@@ -31,7 +31,7 @@ Analyzes and parses JSON data into n*CSV files.
 - Expects an array of results as the $data parameter
 - $type is used for naming the resulting table(s)
 - The $parentId may be either a string, which will be saved in a JSON_parentId column, or an array with "column_name" => "value", which will name the column(s) by array key provided
-- Checks whether the data needs to be analyzed, and either analyzes or parses it into $this->tables[$type] ($type is polished to comply with SAPI naming requirements)
+- Checks whether the data needs to be analyzed, and either analyzes or parses it into `$this->tables[$type]` ($type is polished to comply with SAPI naming requirements)
 - If the data is analyzed, it is stored in Cache and **NOT PARSED** until $this->getCsvFiles() is called
 
 ## getCsvFiles()
