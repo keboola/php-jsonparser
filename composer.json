@@ -1,0 +1,26 @@
+{
+    "name": "keboola/json-parser",
+    "description": "Keboola JSON to CSV parser",
+    "license": "MIT",
+	"keywords": ["json", "csv", "parser", "converter", "json2csv"],
+    "authors": [
+        {
+            "name": "Ondrej Vana",
+            "email": "kachna@keboola.cz"
+        }
+    ],
+    "require": {
+		"keboola/php-csvtable": "~0.1.0",
+		"keboola/php-temp": "@dev",
+		"keboola/php-utils": "@dev",
+		"monolog/monolog": ">=1.8.0"
+    },
+	"require-dev": {
+		"phpunit/phpunit": "3.7.*"
+	},
+	"autoload": {
+		"psr-0": {
+			"Keboola\\Json": "src/"
+		}
+	}
+}
