@@ -11,8 +11,8 @@
     ],
     "require": {
 		"keboola/php-csvtable": "~0.1.0",
-		"keboola/php-temp": "@dev",
-		"keboola/php-utils": "@dev",
+		"keboola/php-temp": "~0.1.0",
+		"keboola/php-utils": "~0.1.0",
 		"monolog/monolog": ">=1.8.0"
     },
 	"require-dev": {
