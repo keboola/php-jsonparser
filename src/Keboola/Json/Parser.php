@@ -50,7 +50,7 @@ class Parser {
 	{
 		// If we don't know the data (enough), store it in Cache, analyze, and parse when asked for it in getCsvFiles()
 		if (empty($data) && empty($this->struct[$type])) { // the analyzer wouldn't set the $struct and parse fails!
-			$e = new Exception(500, "Empty data set received for {$type}");
+			$e = new Exception("Empty data set received for {$type}"); // 500
 			$e->setData(array(
 				"data" => $data,
 				"type" => $type,
@@ -303,7 +303,7 @@ class Parser {
 					// If the current field type is NULL, just keep the original, otherwise throw an Exception 'cos of a type mismatch
 					$old = json_encode($this->struct[$type][$diffKey]);
 					$new = json_encode($struct[$diffKey]);
-					throw new Exception(400, "Unhandled type change between (previous){$old} and (new){$new} in {$diffKey}");
+					throw new Exception("Unhandled type change between (previous){$old} and (new){$new} in {$diffKey}"); // 500
 				}
 			}
 		}
