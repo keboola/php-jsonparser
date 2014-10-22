@@ -1,4 +1,20 @@
 <?php
+/**
+ * JSON to CSV data analyzer and parser/converter
+ *
+ * Use to convert JSON data into CSV file(s).
+ * Creates multiple files if the JSON contains arrays
+ * to store values of child nodes in a separate table,
+ * linked by JSON_parentId column.
+ *
+ * @author		Ondrej Vana (kachna@keboola.com)
+ * @package    keboola/json-parser
+ * @copyright  Copyright (c) 2014 Keboola Data Services (www.keboola.com)
+ * @license    GPL-3.0
+ * @link       https://github.com/keboola/php-jsonparser
+ *
+ * @TODO Ensure the column&table name don't exceed MySQL limits
+ */
 
 namespace Keboola\Json;
 
@@ -7,9 +23,6 @@ use Keboola\Temp\Temp;
 use Monolog\Logger;
 use Keboola\Json\Exception\JsonParserException as Exception;
 
-/**
- * @TODO Ensure the column&table name don't exceed MySQL limits
- */
 class Parser {
 	protected $struct;
 	protected $headers = array();
@@ -27,6 +40,16 @@ class Parser {
 	protected $log;
 	/** @var Temp */
 	protected $temp;
+	/**
+	 * @var array
+	 * Mapping of types that can be "upgraded"
+	 */
+	protected $typeUpgrades = array(
+		array(
+			"slave" => "integer",
+			"master" => "double"
+		)
+	);
 
 	public function __construct(Logger $logger, array $struct = array(), $analyzeRows = 500)
 	{
@@ -299,11 +322,31 @@ class Parser {
 				if (empty($this->struct[$type][$diffKey]) || $this->struct[$type][$diffKey] == "NULL") {
 					// Assign if the field is new
 					$this->struct[$type][$diffKey] = $struct[$diffKey];
+				} elseif (
+					$struct[$diffKey] == "NULL"
+					|| $struct[$diffKey] == $this->struct[$type][$diffKey]
+					|| in_array(array(
+							"slave" => $struct[$diffKey],
+							"master" => $this->struct[$type][$diffKey]
+						), $this->typeUpgrades)
+				) {
+					// If new type is null, unchanged, or the master of a master-slave pair,
+					// do nothing and keep the originally stored type!
+				} elseif (in_array(array(
+						"slave" => $this->struct[$type][$diffKey],
+						"master" => $struct[$diffKey]
+					), $this->typeUpgrades)
+				) {
+					// When current values are in the "master-slave" array
+					// and the "slave" is stored, upgrade type to the "master" type
+					$this->struct[$type][$diffKey] = $struct[$diffKey];
 				} elseif ($struct[$diffKey] != "NULL") {
-					// If the current field type is NULL, just keep the original, otherwise throw an Exception 'cos of a type mismatch
+					// Throw an Exception 'cos of a type mismatch
 					$old = json_encode($this->struct[$type][$diffKey]);
 					$new = json_encode($struct[$diffKey]);
-					throw new Exception("Unhandled type change between (previous){$old} and (new){$new} in {$diffKey}"); // 500
+					$e = new Exception("Unhandled type change from {$old} to {$new} in '{$type}.{$diffKey}'"); // 500
+					$e->setData(array("newValue" => json_encode($row->{$diffKey})));
+					throw $e;
 				}
 			}
 		}
