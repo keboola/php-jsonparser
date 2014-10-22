@@ -1,4 +1,12 @@
 <?php
+
+namespace Keboola\Json;
+
+use Keboola\CsvTable\Table;
+use Keboola\Temp\Temp;
+use Monolog\Logger;
+use Keboola\Json\Exception\JsonParserException as Exception;
+
 /**
  * JSON to CSV data analyzer and parser/converter
  *
@@ -15,14 +23,6 @@
  *
  * @TODO Ensure the column&table name don't exceed MySQL limits
  */
-
-namespace Keboola\Json;
-
-use Keboola\CsvTable\Table;
-use Keboola\Temp\Temp;
-use Monolog\Logger;
-use Keboola\Json\Exception\JsonParserException as Exception;
-
 class Parser {
 	protected $struct;
 	protected $headers = array();
