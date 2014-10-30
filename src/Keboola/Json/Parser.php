@@ -264,6 +264,7 @@ class Parser {
 							array(
 								"data" => $jsonColumn,
 								"row" => json_encode($dataRow),
+								"column" => $column,
 								"type" => $realType,
 								"expected_type" => $dataType
 							)
