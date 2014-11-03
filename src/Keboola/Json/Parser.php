@@ -353,6 +353,9 @@ class Parser {
 		}
 	}
 
+	/**
+	 * @return Table[]
+	 */
 	public function getCsvFiles()
 	{
 		// parse what's in cache before returning results
