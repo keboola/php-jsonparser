@@ -36,7 +36,7 @@ class Parser {
 	protected $analyzeRows;
 	/** @var Cache */
 	protected $cache;
-	/** @var \Monolog\Logger */
+	/** @var Logger */
 	protected $log;
 	/** @var Temp */
 	protected $temp;
@@ -71,17 +71,18 @@ class Parser {
 	 */
 	public function process(array $data, $type = "root", $parentId = null)
 	{
-		// If we don't know the data (enough), store it in Cache, analyze, and parse when asked for it in getCsvFiles()
-		if (empty($data) && empty($this->struct[$type])) { // the analyzer wouldn't set the $struct and parse fails!
-			$e = new Exception("Empty data set received for {$type}"); // 500
-			$e->setData(array(
+		// The analyzer wouldn't set the $struct and parse fails!
+		if (empty($data) && empty($this->struct[$type])) {
+			$this->log->log("warning", "Empty data set received for {$type}", array(
 				"data" => $data,
 				"type" => $type,
 				"parentId" => $parentId
 			));
-			throw $e;
+
+			return;
 		}
 
+		// If we don't know the data (enough), store it in Cache, analyze, and parse when asked for it in getCsvFiles()
 		if (
 			!array_key_exists($type, $this->struct) ||
 			$this->analyzeRows == -1 ||
