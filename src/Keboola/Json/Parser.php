@@ -14,6 +14,17 @@ use Keboola\Json\Exception\JsonParserException as Exception;
  * Creates multiple files if the JSON contains arrays
  * to store values of child nodes in a separate table,
  * linked by JSON_parentId column.
+
+ * The analyze function loops through each row of an array (generally an array of results) and passes the row into analyzeRow() method. If the row only contains a string, it's stored in a "data" column, otherwise the row should usually be an object, so each of the object's variables will be used as a column name, and it's value analysed:
+ * - if it's a scalar, it'll be saved as a value of that column.
+ * - if it's another object, it'll be parsed recursively to analyzeRow(), with it's variable names prepended by current object's name
+ *	- example:
+ *			"parent": {
+ *				"child" : "value1"
+ *			}
+ *			will result into a "parent_child" column with a string type of "value1"
+ * - if it's an array, it'll be passed to analyze() to create a new table, linked by JSON_parentId
+ *
  *
  * @author		Ondrej Vana (kachna@keboola.com)
  * @package    keboola/json-parser
@@ -24,25 +35,55 @@ use Keboola\Json\Exception\JsonParserException as Exception;
  * @TODO Ensure the column&table name don't exceed MySQL limits
  */
 class Parser {
+	/**
+	 * Structures of analyzed data
+	 * @var array
+	 */
 	protected $struct;
+
+	/**
+	 * Array of headers for each type
+	 * @var array
+	 */
 	protected $headers = array();
+
+	/**
+	 * @var Table[]
+	 */
 	protected $csvFiles = array();
+
+	/**
+	 * True if analyze() was called
+	 * @var bool
+	 */
 	protected $analyzed;
+
+	/**
+	 * Array of amounts of analyzed rows per data type
+	 * @var array
+	 */
 	protected $rowsAnalyzed = array();
+
 	/**
 	 * @var int
 	 * Use -1 to always analyze all data
 	 */
 	protected $analyzeRows;
+
 	/** @var Cache */
 	protected $cache;
+
 	/** @var Logger */
 	protected $log;
-	/** @var Temp */
-	protected $temp;
+
 	/**
-	 * @var array
+	 * @var Temp
+	 */
+	protected $temp;
+
+	/**
 	 * Mapping of types that can be "upgraded"
+	 * @var array
 	 */
 	protected $typeUpgrades = array(
 		array(
@@ -51,6 +92,11 @@ class Parser {
 		)
 	);
 
+	/**
+	 * @param Logger $logger
+	 * @param array $struct should contain an array with previously cached results from analyze() calls (called automatically by process())
+	 * @param int $analyzeRows determines, how many rows of data (counting only the "root" level of each Json)  will be analyzed [default 500, -1 for infinite]
+	 */
 	public function __construct(Logger $logger, array $struct = array(), $analyzeRows = 500)
 	{
 		$this->struct = $struct;
@@ -60,12 +106,16 @@ class Parser {
 	}
 
 	/**
-	 * @brief Parse an array of results. If their structure isn't known, it is analyzed and parsed upon retrieval by getCsvFiles()
+	 * @brief Parse an array of results. If their structure isn't known, it is stored, analyzed and then parsed upon retrieval by getCsvFiles()
+	 * Expects an array of results in the $data parameter
+	 * Checks whether the data needs to be analyzed, and either analyzes or parses it into $this->csvFiles[$type] ($type is polished to comply with SAPI naming requirements)
+	 * If the data is analyzed, it is stored in Cache and **NOT PARSED** until $this->getCsvFiles() is called
+	 *
 	 * @TODO FIXME keep the order of data as on the input - try to parse data from Cache before parsing new data
 	 *
 	 * @param array $data
-	 * @param string $type
-	 * @param string $parentId
+	 * @param string $type is used for naming the resulting table(s)
+	 * @param string|array $parentId may be either a string, which will be saved in a JSON_parentId column, or an array with "column_name" => "value", which will name the column(s) by array key provided
 	 *
 	 * @return void
 	 */
@@ -116,6 +166,12 @@ class Parser {
 		}
 	}
 
+	/**
+	 * Get header for a data type
+	 * @param string $type Data type
+	 * @param string|array $parent String with a $parentId or an array with $colName => $parentId
+	 * @return array
+	 */
 	public function getHeader($type, $parent = false)
 	{
 		$header = array();
@@ -145,6 +201,12 @@ class Parser {
 		return $this->validateHeader($header);
 	}
 
+	/**
+	 * Validate header column names to comply with MySQL limitations
+	 *
+	 * @param array $header Input header
+	 * @return array
+	 */
 	protected function validateHeader(array $header)
 	{
 		$newHeader = array();
@@ -161,6 +223,12 @@ class Parser {
 		return $newHeader;
 	}
 
+	/**
+	 * Validates a string for use as MySQL column/table name
+	 *
+	 * @param string $name A string to be validated
+	 * @return string
+	 */
 	protected function createSafeSapiName($name)
 	{
 		if (strlen($name) > 64) {
@@ -186,7 +254,16 @@ class Parser {
 		return trim($newName, "_");
 	}
 
-	public function parse($data, $type, $parentId = null)
+	/**
+	 * Parse data of known type
+	 *
+	 * @param array $data
+	 * @param string $type
+	 * @param string|array $parentId
+	 * @return void
+	 * @see Parser::process()
+	 */
+	public function parse(array $data, $type, $parentId = null)
 	{
 		if (empty($this->struct[$type])) {
 			// analyse instead of failing if the data is unknown!
@@ -228,6 +305,14 @@ class Parser {
 		}
 	}
 
+	/**
+	 * Parse a single row
+	 * If the row contains an array, it's recursively parsed
+	 *
+	 * @param mixed $dataRow Input data
+	 * @param string $type
+	 * @return array
+	 */
 	public function parseRow($dataRow, $type)
 	{
 		// in case of non-associative array of strings
@@ -281,7 +366,14 @@ class Parser {
 		return $row;
 	}
 
-	public function analyze($data, $type)
+	/**
+	 * @brief Analyze an array of input data and save the result in $this->struct
+	 *
+	 * @param array $data
+	 * @param string $type
+	 * @return void
+	 */
+	public function analyze(array $data, $type)
 	{
 		foreach($data as $row) {
 			$this->analyzeRow($row, $type);
@@ -289,6 +381,13 @@ class Parser {
 		$this->analyzed = true;
 	}
 
+	/**
+	 * @brief Analyze row of input data & create $this->struct
+	 *
+	 * @param mixed $row
+	 * @param string $type
+	 * @return void
+	 */
 	public function analyzeRow($row, $type)
 	{
 		// Analyze the current row
@@ -355,6 +454,7 @@ class Parser {
 	}
 
 	/**
+	 * Returns an array of CSV files containing results
 	 * @return Table[]
 	 */
 	public function getCsvFiles()
@@ -368,16 +468,28 @@ class Parser {
 		return $this->csvFiles;
 	}
 
+	/**
+	 * Read results of data analysis from $this->struct
+	 * @return array
+	 */
 	public function getStruct()
 	{
 		return $this->struct;
 	}
 
+	/**
+	 * Returns (bool) whether the analyzer analyzed anything in this instance
+	 * @return bool
+	 */
 	public function hasAnalyzed()
 	{
 		return (bool) $this->analyzed;
 	}
 
+	/**
+	 * Initialize $this->temp
+	 * @return Temp
+	 */
 	protected function getTemp()
 	{
 		if(!($this->temp instanceof Temp)) {
@@ -388,7 +500,7 @@ class Parser {
 
 	/**
 	 * @brief Override the self-initialized Temp
-	 * @param \Keboola\Temp\Temp $temp
+	 * @param Temp $temp
 	 */
 	public function setTemp(Temp $temp)
 	{
