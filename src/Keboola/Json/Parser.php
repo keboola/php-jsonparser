@@ -347,6 +347,7 @@ class Parser {
 
 			switch ($dataType) {
 				case "array":
+					// TODO add array indices?
 					$row[$column] = $type . "_" . uniqid(); // TODO try to use parent's ID - somehow set it or detect it (not sure if that'd be unique)
 					$this->parse($dataRow->{$column}, $type . "." . $column, $row[$column]);
 					break;
@@ -362,7 +363,7 @@ class Parser {
 						$realType = gettype($dataRow->{$column});
 						$this->log->log(
 							"ERROR",
-							"Data parse error - unexpected '{$realType}'!",
+							"Data parse error - unexpected '{$realType}' where '{$dataType}' was expected!",
 							array(
 								"data" => $jsonColumn,
 								"row" => json_encode($dataRow),
