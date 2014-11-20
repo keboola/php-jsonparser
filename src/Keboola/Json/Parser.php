@@ -33,6 +33,9 @@ use Keboola\Json\Exception\JsonParserException as Exception;
  * @link       https://github.com/keboola/php-jsonparser
  *
  * @TODO Ensure the column&table name don't exceed MySQL limits
+ * @TODO Use a $file parameter to allow writing the same
+ * 		data $type to multiple files
+ * 		(ie. type "person" to "customer" and "user")
  */
 class Parser {
 	/**
@@ -284,6 +287,8 @@ class Parser {
 			$this->headers[$type] = $this->getHeader($type, $parentId);
 		}
 
+		// TODO add a $file parameter to use instead of $type
+		// to allow saving a single type to different files
 		$safeType = $this->createSafeSapiName($type);
 		if (empty($this->csvFiles[$safeType])) {
 			$this->csvFiles[$safeType] = Table::create($safeType, $this->headers[$type], $this->getTemp());
@@ -296,6 +301,17 @@ class Parser {
 			$csvRow = array_replace(array_fill_keys($this->headers[$type], null), $parsed);
 			if (!empty($parentId)) {
 				if (is_array($parentId)) {
+					// Ensure the parentId array is not multidimensional
+					if (count($parentId) != count($parentId, COUNT_RECURSIVE)) {
+						$e = new Exception('Error assigning parentId to a CSV file! $parentId array cannot be multidimensional.');
+						$e->setData([
+							'parentId' => $parentId,
+							'type' => $type,
+							'dataRow' => $csvRow
+						]);
+						throw $e;
+					}
+
 					$csvRow = array_merge($csvRow, $parentId);
 				} else {
 					$csvRow["JSON_parentId"] = $parentId;
