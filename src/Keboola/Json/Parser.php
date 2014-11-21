@@ -98,9 +98,9 @@ class Parser {
 	/**
 	 * @param Logger $logger
 	 * @param array $struct should contain an array with previously cached results from analyze() calls (called automatically by process())
-	 * @param int $analyzeRows determines, how many rows of data (counting only the "root" level of each Json)  will be analyzed [default 500, -1 for infinite]
+	 * @param int $analyzeRows determines, how many rows of data (counting only the "root" level of each Json)  will be analyzed [default -1 for infinite/all]
 	 */
-	public function __construct(Logger $logger, array $struct = array(), $analyzeRows = 500)
+	public function __construct(Logger $logger, array $struct = array(), $analyzeRows = -1)
 	{
 		$this->struct = $struct;
 		$this->analyzeRows = $analyzeRows;
