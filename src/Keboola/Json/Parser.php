@@ -121,6 +121,8 @@ class Parser {
 	 * @param string|array $parentId may be either a string, which will be saved in a JSON_parentId column, or an array with "column_name" => "value", which will name the column(s) by array key provided
 	 *
 	 * @return void
+	 *
+	 * @api
 	 */
 	public function process(array $data, $type = "root", $parentId = null)
 	{
@@ -167,6 +169,7 @@ class Parser {
 		} else {
 			$this->parse($data, $type, $parentId);
 		}
+		// TODO return the files written into
 	}
 
 	/**
@@ -358,7 +361,7 @@ class Parser {
 					break;
 				default:
 					// If a column is an object/array while $struct expects a single column, log an error
-					if (is_array($dataRow->{$column}) || is_object($dataRow->{$column})) {
+					if (!is_scalar($dataRow->{$column})) {
 						$jsonColumn = json_encode($dataRow->{$column});
 						$realType = gettype($dataRow->{$column});
 						$this->log->log(
