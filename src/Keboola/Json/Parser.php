@@ -341,6 +341,16 @@ class Parser {
 			return array("data" => json_encode($dataRow));
 		}
 
+		// Generate parent ID for arrays
+		$arrayParentId =
+			$type . "_"
+			// Try to find a "real" parent ID
+			. (!empty($dataRow->id)
+			? ($dataRow->id . "_")
+			: (!empty($dataRow->uid)
+			? ($dataRow->uid . "_")
+			: md5(serialize($dataRow)) . "_"));
+
 		$row = array();
 		foreach($this->struct[$type] as $column => $dataType) {
 			if (empty($dataRow->{$column})) {
@@ -350,8 +360,7 @@ class Parser {
 
 			switch ($dataType) {
 				case "array":
-					// TODO add array indices?
-					$row[$column] = $type . "_" . uniqid(); // TODO try to use parent's ID - somehow set it or detect it (not sure if that'd be unique)
+					$row[$column] = $arrayParentId . uniqid();
 					$this->parse($dataRow->{$column}, $type . "." . $column, $row[$column]);
 					break;
 				case "object":
@@ -363,18 +372,13 @@ class Parser {
 					// If a column is an object/array while $struct expects a single column, log an error
 					if (!is_scalar($dataRow->{$column})) {
 						$jsonColumn = json_encode($dataRow->{$column});
-						$realType = gettype($dataRow->{$column});
+
 						$this->log->log(
 							"ERROR",
-							"Data parse error - unexpected '{$realType}' where '{$dataType}' was expected!",
-							array(
-								"data" => $jsonColumn,
-								"row" => json_encode($dataRow),
-								"column" => $column,
-								"type" => $realType,
-								"expected_type" => $dataType
-							)
+							"Data parse error in '{$column}' - unexpected '" . gettype($dataRow->{$column}) . "' where '{$dataType}' was expected!",
+							[ "data" => $jsonColumn, "row" => json_encode($dataRow) ]
 						);
+
 						$row[$column] = $jsonColumn;
 					} else {
 						$row[$column] = $dataRow->{$column};

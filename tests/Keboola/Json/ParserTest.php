@@ -19,7 +19,6 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		foreach($parser->getCsvFiles() as $name => $table) {
 			// using uniqid() for parents makes this struggle :(
 // 			$this->assertEquals(file($table->getPathname()), file(__DIR__ . "/../_data/Json_tweets_pinkbike/{$name}.csv"));
-
 			// compare headers at least
 			$this->assertEquals(file($table->getPathname())[0], file(__DIR__ . "{$testFilesPath}/{$name}.csv")[0]);
 		}
