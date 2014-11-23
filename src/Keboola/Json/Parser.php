@@ -96,6 +96,11 @@ class Parser {
 	);
 
 	/**
+	 * @var array
+	 */
+	protected $primaryKeys = [];
+
+	/**
 	 * @param Logger $logger
 	 * @param array $struct should contain an array with previously cached results from analyze() calls (called automatically by process())
 	 * @param int $analyzeRows determines, how many rows of data (counting only the "root" level of each Json)  will be analyzed [default -1 for infinite/all]
@@ -489,6 +494,13 @@ class Parser {
 				$this->parse($batch["data"], $batch["type"], $batch["parentId"]);
 			}
 		}
+
+		foreach($this->primaryKeys as $table => $pk) {
+			if (array_key_exists($table, $this->csvFiles)) {
+				$this->csvFiles[$table]->setPrimaryKey($pk);
+			}
+		}
+
 		return $this->csvFiles;
 	}
 
@@ -529,5 +541,13 @@ class Parser {
 	public function setTemp(Temp $temp)
 	{
 		$this->temp = $temp;
+	}
+
+	/**
+	 * @param array $pks
+	 */
+	public function addPrimaryKeys(array $pks)
+	{
+		$this->primaryKeys += $pks;
 	}
 }

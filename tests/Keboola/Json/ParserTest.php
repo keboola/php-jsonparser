@@ -105,6 +105,29 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$this->assertEquals($validHeader, $expectedHeader);
 	}
 
+	public function testPrimaryKeys()
+	{
+		$parser = new Parser(new \Monolog\Logger('test'));
+
+		$testFilesPath = '/../../_data/Json_tweets_pinkbike';
+
+		$file = file_get_contents(__DIR__ . "{$testFilesPath}.json");
+		$data = json_decode($file);
+
+		$pks = [
+			'root_statuses' => 'id',
+			'root_statuses_entities_urls' => 'url,JSON_parentId'
+		];
+		$parser->process($data);
+		$parser->addPrimaryKeys($pks);
+
+		$files = $parser->getCsvFiles();
+		foreach($pks as $table => $pk) {
+			$this->assertEquals($files[$table]->getPrimaryKey(), $pk);
+		}
+		$this->assertEquals($files['root']->getPrimaryKey(), null);
+	}
+
 	protected static function callMethod($obj, $name, array $args) {
 		$class = new \ReflectionClass($obj);
 		$method = $class->getMethod($name);
@@ -112,4 +135,5 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 
 		return $method->invokeArgs($obj, $args);
 	}
+
 }
