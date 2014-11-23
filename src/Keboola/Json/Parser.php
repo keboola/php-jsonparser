@@ -5,7 +5,7 @@ namespace Keboola\Json;
 use Keboola\CsvTable\Table;
 use Keboola\Temp\Temp;
 use Monolog\Logger;
-use Keboola\Json\Exception\JsonParserException as Exception;
+use Keboola\Json\Exception\JsonParserException;
 
 /**
  * JSON to CSV data analyzer and parser/converter
@@ -45,7 +45,7 @@ class Parser {
 	protected $struct;
 
 	/**
-	 * Array of headers for each type
+	 * Headers for each type
 	 * @var array
 	 */
 	protected $headers = array();
@@ -62,14 +62,13 @@ class Parser {
 	protected $analyzed;
 
 	/**
-	 * Array of amounts of analyzed rows per data type
+	 * Counts of analyzed rows per data type
 	 * @var array
 	 */
 	protected $rowsAnalyzed = array();
 
 	/**
 	 * @var int
-	 * Use -1 to always analyze all data
 	 */
 	protected $analyzeRows;
 
@@ -306,7 +305,7 @@ class Parser {
 				if (is_array($parentId)) {
 					// Ensure the parentId array is not multidimensional
 					if (count($parentId) != count($parentId, COUNT_RECURSIVE)) {
-						$e = new Exception('Error assigning parentId to a CSV file! $parentId array cannot be multidimensional.');
+						$e = new JsonParserException('Error assigning parentId to a CSV file! $parentId array cannot be multidimensional.');
 						$e->setData([
 							'parentId' => $parentId,
 							'type' => $type,
@@ -466,10 +465,10 @@ class Parser {
 					// and the "slave" is stored, upgrade type to the "master" type
 					$this->struct[$type][$diffKey] = $struct[$diffKey];
 				} elseif ($struct[$diffKey] != "NULL") {
-					// Throw an Exception 'cos of a type mismatch
+					// Throw an JsonParserException 'cos of a type mismatch
 					$old = json_encode($this->struct[$type][$diffKey]);
 					$new = json_encode($struct[$diffKey]);
-					$e = new Exception("Unhandled type change from {$old} to {$new} in '{$type}.{$diffKey}'"); // 500
+					$e = new JsonParserException("Unhandled type change from {$old} to {$new} in '{$type}.{$diffKey}'"); // 500
 					$e->setData(array("newValue" => json_encode($row->{$diffKey})));
 					throw $e;
 				}
