@@ -12,9 +12,9 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$testFilesPath = '/../../_data/Json_tweets_pinkbike';
 
 		$file = file_get_contents(__DIR__ . "{$testFilesPath}.json");
-		$json = json_decode($file);
+		$data = json_decode($file);
 
-		$parser->process($json);
+		$parser->process($data);
 
 		foreach($parser->getCsvFiles() as $name => $table) {
 			// using uniqid() for parents makes this struggle :(

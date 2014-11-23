@@ -85,6 +85,7 @@ class Parser {
 
 	/**
 	 * Mapping of types that can be "upgraded"
+	 * @todo Create an object/method to handle this comparison and return the master
 	 * @var array
 	 */
 	protected $typeUpgrades = array(
@@ -108,7 +109,7 @@ class Parser {
 	}
 
 	/**
-	 * @brief Parse an array of results. If their structure isn't known, it is stored, analyzed and then parsed upon retrieval by getCsvFiles()
+	 * Parse an array of results. If their structure isn't known, it is stored, analyzed and then parsed upon retrieval by getCsvFiles()
 	 * Expects an array of results in the $data parameter
 	 * Checks whether the data needs to be analyzed, and either analyzes or parses it into $this->csvFiles[$type] ($type is polished to comply with SAPI naming requirements)
 	 * If the data is analyzed, it is stored in Cache and **NOT PARSED** until $this->getCsvFiles() is called
@@ -390,7 +391,7 @@ class Parser {
 	}
 
 	/**
-	 * @brief Analyze an array of input data and save the result in $this->struct
+	 * Analyze an array of input data and save the result in $this->struct
 	 *
 	 * @param array $data
 	 * @param string $type
@@ -405,7 +406,7 @@ class Parser {
 	}
 
 	/**
-	 * @brief Analyze row of input data & create $this->struct
+	 * Analyze row of input data & create $this->struct
 	 *
 	 * @param mixed $row
 	 * @param string $type
@@ -449,17 +450,17 @@ class Parser {
 				} elseif (
 					$struct[$diffKey] == "NULL"
 					|| $struct[$diffKey] == $this->struct[$type][$diffKey]
-					|| in_array(array(
+					|| in_array([
 							"slave" => $struct[$diffKey],
 							"master" => $this->struct[$type][$diffKey]
-						), $this->typeUpgrades)
+						], $this->typeUpgrades)
 				) {
 					// If new type is null, unchanged, or the master of a master-slave pair,
 					// do nothing and keep the originally stored type!
-				} elseif (in_array(array(
+				} elseif (in_array([
 						"slave" => $this->struct[$type][$diffKey],
 						"master" => $struct[$diffKey]
-					), $this->typeUpgrades)
+					], $this->typeUpgrades)
 				) {
 					// When current values are in the "master-slave" array
 					// and the "slave" is stored, upgrade type to the "master" type
@@ -522,7 +523,7 @@ class Parser {
 	}
 
 	/**
-	 * @brief Override the self-initialized Temp
+	 * Override the self-initialized Temp
 	 * @param Temp $temp
 	 */
 	public function setTemp(Temp $temp)
