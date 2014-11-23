@@ -30,6 +30,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 			}
 		);
 		$this->assertEquals(array_diff($dir, array_keys($parser->getCsvFiles())), array(".",".."));
+		$this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
 	}
 
 	public function testValidateHeader() {
