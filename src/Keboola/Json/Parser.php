@@ -150,7 +150,7 @@ class Parser {
 		) {
 			if (empty($this->rowsAnalyzed[$type])) {
 				$this->log->log("debug", "analyzing {$type}", array(
-					"struct" => json_encode($this->struct),
+// 					"struct" => json_encode($this->struct),
 					"analyzeRows" => $this->analyzeRows,
 					"rowsAnalyzed" => json_encode($this->rowsAnalyzed)
 				));
