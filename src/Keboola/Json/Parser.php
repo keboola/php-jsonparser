@@ -448,11 +448,9 @@ class Parser {
 				$fieldType = gettype($field);
 				if ($fieldType == "object") {
 					// Only assign the type if the object isn't empty
-					if (get_object_vars($field) == []) {
-						continue;
+					if (get_object_vars($field) != []) {
+						$this->analyzeRow($field, $type . "." . $key);
 					}
-
-					$this->analyzeRow($field, $type . "." . $key);
 				} elseif ($fieldType == "array") {
 					$this->analyze($field, $type . "." . $key);
 				}
