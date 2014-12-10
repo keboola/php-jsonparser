@@ -349,7 +349,7 @@ class Parser {
 
 		foreach($data as $row) {
 			if (!empty($parentId)) {
-				if (is_scalar($row)) {
+				if (is_scalar($row) || is_null($row)) {
 					$row = [self::DATA_COLUMN => $row];
 				}
 				$row = (object) array_replace((array) $row, $parentId);
@@ -392,7 +392,13 @@ class Parser {
 
 		$row = [];
 		foreach(array_merge($this->struct[$type], $parentCols) as $column => $dataType) {
-			if (empty($dataRow->{$column})) {
+			// skip empty objects & arrays to prevent creating empty tables
+			// or incomplete column names
+			if (
+				!isset($dataRow->{$column})
+				|| is_null($dataRow->{$column})
+				|| (empty($dataRow->{$column}) && !is_scalar($dataRow->{$column}))
+			) {
 				$row[$column] = null;
 				continue;
 			}
@@ -409,7 +415,9 @@ class Parser {
 					break;
 				default:
 					// If a column is an object/array while $struct expects a single column, log an error
-					if (!is_scalar($dataRow->{$column})) {
+					if (is_scalar($dataRow->{$column})) {
+						$row[$column] = $dataRow->{$column};
+					} else {
 						$jsonColumn = json_encode($dataRow->{$column});
 
 						$this->log->log(
@@ -419,8 +427,6 @@ class Parser {
 						);
 
 						$row[$column] = $jsonColumn;
-					} else {
-						$row[$column] = $dataRow->{$column};
 					}
 					break;
 			}
