@@ -159,8 +159,8 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 			{"field": true}
 		]');
 
-		$parser->process($data);
-		$this->assertEquals(file(reset($parser->getCsvFiles())->getPathname()), [
+		$parser->process($data, 'threepack');
+		$this->assertEquals(file($parser->getCsvFiles()['threepack']->getPathname()), [
 			'"field"' . PHP_EOL,
 			'"128"' . PHP_EOL,
 			'"string"' . PHP_EOL,
