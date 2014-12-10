@@ -328,6 +328,8 @@ class Parser {
 			$parsed = $this->parseRow($row, $type);
 			// ensure no fields are missing in CSV row (required in case an object is null and doesn't generate )
 			$csvRow = array_replace(array_fill_keys($this->headers[$type], null), $parsed);
+
+			// TODO $parentId should be available in parseRow() to enable hash generation including such ID
 			if (!empty($parentId)) {
 				if (is_array($parentId)) {
 					// Ensure the parentId array is not multidimensional
@@ -446,11 +448,14 @@ class Parser {
 		} else {
 			foreach($row as $key => $field) {
 				$fieldType = gettype($field);
+
 				if ($fieldType == "object") {
 					// Only assign the type if the object isn't empty
-					if (get_object_vars($field) != []) {
-						$this->analyzeRow($field, $type . "." . $key);
+					if ($this->isEmptyObject($field)) {
+						continue;
 					}
+
+					$this->analyzeRow($field, $type . "." . $key);
 				} elseif ($fieldType == "array") {
 					$this->analyze($field, $type . "." . $key);
 				}
@@ -507,17 +512,35 @@ class Parser {
 	}
 
 	/**
+	 * Recursively scans $object for non-empty objects
+	 * Returns true if the object contains no scalar nor array
+	 * @param \stdClass $object
+	 * @return bool
+	 */
+	protected function isEmptyObject(\stdClass $object)
+	{
+		$vars = get_object_vars($object);
+		if($vars == []) {
+			return true;
+		} else {
+			foreach($vars as $var) {
+				if (!is_object($var)) {
+					return false;
+				} else {
+					return $this->isEmptyObject((object) $var);
+				}
+			}
+		}
+	}
+
+	/**
 	 * Returns an array of CSV files containing results
 	 * @return Table[]
 	 */
 	public function getCsvFiles()
 	{
 		// parse what's in cache before returning results
-		if(!empty($this->cache)) {
-			while ($batch = $this->cache->getNext()) {
-				$this->parse($batch["data"], $batch["type"], $batch["parentId"]);
-			}
-		}
+		$this->processCache();
 
 		foreach($this->primaryKeys as $table => $pk) {
 			if (array_key_exists($table, $this->csvFiles)) {
@@ -527,6 +550,19 @@ class Parser {
 
 		return $this->csvFiles;
 	}
+
+	/**
+	 * @return void
+	 */
+	protected function processCache()
+	{
+		if(!empty($this->cache)) {
+			while ($batch = $this->cache->getNext()) {
+				$this->parse($batch["data"], $batch["type"], $batch["parentId"]);
+			}
+		}
+	}
+
 
 	/**
 	 * Read results of data analysis from $this->struct

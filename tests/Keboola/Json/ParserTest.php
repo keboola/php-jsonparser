@@ -5,27 +5,30 @@ use Keboola\CsvTable\Table;
 use Keboola\Utils\Utils;
 
 class ParserTest extends \PHPUnit_Framework_TestCase {
-
 	public function testProcess() {
 		$parser = $this->getParser();
 
-		$testFilesPath = '/../../_data/Json_tweets_pinkbike';
+		$testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
 
-		$file = file_get_contents(__DIR__ . "{$testFilesPath}.json");
+		$file = file_get_contents("{$testFilesPath}.json");
 		$data = json_decode($file);
 
 		$parser->process($data);
 
 		foreach($parser->getCsvFiles() as $name => $table) {
 			// using uniqid() for parents makes this struggle :(
-			// TODO parse each CSV row, ditch the parentId and compare data
-// 			$this->assertEquals(file($table->getPathname()), file(__DIR__ . "{$testFilesPath}/{$name}.csv"));
+			// need to find an option to make IDs always the same,
+			// generated from the data instead of timestamp based uniqid
+// 			$this->assertEquals(
+// 				$this->stripUniqueIds(file($table->getPathname())),
+// 				$this->stripUniqueIds(file(__DIR__ . "{$testFilesPath}/{$name}.csv"))
+// 			);
 			// compare headers at least
-			$this->assertEquals(file($table->getPathname())[0], file(__DIR__ . "{$testFilesPath}/{$name}.csv")[0]);
+			$this->assertEquals(file($table->getPathname())[0], file("{$testFilesPath}/{$name}.csv")[0]);
 		}
 
 		// compare all the files are present
-		$dir = scandir(__DIR__ . "{$testFilesPath}/");
+		$dir = scandir($testFilesPath);
 		array_walk($dir, function (&$val) {
 				$val = str_replace(".csv", "", $val);
 			}
@@ -33,6 +36,22 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$this->assertEquals(array_diff($dir, array_keys($parser->getCsvFiles())), array(".",".."));
 		$this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
 	}
+
+// 	protected function stripUniqueIds($fileArr)
+// 	{
+// 		$first = true;
+// 		foreach($fileArr as &$row) {
+// 			$rowArr = explode(',', $row);
+// 			if ($first) {
+// 				$parentColIndex = array_search('"JSON_parentId"', $rowArr);
+// 			}
+// 			unset($rowArr[$parentColIndex]);
+// 			$row = join(',', $rowArr);
+// 		}
+// // 		var_dump($fileArr); die();
+//
+// 		return $fileArr;
+// 	}
 
 	public function testValidateHeader() {
 		$parser = $this->getParser();
@@ -111,9 +130,9 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 	{
 		$parser = $this->getParser();
 
-		$testFilesPath = '/../../_data/Json_tweets_pinkbike';
+		$testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
 
-		$file = file_get_contents(__DIR__ . "{$testFilesPath}.json");
+		$file = file_get_contents("{$testFilesPath}.json");
 		$data = json_decode($file);
 
 		$pks = [
@@ -167,6 +186,16 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$parser->process($data);
 	}
 
+	public function testProcessEmptyObjects()
+	{
+		$json = file_get_contents($this->getDataDir() . "Json_zendesk_comments_empty_objects.json");
+
+		$j = Utils::json_decode($json);
+		$parser = $this->getParser();
+		$parser->process($j->data);
+		$parser->getCsvFiles();
+	}
+
 	protected static function callMethod($obj, $name, array $args)
 	{
 		$class = new \ReflectionClass($obj);
@@ -179,5 +208,10 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 	protected function getParser()
 	{
 		return new Parser(new \Monolog\Logger('test'));
+	}
+
+	protected function getDataDir()
+	{
+		return __DIR__ . "/../../_data/";
 	}
 }
