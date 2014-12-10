@@ -149,6 +149,28 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$this->assertEquals($files['root']->getPrimaryKey(), null);
 	}
 
+	public function testParentIdPrimaryKey()
+	{
+		$parser = $this->getParser();
+
+		$data = json_decode('[
+			{
+				"pk": 1,
+				"arr": [1,2,3]
+			},
+			{
+				"pk": 2,
+				"arr": ["a","b","c"]
+			}
+		]');
+
+		$parser->addPrimaryKeys(['type' => "pk"]);
+		$parser->parse($data, 'type');
+		foreach($parser->getCsvFiles() as $type => $file) {
+			var_dump($type, file_get_contents($file->getPathname()));
+		}
+	}
+
 	public function testNoStrictScalarChange()
 	{
 		$parser = $this->getParser();
@@ -177,7 +199,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$parser = $this->getParser();
 		$parser->setStrict(true);
 
-		$data = Utils::json_decode('[
+		$data = json_decode('[
 			{"field": 128},
 			{"field": "string"},
 			{"field": true}
@@ -190,7 +212,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 	{
 		$json = file_get_contents($this->getDataDir() . "Json_zendesk_comments_empty_objects.json");
 
-		$j = Utils::json_decode($json);
+		$j = json_decode($json);
 		$parser = $this->getParser();
 		$parser->process($j->data);
 		$parser->getCsvFiles();

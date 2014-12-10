@@ -370,6 +370,9 @@ class Parser {
 		}
 
 		// Generate parent ID for arrays
+// 		if (!empty($this->primaryKeys[$this->createSafeSapiName($type)])) {
+// 			var_dump($this->primaryKeys[$this->createSafeSapiName($type)]);
+// 		}
 		$arrayParentId =
 			$type . "_"
 			// Try to find a "real" parent ID
@@ -469,45 +472,85 @@ class Parser {
 			// if we already know the row's types
 			$this->struct[$type] = $struct;
 		} elseif ($this->struct[$type] !== $struct) {
-			// If the current row doesn't match the known structure
-			$diff = array_diff_assoc($struct, $this->struct[$type]);
-			// Walk through different fields
-			foreach($diff as $diffKey => $diffVal) {
-				if (empty($this->struct[$type][$diffKey]) || $this->struct[$type][$diffKey] == "NULL") {
-					// Assign if the field is new
-					$this->struct[$type][$diffKey] = $struct[$diffKey];
-				} elseif (
-					$struct[$diffKey] == "NULL"
-					|| $struct[$diffKey] == $this->struct[$type][$diffKey]
-					|| in_array([
-							"slave" => $struct[$diffKey],
-							"master" => $this->struct[$type][$diffKey]
-						], $this->typeUpgrades)
-					|| (!$this->strict
-						&& in_array($struct[$diffKey], $this->scalars)
-						&& in_array($this->struct[$type][$diffKey], $this->scalars))
-				) {
-					// If new type is null, unchanged,
-					// or the master of a master-slave pair,
-					// or $this->strict is off AND both values are scalar
-					// do nothing and keep the originally stored type!
-				} elseif (in_array([
-						"slave" => $this->struct[$type][$diffKey],
-						"master" => $struct[$diffKey]
-					], $this->typeUpgrades)
-				) {
-					// When current values are in the "master-slave" array
-					// and the "slave" is stored, upgrade type to the "master" type
-					$this->struct[$type][$diffKey] = $struct[$diffKey];
-				} elseif ($struct[$diffKey] != "NULL") {
-					// Throw an JsonParserException 'cos of a type mismatch
-					$old = json_encode($this->struct[$type][$diffKey]);
-					$new = json_encode($struct[$diffKey]);
-					$e = new JsonParserException("Unhandled type change from {$old} to {$new} in '{$type}.{$diffKey}'"); // 500
-					$e->setData(array("newValue" => json_encode($row->{$diffKey})));
-					throw $e;
+			if (is_array($struct) && is_array($this->struct[$type])) {
+				// If the current row doesn't match the known structure
+				$diff = array_diff_assoc($struct, $this->struct[$type]);
+				// Walk through different fields
+				foreach($diff as $diffKey => $diffVal) {
+					$this->struct[$type][$diffKey] = $this->updateStruct(
+						empty($this->struct[$type][$diffKey]) ? null : $this->struct[$type][$diffKey],
+						$struct[$diffKey],
+						"{$type}.{$diffKey}",
+						$row->{$diffKey}
+					);
 				}
+			} else {
+				$this->struct[$type] = $this->updateStruct(
+					$this->struct[$type],
+					$struct,
+					$type,
+					$row
+				);
 			}
+		}
+	}
+
+	/**
+	 * Return currently stored dataType with currently analyzed one,
+	 * if it is a valid update
+	 * @param string &$oldType
+	 * @param string $newType
+	 * @param string $type for logging
+	 * @param string $currentRow for logging
+	 * @return mixed $oldType|$newType
+	 */
+	protected function updateStruct($oldType, $newType, $type, $currentRow)
+	{
+		if (
+			empty($oldType)
+			|| $oldType == "NULL"
+			|| in_array([
+					"slave" => $oldType,
+					"master" => $newType
+				], $this->typeUpgrades)
+		) {
+			// Assign if the field is new
+			// OR
+			// When current values are in the "master-slave" array
+			// and the "slave" is stored, upgrade type to the "master" type
+			return $newType;
+		} elseif (
+			$newType == "NULL"
+			|| $newType == $oldType
+			|| in_array([
+					"slave" => $newType,
+					"master" => $oldType
+				], $this->typeUpgrades)
+			|| (!$this->strict
+				&& in_array($newType, $this->scalars)
+				&& in_array($oldType, $this->scalars))
+		) {
+			// If new type is null, unchanged,
+			// or the master of a master-slave pair,
+			// or $this->strict is off AND both values are scalar
+			// do nothing and keep the originally stored type!
+			return $oldType;
+		} elseif ($newType != "NULL") {
+			// Throw an JsonParserException 'cos of a type mismatch
+			$old = json_encode($oldType);
+			$new = json_encode($newType);
+			$e = new JsonParserException("Unhandled type change from {$old} to {$new} in '{$type}'");
+			$e->setData(["newValue" => json_encode($currentRow)]);
+			throw $e;
+		} else {
+			$e = new JsonParserException("Unexpected error!");
+			$e->setData([
+				'oldType' => $oldType,
+				'newType' => $newType,
+				'type' => $type,
+				'newValue' => json_encode($currentRow)
+			]);
+			throw $e;
 		}
 	}
 
