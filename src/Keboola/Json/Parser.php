@@ -48,12 +48,12 @@ class Parser {
 	 * Headers for each type
 	 * @var array
 	 */
-	protected $headers = array();
+	protected $headers = [];
 
 	/**
 	 * @var Table[]
 	 */
-	protected $csvFiles = array();
+	protected $csvFiles = [];
 
 	/**
 	 * True if analyze() was called
@@ -65,17 +65,21 @@ class Parser {
 	 * Counts of analyzed rows per data type
 	 * @var array
 	 */
-	protected $rowsAnalyzed = array();
+	protected $rowsAnalyzed = [];
 
 	/**
 	 * @var int
 	 */
 	protected $analyzeRows;
 
-	/** @var Cache */
+	/**
+	 * @var Cache
+	 */
 	protected $cache;
 
-	/** @var Logger */
+	/**
+	 * @var Logger
+	 */
 	protected $log;
 
 	/**
@@ -88,12 +92,24 @@ class Parser {
 	 * @todo Create an object/method to handle this comparison and return the master
 	 * @var array
 	 */
-	protected $typeUpgrades = array(
-		array(
+	protected $typeUpgrades = [
+		[
 			"slave" => "integer",
 			"master" => "double"
-		)
-	);
+		]
+	];
+
+	/**
+	 * @var array
+	 */
+	protected $scalars = [
+		"integer",
+		"double",
+		// "float", // get_type returns "double"
+		"string",
+		"boolean",
+		"NULL"
+	];
 
 	/**
 	 * @var array
@@ -101,11 +117,16 @@ class Parser {
 	protected $primaryKeys = [];
 
 	/**
+	 * @var bool
+	 */
+	protected $strict = false;
+
+	/**
 	 * @param Logger $logger
 	 * @param array $struct should contain an array with previously cached results from analyze() calls (called automatically by process())
 	 * @param int $analyzeRows determines, how many rows of data (counting only the "root" level of each Json)  will be analyzed [default -1 for infinite/all]
 	 */
-	public function __construct(Logger $logger, array $struct = array(), $analyzeRows = -1)
+	public function __construct(Logger $logger, array $struct = [], $analyzeRows = -1)
 	{
 		$this->struct = $struct;
 		$this->analyzeRows = $analyzeRows;
@@ -185,7 +206,7 @@ class Parser {
 	 */
 	public function getHeader($type, $parent = false)
 	{
-		$header = array();
+		$header = [];
 		if (is_scalar($this->struct[$type])) {
 			$header[] = "data";
 		} else {
@@ -220,7 +241,7 @@ class Parser {
 	 */
 	protected function validateHeader(array $header)
 	{
-		$newHeader = array();
+		$newHeader = [];
 		foreach($header as $key => $colName) {
 			$newName = $this->createSafeSapiName($colName);
 
@@ -356,7 +377,7 @@ class Parser {
 			? ($dataRow->uid . "_")
 			: md5(serialize($dataRow)) . "_"));
 
-		$row = array();
+		$row = [];
 		foreach($this->struct[$type] as $column => $dataType) {
 			if (empty($dataRow->{$column})) {
 				$row[$column] = null;
@@ -427,7 +448,7 @@ class Parser {
 				$fieldType = gettype($field);
 				if ($fieldType == "object") {
 					// Only assign the type if the object isn't empty
-					if (get_object_vars($field) == array()) {
+					if (get_object_vars($field) == []) {
 						continue;
 					}
 
@@ -459,8 +480,13 @@ class Parser {
 							"slave" => $struct[$diffKey],
 							"master" => $this->struct[$type][$diffKey]
 						], $this->typeUpgrades)
+					|| (!$this->strict
+						&& in_array($struct[$diffKey], $this->scalars)
+						&& in_array($this->struct[$type][$diffKey], $this->scalars))
 				) {
-					// If new type is null, unchanged, or the master of a master-slave pair,
+					// If new type is null, unchanged,
+					// or the master of a master-slave pair,
+					// or $this->strict is off AND both values are scalar
 					// do nothing and keep the originally stored type!
 				} elseif (in_array([
 						"slave" => $this->struct[$type][$diffKey],
@@ -549,5 +575,15 @@ class Parser {
 	public function addPrimaryKeys(array $pks)
 	{
 		$this->primaryKeys += $pks;
+	}
+
+	/**
+	 * Set whether scalars are treated as compatible
+	 * within a field (default = false -> compatible)
+	 * @param bool $strict
+	 */
+	public function setStrict($strict)
+	{
+		$this->strict = (bool) $strict;
 	}
 }

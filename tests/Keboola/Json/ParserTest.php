@@ -7,7 +7,7 @@ use Keboola\Utils\Utils;
 class ParserTest extends \PHPUnit_Framework_TestCase {
 
 	public function testProcess() {
-		$parser = new Parser(new \Monolog\Logger('test'));
+		$parser = $this->getParser();
 
 		$testFilesPath = '/../../_data/Json_tweets_pinkbike';
 
@@ -18,7 +18,8 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 
 		foreach($parser->getCsvFiles() as $name => $table) {
 			// using uniqid() for parents makes this struggle :(
-// 			$this->assertEquals(file($table->getPathname()), file(__DIR__ . "/../_data/Json_tweets_pinkbike/{$name}.csv"));
+			// TODO parse each CSV row, ditch the parentId and compare data
+// 			$this->assertEquals(file($table->getPathname()), file(__DIR__ . "{$testFilesPath}/{$name}.csv"));
 			// compare headers at least
 			$this->assertEquals(file($table->getPathname())[0], file(__DIR__ . "{$testFilesPath}/{$name}.csv")[0]);
 		}
@@ -34,7 +35,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	public function testValidateHeader() {
-		$parser = new Parser(new \Monolog\Logger('test'));
+		$parser = $this->getParser();
 
 		$header = array(
 			"KIND_Baseline SEM_Conversions : KIND_Baseline SEM_Conversions: Click-through Conversions",
@@ -108,7 +109,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 
 	public function testPrimaryKeys()
 	{
-		$parser = new Parser(new \Monolog\Logger('test'));
+		$parser = $this->getParser();
 
 		$testFilesPath = '/../../_data/Json_tweets_pinkbike';
 
@@ -129,7 +130,45 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$this->assertEquals($files['root']->getPrimaryKey(), null);
 	}
 
-	protected static function callMethod($obj, $name, array $args) {
+	public function testNoStrictScalarChange()
+	{
+		$parser = $this->getParser();
+
+		$data = Utils::json_decode('[
+			{"field": 128},
+			{"field": "string"},
+			{"field": true}
+		]');
+
+		$parser->process($data);
+		$this->assertEquals(file(reset($parser->getCsvFiles())->getPathname()), [
+			'"field"' . PHP_EOL,
+			'"128"' . PHP_EOL,
+			'"string"' . PHP_EOL,
+			'"1"' . PHP_EOL // true gets converted to "1"! should be documented!
+		]);
+	}
+
+	/**
+	 * @expectedException \Keboola\Json\Exception\JsonParserException
+	 * @expectedExceptionMessage Unhandled type change from "integer" to "string" in 'root.field'
+	 */
+	public function testStrictScalarChange()
+	{
+		$parser = $this->getParser();
+		$parser->setStrict(true);
+
+		$data = Utils::json_decode('[
+			{"field": 128},
+			{"field": "string"},
+			{"field": true}
+		]');
+
+		$parser->process($data);
+	}
+
+	protected static function callMethod($obj, $name, array $args)
+	{
 		$class = new \ReflectionClass($obj);
 		$method = $class->getMethod($name);
 		$method->setAccessible(true);
@@ -137,4 +176,8 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		return $method->invokeArgs($obj, $args);
 	}
 
+	protected function getParser()
+	{
+		return new Parser(new \Monolog\Logger('test'));
+	}
 }
