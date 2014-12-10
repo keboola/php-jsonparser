@@ -198,6 +198,63 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		}
 	}
 
+	/**
+	 * Process the same dataset with different parentId
+	 */
+	public function testParentIdHashTimeDiff()
+	{
+		$this->timeDiffCompare($this->getParser());
+	}
+
+	public function testParentIdPrimaryKeyTimeDiff()
+	{
+		$parser = $this->getParser();
+		$parser->addPrimaryKeys([
+			'hash' => 'pk, time',
+			'later' => 'pk, time'
+		]);
+		$this->timeDiffCompare($parser);
+	}
+
+	protected function timeDiffCompare($parser)
+	{
+		$data = json_decode('[
+			{
+				"pk": 1,
+				"arr": [1,2,3]
+			},
+			{
+				"pk": 2,
+				"arr": ["a","b","c"]
+			}
+		]');
+
+		$parser->process($data, 'hash', ['time' =>time()]);
+		sleep(1);
+		$parser->process($data, 'later', ['time' =>time()]);
+		$files = $parser->getCsvFiles();
+		foreach(['hash' => 'later', 'hash_arr' => 'later_arr'] as $file => $later) {
+			$old = file($files[$file]->getPathname());
+			$new = file($files[$later]->getPathname());
+			$this->assertNotEquals(
+				$old,
+				$new
+			);
+
+			// ditch headers
+			$old = array_slice($old, 1);
+			$new = array_slice($new, 1);
+			// compare first field (this $data has no more anywhere!)
+			foreach($old as $key => $row) {
+				$oldRow = str_getcsv($row);
+				$newRow = str_getcsv($new[$key]);
+				$this->assertEquals($oldRow[0], $newRow[0]);
+				$this->assertNotEquals($oldRow[1], $newRow[1]);
+			}
+var_dump($new);
+		}
+	}
+
 	public function testNoStrictScalarChange()
 	{
 		$parser = $this->getParser();

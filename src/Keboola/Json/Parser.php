@@ -440,17 +440,21 @@ class Parser {
 		if (!empty($this->primaryKeys[$this->createSafeSapiName($type)])) {
 			$pk = $this->primaryKeys[$this->createSafeSapiName($type)];
 			$pKeyCols = explode(',', $pk);
-			$val = $type . "_";
+			$pKeyCols = array_map('trim', $pKeyCols);
+			$values = [];
 			foreach($pKeyCols as $pKeyCol) {
 				if (empty($dataRow->{$pKeyCol})) {
-					$this->log->log("WARNING", "Primary key for type '{$type}' was set to '{$pk}', but its column '{$pKeyCol}' does not exist!");
-					$val .= uniqid() . ";";
+					$values[] = md5(serialize($dataRow));
+					$this->log->log("WARNING", "Primary key for type '{$type}' was set to '{$pk}', but its column '{$pKeyCol}' does not exist! Using hash to link child objects instead.", [
+						'row' => $dataRow,
+						'hash' => $val
+					]);
 				} else {
-					$val .= $dataRow->{$pKeyCol};
+					$values[] = $dataRow->{$pKeyCol};
 				}
 			}
 
-			return trim($val, ";");
+			return $type . "_" . join(";", $values);
 		} else {
 			// Of no pkey is specified to get the real ID, use a hash of the row
 			return
