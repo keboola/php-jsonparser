@@ -142,6 +142,7 @@ class Parser {
 	 * If the data is analyzed, it is stored in Cache and **NOT PARSED** until $this->getCsvFiles() is called
 	 *
 	 * @TODO FIXME keep the order of data as on the input - try to parse data from Cache before parsing new data
+	 * 	- sort of fixed by defaulting to -1 analyze default
 	 *
 	 * @param array $data
 	 * @param string $type is used for naming the resulting table(s)
@@ -458,7 +459,7 @@ class Parser {
 		} else {
 			// Of no pkey is specified to get the real ID, use a hash of the row
 			return
-				$type . "_" . md5(serialize($dataRow)); // requires TEST TODO
+				$type . "_" . md5(serialize($dataRow));
 		}
 	}
 

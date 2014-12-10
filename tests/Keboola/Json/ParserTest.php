@@ -251,7 +251,6 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 				$this->assertEquals($oldRow[0], $newRow[0]);
 				$this->assertNotEquals($oldRow[1], $newRow[1]);
 			}
-var_dump($new);
 		}
 	}
 
