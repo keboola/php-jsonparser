@@ -38,6 +38,7 @@ use Keboola\Json\Exception\JsonParserException;
  * 		(ie. type "person" to "customer" and "user")
  */
 class Parser {
+	const DATA_COLUMN = 'data';
 	/**
 	 * Structures of analyzed data
 	 * @var array
@@ -170,7 +171,7 @@ class Parser {
 			(!empty($this->rowsAnalyzed[$type]) && $this->rowsAnalyzed[$type] < $this->analyzeRows)
 		) {
 			if (empty($this->rowsAnalyzed[$type])) {
-				$this->log->log("debug", "analyzing {$type}", array(
+				$this->log->log("debug", "Analyzing {$type}", array(
 // 					"struct" => json_encode($this->struct),
 					"analyzeRows" => $this->analyzeRows,
 					"rowsAnalyzed" => json_encode($this->rowsAnalyzed)
@@ -208,7 +209,7 @@ class Parser {
 	{
 		$header = [];
 		if (is_scalar($this->struct[$type])) {
-			$header[] = "data";
+			$header[] = self::DATA_COLUMN;
 		} else {
 			foreach($this->struct[$type] as $column => $dataType) {
 				if ($dataType == "object") {
@@ -301,7 +302,7 @@ class Parser {
 			// analyse instead of failing if the data is unknown!
 			$this->log->log(
 				"debug",
-				"Json::parse() ran into an unknown data type {$type} - trying on-the-fly analysis",
+				"Json::parse() ran into an unknown data type '{$type}' - trying on-the-fly analysis",
 				array(
 					"data" => $data,
 					"type" => $type,
@@ -324,30 +325,39 @@ class Parser {
 			$this->csvFiles[$safeType]->addAttributes(array("fullDisplayName" => $type));
 		}
 
-		foreach($data as $row) {
-			$parsed = $this->parseRow($row, $type);
-			// ensure no fields are missing in CSV row (required in case an object is null and doesn't generate )
-			$csvRow = array_replace(array_fill_keys($this->headers[$type], null), $parsed);
-
-			// TODO $parentId should be available in parseRow() to enable hash generation including such ID
-			if (!empty($parentId)) {
-				if (is_array($parentId)) {
-					// Ensure the parentId array is not multidimensional
-					if (count($parentId) != count($parentId, COUNT_RECURSIVE)) {
-						$e = new JsonParserException('Error assigning parentId to a CSV file! $parentId array cannot be multidimensional.');
-						$e->setData([
-							'parentId' => $parentId,
-							'type' => $type,
-							'dataRow' => $csvRow
-						]);
-						throw $e;
-					}
-
-					$csvRow = array_merge($csvRow, $parentId);
-				} else {
-					$csvRow["JSON_parentId"] = $parentId;
+		if (!empty($parentId)) {
+			if (is_array($parentId)) {
+				// Ensure the parentId array is not multidimensional
+				if (count($parentId) != count($parentId, COUNT_RECURSIVE)) {
+					$e = new JsonParserException('Error assigning parentId to a CSV file! $parentId array cannot be multidimensional.');
+					$e->setData([
+						'parentId' => $parentId,
+						'type' => $type,
+						'dataRow' => $row
+					]);
+					throw $e;
 				}
+			} else {
+				$parentId = ['JSON_parentId' => $parentId];
 			}
+		} else {
+			$parentId = [];
+		}
+
+		$parentCols = array_fill_keys(array_keys($parentId), "string");
+
+		foreach($data as $row) {
+			if (!empty($parentId)) {
+				if (is_scalar($row)) {
+					$row = [self::DATA_COLUMN => $row];
+				}
+				$row = (object) array_replace((array) $row, $parentId);
+			}
+
+			$parsed = $this->parseRow($row, $type, $parentCols);
+			// ensure no fields are missing in CSV row
+			// (required in case an object is null and doesn't generate)
+			$csvRow = array_replace(array_fill_keys($this->headers[$type], null), $parsed);
 			$this->csvFiles[$safeType]->writeRow($csvRow);
 		}
 	}
@@ -360,30 +370,27 @@ class Parser {
 	 * @param string $type
 	 * @return array
 	 */
-	public function parseRow($dataRow, $type)
+	public function parseRow($dataRow, $type, array $parentCols = [])
 	{
 		// in case of non-associative array of strings
 		if (is_scalar($dataRow)) {
-			return array("data" => $dataRow);
+			return [self::DATA_COLUMN => $dataRow];
 		} elseif ($this->struct[$type] == "NULL") {
-			return array("data" => json_encode($dataRow));
+			$this->log->log("WARNING", "Encountered data where 'NULL' was expected from previous analysis", [
+				'type' => $type,
+				'data' => $dataRow
+			]);
+			return [self::DATA_COLUMN => json_encode($dataRow)];
 		}
 
 		// Generate parent ID for arrays
-// 		if (!empty($this->primaryKeys[$this->createSafeSapiName($type)])) {
-// 			var_dump($this->primaryKeys[$this->createSafeSapiName($type)]);
-// 		}
-		$arrayParentId =
-			$type . "_"
-			// Try to find a "real" parent ID
-			. (!empty($dataRow->id)
-			? ($dataRow->id . "_")
-			: (!empty($dataRow->uid)
-			? ($dataRow->uid . "_")
-			: md5(serialize($dataRow)) . "_"));
+		$arrayParentId = $this->getPrimaryKeyValue(
+			$dataRow,
+			$type
+		);
 
 		$row = [];
-		foreach($this->struct[$type] as $column => $dataType) {
+		foreach(array_merge($this->struct[$type], $parentCols) as $column => $dataType) {
 			if (empty($dataRow->{$column})) {
 				$row[$column] = null;
 				continue;
@@ -391,7 +398,7 @@ class Parser {
 
 			switch ($dataType) {
 				case "array":
-					$row[$column] = $arrayParentId . uniqid();
+					$row[$column] = $arrayParentId;
 					$this->parse($dataRow->{$column}, $type . "." . $column, $row[$column]);
 					break;
 				case "object":
@@ -419,6 +426,36 @@ class Parser {
 		}
 
 		return $row;
+	}
+
+	/**
+	 * @param \stdClass $dataRow
+	 * @param string $pk
+	 * @param string $type for logging
+	 * @return string
+	 */
+	protected function getPrimaryKeyValue(\stdClass $dataRow, $type)
+	{
+		// Try to find a "real" parent ID
+		if (!empty($this->primaryKeys[$this->createSafeSapiName($type)])) {
+			$pk = $this->primaryKeys[$this->createSafeSapiName($type)];
+			$pKeyCols = explode(',', $pk);
+			$val = $type . "_";
+			foreach($pKeyCols as $pKeyCol) {
+				if (empty($dataRow->{$pKeyCol})) {
+					$this->log->log("WARNING", "Primary key for type '{$type}' was set to '{$pk}', but its column '{$pKeyCol}' does not exist!");
+					$val .= uniqid() . ";";
+				} else {
+					$val .= $dataRow->{$pKeyCol};
+				}
+			}
+
+			return trim($val, ";");
+		} else {
+			// Of no pkey is specified to get the real ID, use a hash of the row
+			return
+				$type . "_" . md5(serialize($dataRow)); // requires TEST TODO
+		}
 	}
 
 	/**
@@ -470,7 +507,7 @@ class Parser {
 		// Save the analysis result
 		if (empty($this->struct[$type]) || $this->struct[$type] == "NULL") {
 			// if we already know the row's types
-			$this->struct[$type] = $struct;
+			$this->struct[$type] = is_array($struct) ? $struct : [self::DATA_COLUMN => $struct];
 		} elseif ($this->struct[$type] !== $struct) {
 			if (is_array($struct) && is_array($this->struct[$type])) {
 				// If the current row doesn't match the known structure
@@ -484,9 +521,9 @@ class Parser {
 						$row->{$diffKey}
 					);
 				}
-			} else {
-				$this->struct[$type] = $this->updateStruct(
-					$this->struct[$type],
+			} else { // does nothing? as this should never be the case
+				$this->struct[$type][self::DATA_COLUMN] = $this->updateStruct(
+					empty($this->struct[$type][self::DATA_COLUMN]) ? null : $this->struct[$type][self::DATA_COLUMN],
 					$struct,
 					$type,
 					$row

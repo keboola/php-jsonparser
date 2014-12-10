@@ -164,10 +164,37 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 			}
 		]');
 
-		$parser->addPrimaryKeys(['type' => "pk"]);
-		$parser->parse($data, 'type');
+		$parser->addPrimaryKeys(['test' => "pk"]);
+		$parser->process($data, 'test');
 		foreach($parser->getCsvFiles() as $type => $file) {
-			var_dump($type, file_get_contents($file->getPathname()));
+			$this->assertEquals(
+				file_get_contents($file->getPathname()),
+				file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv")
+			);
+		}
+	}
+
+	public function testParentIdHash()
+	{
+		$parser = $this->getParser();
+
+		$data = json_decode('[
+			{
+				"pk": 1,
+				"arr": [1,2,3]
+			},
+			{
+				"pk": 2,
+				"arr": ["a","b","c"]
+			}
+		]');
+
+		$parser->process($data, 'hash');
+		foreach($parser->getCsvFiles() as $type => $file) {
+			$this->assertEquals(
+				file_get_contents($file->getPathname()),
+				file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv")
+			);
 		}
 	}
 
@@ -236,4 +263,10 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 	{
 		return __DIR__ . "/../../_data/";
 	}
+
+	/**
+	 * TODO:
+	 * 	- test array parentId
+	 * 	- test parentId from PKey to deeper level
+	 */
 }
