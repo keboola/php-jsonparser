@@ -359,6 +359,7 @@ class Parser {
 			// ensure no fields are missing in CSV row
 			// (required in case an object is null and doesn't generate)
 			$csvRow = array_replace(array_fill_keys($this->headers[$type], null), $parsed);
+
 			$this->csvFiles[$safeType]->writeRow($csvRow);
 		}
 	}
@@ -399,7 +400,11 @@ class Parser {
 				|| is_null($dataRow->{$column})
 				|| (empty($dataRow->{$column}) && !is_scalar($dataRow->{$column}))
 			) {
-				$row[$column] = null;
+				// do not save empty objects to prevent creation of ["obj_name" => null]
+				if ($dataType != 'object') {
+					$row[$column] = null;
+				}
+
 				continue;
 			}
 
@@ -464,8 +469,7 @@ class Parser {
 			return $type . "_" . join(";", $values);
 		} else {
 			// Of no pkey is specified to get the real ID, use a hash of the row
-			return
-				$type . "_" . md5(serialize($dataRow));
+			return $type . "_" . md5(serialize($dataRow));
 		}
 	}
 

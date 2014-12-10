@@ -5,7 +5,8 @@ use Keboola\CsvTable\Table;
 use Keboola\Utils\Utils;
 
 class ParserTest extends \PHPUnit_Framework_TestCase {
-	public function testProcess() {
+	public function testProcess()
+	{
 		$parser = $this->getParser();
 
 		$testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
@@ -16,15 +17,10 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$parser->process($data);
 
 		foreach($parser->getCsvFiles() as $name => $table) {
-			// using uniqid() for parents makes this struggle :(
-			// need to find an option to make IDs always the same,
-			// generated from the data instead of timestamp based uniqid
-// 			$this->assertEquals(
-// 				$this->stripUniqueIds(file($table->getPathname())),
-// 				$this->stripUniqueIds(file(__DIR__ . "{$testFilesPath}/{$name}.csv"))
-// 			);
-			// compare headers at least
-			$this->assertEquals(file($table->getPathname())[0], file("{$testFilesPath}/{$name}.csv")[0]);
+			$this->assertEquals(
+				file_get_contents($table->getPathname()),
+				file_get_contents("{$testFilesPath}/{$name}.csv")
+			);
 		}
 
 		// compare all the files are present
@@ -37,23 +33,34 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
 	}
 
-// 	protected function stripUniqueIds($fileArr)
-// 	{
-// 		$first = true;
-// 		foreach($fileArr as &$row) {
-// 			$rowArr = explode(',', $row);
-// 			if ($first) {
-// 				$parentColIndex = array_search('"JSON_parentId"', $rowArr);
-// 			}
-// 			unset($rowArr[$parentColIndex]);
-// 			$row = join(',', $rowArr);
-// 		}
-// // 		var_dump($fileArr); die();
-//
-// 		return $fileArr;
-// 	}
+	public function testZeroValues()
+	{
+		$json = json_decode('[
+			{
+				"hashtags": [
+					{
+						"text": "mtb",
+						"indices": [
+							0,
+							4,
+							null
+						]
+					}
+				],
+				"symbols": [
 
-	public function testValidateHeader() {
+				]
+			}
+		]');
+		$parser = $this->getParser();
+
+		$parser->process($json, 'entities');
+		// yo dawg
+		$this->assertEquals("0", str_getcsv(file($parser->getCsvFiles()['entities_hashtags_indices']->getPathname())[1])[0]);
+	}
+
+	public function testValidateHeader()
+	{
 		$parser = $this->getParser();
 
 		$header = array(
@@ -324,5 +331,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 	 * TODO:
 	 * 	- test array parentId
 	 * 	- test parentId from PKey to deeper level
+	 *  - test proper count of results! (pinkbike returns false for one?!)
+	 *  - test all columns length against header (use tweets)
 	 */
 }
