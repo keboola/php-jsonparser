@@ -442,7 +442,6 @@ class Parser {
 
 	/**
 	 * @param \stdClass $dataRow
-	 * @param string $pk
 	 * @param string $type for logging
 	 * @return string
 	 */
@@ -497,8 +496,9 @@ class Parser {
 	 */
 	public function analyzeRow($row, $type)
 	{
+
 		// Analyze the current row
-		if (!is_array($row) && !is_object($row)) {
+		if (is_scalar($row) || is_null($row)) {
 			$struct = gettype($row);
 		} else {
 			foreach($row as $key => $field) {

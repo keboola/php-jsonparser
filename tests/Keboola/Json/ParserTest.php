@@ -12,8 +12,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 
 		$testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
 
-		$file = file_get_contents("{$testFilesPath}.json");
-		$data = json_decode($file);
+		$data = $this->loadJson('Json_tweets_pinkbike');
 
 		$parser->process($data);
 
@@ -49,9 +48,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 	{
 		$parser = $this->getParser();
 
-		$testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
-
-		$data = json_decode(file_get_contents("{$testFilesPath}.json"));
+		$data = $this->loadJson('Json_tweets_pinkbike');
 
 		$parser->process($data);
 
@@ -168,10 +165,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 	{
 		$parser = $this->getParser();
 
-		$testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
-
-		$file = file_get_contents("{$testFilesPath}.json");
-		$data = json_decode($file);
+		$data = $this->loadJson('Json_tweets_pinkbike');
 
 		$pks = [
 			'root_statuses' => 'id',
@@ -216,7 +210,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 	{
 		$parser = $this->getParser();
 
-		$data = json_decode(file_get_contents($this->getDataDir() . "PrimaryKeyTest/multilevel.json"));
+		$data = $this->loadJson('multilevel');
 
 		$parser->addPrimaryKeys([
 			'outer' => "pk",
@@ -353,11 +347,9 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 
 	public function testProcessEmptyObjects()
 	{
-		$json = file_get_contents($this->getDataDir() . "Json_zendesk_comments_empty_objects.json");
-
-		$j = json_decode($json);
+		$json = $this->loadJson('Json_zendesk_comments_empty_objects');
 		$parser = $this->getParser();
-		$parser->process($j->data);
+		$parser->process($json->data);
 		$parser->getCsvFiles();
 	}
 
@@ -381,6 +373,59 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
+	public function testProcessSimpleArray()
+	{
+		$parser = $this->getParser();
+		$parser->process(json_decode('["a","b"]'));
+		$this->assertEquals(
+			[
+				'"data"' . PHP_EOL,
+				'"a"' . PHP_EOL,
+				'"b"' . PHP_EOL,
+			],
+			file($parser->getCsvFiles()['root']->getPathname())
+		);
+	}
+
+	public function testInputDataIntegrity()
+	{
+		$parser = $this->getParser();
+
+		$inputData = $this->loadJson('Json_tweets_pinkbike');
+		$originalData = $this->loadJson('Json_tweets_pinkbike');
+
+		$parser->process($inputData);
+
+		$this->assertEquals($originalData, $inputData);
+		$this->assertEquals(sha1(serialize($originalData)), sha1(serialize($inputData)), "The object hash does not match original.");
+	}
+
+	/**
+	 * There's no current use case for this.
+	 * It should, however, be supported as it is a valid JSON string
+	 */
+// 	public function testNestedArrays()
+// 	{
+// 		$parser = $this->getParser();
+// 		$data = json_decode('
+// 			[
+// 				[1,2,3],
+// 				[4,5,6]
+// 			]
+// 		');
+//
+// 		$parser->process($data);
+// // 		var_dump(file_get_contents($parser->getCsvFiles()['root']));
+// // 		var_dump(count($parser->getCsvFiles()));
+// 	}
+
+	/**
+	 * Call a non-public method
+	 * @param mixed $obj
+	 * @param string $name
+	 * @param array $args
+	 * @return mixed the class' return value
+	 */
 	protected static function callMethod($obj, $name, array $args)
 	{
 		$class = new \ReflectionClass($obj);
@@ -388,6 +433,13 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$method->setAccessible(true);
 
 		return $method->invokeArgs($obj, $args);
+	}
+
+	protected function loadJson($fileName)
+	{
+		$testFilesPath = $this->getDataDir() . $fileName . ".json";
+		$file = file_get_contents($testFilesPath);
+		return Utils::json_decode($file);
 	}
 
 	protected function getParser()
