@@ -395,6 +395,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$originalData = $this->loadJson('Json_tweets_pinkbike');
 
 		$parser->process($inputData);
+		$parser->getCsvFiles();
 
 		$this->assertEquals($originalData, $inputData);
 		$this->assertEquals(sha1(serialize($originalData)), sha1(serialize($inputData)), "The object hash does not match original.");
