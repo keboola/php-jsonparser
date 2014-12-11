@@ -15,7 +15,11 @@ use Keboola\Json\Exception\JsonParserException;
  * to store values of child nodes in a separate table,
  * linked by JSON_parentId column.
 
- * The analyze function loops through each row of an array (generally an array of results) and passes the row into analyzeRow() method. If the row only contains a string, it's stored in a "data" column, otherwise the row should usually be an object, so each of the object's variables will be used as a column name, and it's value analysed:
+ * The analyze function loops through each row of an array (generally an array of results)
+ * and passes the row into analyzeRow() method. If the row only contains a string,
+ * it's stored in a "data" column, otherwise the row should usually be an object,
+ * so each of the object's variables will be used as a column name, and it's value analysed:
+ *
  * - if it's a scalar, it'll be saved as a value of that column.
  * - if it's another object, it'll be parsed recursively to analyzeRow(), with it's variable names prepended by current object's name
  *	- example:
@@ -27,12 +31,11 @@ use Keboola\Json\Exception\JsonParserException;
  *
  *
  * @author		Ondrej Vana (kachna@keboola.com)
- * @package    keboola/json-parser
- * @copyright  Copyright (c) 2014 Keboola Data Services (www.keboola.com)
- * @license    GPL-3.0
- * @link       https://github.com/keboola/php-jsonparser
+ * @package		keboola/json-parser
+ * @copyright	Copyright (c) 2014 Keboola Data Services (www.keboola.com)
+ * @license		GPL-3.0
+ * @link		https://github.com/keboola/php-jsonparser
  *
- * @TODO Ensure the column&table name don't exceed MySQL limits
  * @TODO Use a $file parameter to allow writing the same
  * 		data $type to multiple files
  * 		(ie. type "person" to "customer" and "user")
@@ -123,6 +126,11 @@ class Parser {
 	protected $strict = false;
 
 	/**
+	 * @var bool
+	 */
+	protected $nestedArrayAsJson = false;
+
+	/**
 	 * @param Logger $logger
 	 * @param array $struct should contain an array with previously cached results from analyze() calls (called automatically by process())
 	 * @param int $analyzeRows determines, how many rows of data (counting only the "root" level of each Json)  will be analyzed [default -1 for infinite/all]
@@ -156,11 +164,11 @@ class Parser {
 	{
 		// The analyzer wouldn't set the $struct and parse fails!
 		if (empty($data) && empty($this->struct[$type])) {
-			$this->log->log("warning", "Empty data set received for {$type}", array(
+			$this->log->log("warning", "Empty data set received for {$type}", [
 				"data" => $data,
 				"type" => $type,
 				"parentId" => $parentId
-			));
+			]);
 
 			return;
 		}
@@ -172,11 +180,11 @@ class Parser {
 			(!empty($this->rowsAnalyzed[$type]) && $this->rowsAnalyzed[$type] < $this->analyzeRows)
 		) {
 			if (empty($this->rowsAnalyzed[$type])) {
-				$this->log->log("debug", "Analyzing {$type}", array(
+				$this->log->log("debug", "Analyzing {$type}", [
 // 					"struct" => json_encode($this->struct),
 					"analyzeRows" => $this->analyzeRows,
 					"rowsAnalyzed" => json_encode($this->rowsAnalyzed)
-				));
+				]);
 			}
 
 			$this->rowsAnalyzed[$type] = empty($this->rowsAnalyzed[$type])
@@ -187,11 +195,11 @@ class Parser {
 				$this->cache = new Cache();
 			}
 
-			$this->cache->store(array(
+			$this->cache->store([
 				"data" => $data,
 				"type" => $type,
 				"parentId" => $parentId
-			));
+			]);
 
 			$this->analyze($data, $type);
 		} else {
@@ -304,11 +312,11 @@ class Parser {
 			$this->log->log(
 				"debug",
 				"Json::parse() ran into an unknown data type '{$type}' - trying on-the-fly analysis",
-				array(
+				[
 					"data" => $data,
 					"type" => $type,
 					"parentId" => $parentId
-				)
+				]
 			);
 
 			$this->analyze($data, $type);
@@ -323,20 +331,21 @@ class Parser {
 		$safeType = $this->createSafeSapiName($type);
 		if (empty($this->csvFiles[$safeType])) {
 			$this->csvFiles[$safeType] = Table::create($safeType, $this->headers[$type], $this->getTemp());
-			$this->csvFiles[$safeType]->addAttributes(array("fullDisplayName" => $type));
+			$this->csvFiles[$safeType]->addAttributes(["fullDisplayName" => $type]);
 		}
 
 		if (!empty($parentId)) {
 			if (is_array($parentId)) {
 				// Ensure the parentId array is not multidimensional
 				if (count($parentId) != count($parentId, COUNT_RECURSIVE)) {
-					$e = new JsonParserException('Error assigning parentId to a CSV file! $parentId array cannot be multidimensional.');
-					$e->setData([
-						'parentId' => $parentId,
-						'type' => $type,
-						'dataRow' => $row
-					]);
-					throw $e;
+					throw new JsonParserException(
+						'Error assigning parentId to a CSV file! $parentId array cannot be multidimensional.',
+						[
+							'parentId' => $parentId,
+							'type' => $type,
+							'dataRow' => $row
+						]
+					);
 				}
 			} else {
 				$parentId = ['JSON_parentId' => $parentId];
@@ -348,16 +357,22 @@ class Parser {
 		$parentCols = array_fill_keys(array_keys($parentId), "string");
 
 		foreach($data as $row) {
+			// in case of non-associative array of strings
+			// prepare {"data": $value} objects for each row
+			if (is_scalar($row) || is_null($row)) {
+				$row = (object) [self::DATA_COLUMN => $row];
+			} elseif ($this->nestedArrayAsJson && is_array($row)) {
+				$row = (object) [self::DATA_COLUMN => json_encode($row)];
+			}
+
 			if (!empty($parentId)) {
-				if (is_scalar($row) || is_null($row)) {
-					$row = [self::DATA_COLUMN => $row];
-				}
 				$row = (object) array_replace((array) $row, $parentId);
 			}
 
 			$parsed = $this->parseRow($row, $type, $parentCols);
+
 			// ensure no fields are missing in CSV row
-			// (required in case an object is null and doesn't generate)
+			// (required in case an object is null and doesn't generate all columns)
 			$csvRow = array_replace(array_fill_keys($this->headers[$type], null), $parsed);
 
 			$this->csvFiles[$safeType]->writeRow($csvRow);
@@ -368,16 +383,14 @@ class Parser {
 	 * Parse a single row
 	 * If the row contains an array, it's recursively parsed
 	 *
-	 * @param mixed $dataRow Input data
+	 * @param \stdClass $dataRow Input data
 	 * @param string $type
+	 * @param array $parentCols to inject parent columns, which aren't part of $this->struct
 	 * @return array
 	 */
-	public function parseRow($dataRow, $type, array $parentCols = [])
+	public function parseRow(\stdClass $dataRow, $type, array $parentCols = [])
 	{
-		// in case of non-associative array of strings
-		if (is_scalar($dataRow)) {
-			return [self::DATA_COLUMN => $dataRow];
-		} elseif ($this->struct[$type] == "NULL") {
+		if ($this->struct[$type] == "NULL") {
 			$this->log->log("WARNING", "Encountered data where 'NULL' was expected from previous analysis", [
 				'type' => $type,
 				'data' => $dataRow
@@ -496,11 +509,12 @@ class Parser {
 	 */
 	public function analyzeRow($row, $type)
 	{
-
-		// Analyze the current row
+		// If the row is scalar, make it a {"data" => $value} object
 		if (is_scalar($row) || is_null($row)) {
-			$struct = gettype($row);
-		} else {
+			$struct[self::DATA_COLUMN] = gettype($row);
+			$row = (object) [self::DATA_COLUMN => $row];
+		} elseif (is_object($row)) {
+			// process each property of the object
 			foreach($row as $key => $field) {
 				$fieldType = gettype($field);
 
@@ -517,6 +531,12 @@ class Parser {
 
 				$struct[$key] = $fieldType;
 			}
+		} elseif ($this->nestedArrayAsJson && is_array($row)) {
+			$this->log->log("WARNING", "Unsupported array nesting in '{$type}'! Converted to JSON string.", ['row' => $row]);
+			$struct[self::DATA_COLUMN] = 'string';
+			$row = (object) [self::DATA_COLUMN => json_encode($row)];
+		} else {
+			throw new JsonParserException("Unsupported data row in '{$type}'!", ['row' => $row]);
 		}
 
 		// Save the analysis result
@@ -524,24 +544,15 @@ class Parser {
 			// if we already know the row's types
 			$this->struct[$type] = is_array($struct) ? $struct : [self::DATA_COLUMN => $struct];
 		} elseif ($this->struct[$type] !== $struct) {
-			if (is_array($struct) && is_array($this->struct[$type])) {
-				// If the current row doesn't match the known structure
-				$diff = array_diff_assoc($struct, $this->struct[$type]);
-				// Walk through different fields
-				foreach($diff as $diffKey => $diffVal) {
-					$this->struct[$type][$diffKey] = $this->updateStruct(
-						empty($this->struct[$type][$diffKey]) ? null : $this->struct[$type][$diffKey],
-						$struct[$diffKey],
-						"{$type}.{$diffKey}",
-						$row->{$diffKey}
-					);
-				}
-			} else { // does nothing? as this should never be the case
-				$this->struct[$type][self::DATA_COLUMN] = $this->updateStruct(
-					empty($this->struct[$type][self::DATA_COLUMN]) ? null : $this->struct[$type][self::DATA_COLUMN],
-					$struct,
-					$type,
-					$row
+			// If the current row doesn't match the known structure
+			$diff = array_diff_assoc($struct, $this->struct[$type]);
+			// Walk through mismatched fields
+			foreach($diff as $diffKey => $diffVal) {
+				$this->struct[$type][$diffKey] = $this->updateStruct(
+					empty($this->struct[$type][$diffKey]) ? null : $this->struct[$type][$diffKey],
+					$struct[$diffKey],
+					"{$type}.{$diffKey}",
+					$row->{$diffKey}
 				);
 			}
 		}
@@ -588,21 +599,25 @@ class Parser {
 			// do nothing and keep the originally stored type!
 			return $oldType;
 		} elseif ($newType != "NULL") {
-			// Throw an JsonParserException 'cos of a type mismatch
+			// Throw a JsonParserException 'cos of a type mismatch
 			$old = json_encode($oldType);
 			$new = json_encode($newType);
-			$e = new JsonParserException("Unhandled type change from {$old} to {$new} in '{$type}'");
-			$e->setData(["newValue" => json_encode($currentRow)]);
-			throw $e;
+			throw new JsonParserException(
+				"Unhandled type change from {$old} to {$new} in '{$type}'",
+				['newValue' => json_encode($currentRow)]
+			);
 		} else {
-			$e = new JsonParserException("Unexpected error!");
-			$e->setData([
-				'oldType' => $oldType,
-				'newType' => $newType,
-				'type' => $type,
-				'newValue' => json_encode($currentRow)
-			]);
-			throw $e;
+			// Now obviously this shouldn't ever possibly happen,
+			// but if it does, let's have something to work with
+			throw new JsonParserException(
+				"Unexpected error occured while updating the structure tree!",
+				[
+					'oldType' => $oldType,
+					'newType' => $newType,
+					'type' => $type,
+					'newValue' => json_encode($currentRow)
+				]
+			);
 		}
 	}
 
@@ -714,5 +729,14 @@ class Parser {
 	public function setStrict($strict)
 	{
 		$this->strict = (bool) $strict;
+	}
+
+	/**
+	 * If enabled, nested arrays will be saved as JSON strings instead
+	 * @param bool $bool
+	 */
+	public function setNestedArrayAsJson($bool)
+	{
+		$this->nestedArrayAsJson = (bool) $bool;
 	}
 }

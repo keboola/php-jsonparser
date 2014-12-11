@@ -398,27 +398,50 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$parser->getCsvFiles();
 
 		$this->assertEquals($originalData, $inputData);
-		$this->assertEquals(sha1(serialize($originalData)), sha1(serialize($inputData)), "The object hash does not match original.");
+		$this->assertEquals(serialize($originalData), serialize($inputData), "The object does not match original.");
 	}
 
 	/**
 	 * There's no current use case for this.
 	 * It should, however, be supported as it is a valid JSON string
+	 * @expectedException \Keboola\Json\Exception\JsonParserException
+	 * @expectedExceptionMessage Unsupported data row in 'root'!
 	 */
-// 	public function testNestedArrays()
-// 	{
-// 		$parser = $this->getParser();
-// 		$data = json_decode('
-// 			[
-// 				[1,2,3],
-// 				[4,5,6]
-// 			]
-// 		');
-//
-// 		$parser->process($data);
-// // 		var_dump(file_get_contents($parser->getCsvFiles()['root']));
-// // 		var_dump(count($parser->getCsvFiles()));
-// 	}
+	public function testNestedArraysError()
+	{
+		$parser = $this->getParser();
+		$data = json_decode('
+			[
+				[1,2,3],
+				[4,5,6]
+			]
+		');
+
+		$parser->process($data);
+	}
+
+	public function testNestedArrays()
+	{
+		$logHandler = new \Monolog\Handler\TestHandler();
+		$parser = new Parser(new \Monolog\Logger('test', [$logHandler]));
+		$parser->setNestedArrayAsJson(true);
+		$data = json_decode('
+			[
+				[1,2,3,[7,8]],
+				[4,5,6]
+			]
+		');
+
+		$parser->process($data);
+		$this->assertEquals(
+			true,
+			$logHandler->hasWarning("Unsupported array nesting in 'root'! Converted to JSON string."), "Warning should have been logged"
+		);
+		$this->assertEquals(
+			file_get_contents($this->getDataDir() . 'NestedArraysJson.csv'),
+			file_get_contents($parser->getCsvFiles()['root'])
+		);
+	}
 
 	/**
 	 * Call a non-public method
@@ -445,7 +468,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 
 	protected function getParser()
 	{
-		return new Parser(new \Monolog\Logger('test'));
+		return new Parser(new \Monolog\Logger('test', [new \Monolog\Handler\TestHandler()]));
 	}
 
 	protected function getDataDir()
