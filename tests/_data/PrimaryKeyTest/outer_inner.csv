@@ -1,0 +1,5 @@
+"pkey","data","arr","JSON_parentId"
+"1.1","whatever arbitrary sh**","outer.inner_1.1","outer_1"
+"1.2","more arbitrary sh**","outer.inner_1.2","outer_1"
+"2.1","even more arbitrary sh**","outer.inner_2.1","outer_2"
+"2.2","seriously?","outer.inner_2.2","outer_2"

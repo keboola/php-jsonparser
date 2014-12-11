@@ -5,6 +5,7 @@ use Keboola\CsvTable\Table;
 use Keboola\Utils\Utils;
 
 class ParserTest extends \PHPUnit_Framework_TestCase {
+
 	public function testProcess()
 	{
 		$parser = $this->getParser();
@@ -17,20 +18,50 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$parser->process($data);
 
 		foreach($parser->getCsvFiles() as $name => $table) {
+			// compare result files
 			$this->assertEquals(
-				file_get_contents($table->getPathname()),
-				file_get_contents("{$testFilesPath}/{$name}.csv")
+				file_get_contents("{$testFilesPath}/{$name}.csv"),
+				file_get_contents($table->getPathname())
 			);
+
+			// compare column counts
+			$parsedFile = file($table->getPathname());
+			foreach($parsedFile as $row) {
+				if (empty($headerCount)) {
+					$headerCount = count($row);
+				} else {
+					$this->assertEquals($headerCount, count($row));
+				}
+			}
 		}
 
-		// compare all the files are present
+		// make sure all the files are present
 		$dir = scandir($testFilesPath);
 		array_walk($dir, function (&$val) {
 				$val = str_replace(".csv", "", $val);
 			}
 		);
-		$this->assertEquals(array_diff($dir, array_keys($parser->getCsvFiles())), array(".",".."));
+		$this->assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
 		$this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
+	}
+
+	public function testRowCount()
+	{
+		$parser = $this->getParser();
+
+		$testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
+
+		$data = json_decode(file_get_contents("{$testFilesPath}.json"));
+
+		$parser->process($data);
+
+		// -1 offset to compensate for header
+		$rows = -1;
+		$handle = fopen($parser->getCsvFiles()['root_statuses'], 'r');
+		while($row = fgetcsv($handle)) {
+			$rows++;
+		}
+		$this->assertEquals(count($data[0]->statuses), $rows);
 	}
 
 	public function testZeroValues()
@@ -130,7 +161,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 			"KKTR____KIND_Projects_Conversions_Submissions__Total_Revenue"
 		);
 
-		$this->assertEquals($validHeader, $expectedHeader);
+		$this->assertEquals($expectedHeader, $validHeader);
 	}
 
 	public function testPrimaryKeys()
@@ -151,9 +182,9 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 
 		$files = $parser->getCsvFiles();
 		foreach($pks as $table => $pk) {
-			$this->assertEquals($files[$table]->getPrimaryKey(), $pk);
+			$this->assertEquals($pk, $files[$table]->getPrimaryKey());
 		}
-		$this->assertEquals($files['root']->getPrimaryKey(), null);
+		$this->assertEquals(null, $files['root']->getPrimaryKey());
 	}
 
 	public function testParentIdPrimaryKey()
@@ -175,8 +206,27 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$parser->process($data, 'test');
 		foreach($parser->getCsvFiles() as $type => $file) {
 			$this->assertEquals(
-				file_get_contents($file->getPathname()),
-				file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv")
+				file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv"),
+				file_get_contents($file->getPathname())
+			);
+		}
+	}
+
+	public function testParentIdPrimaryKeyMultiLevel()
+	{
+		$parser = $this->getParser();
+
+		$data = json_decode(file_get_contents($this->getDataDir() . "PrimaryKeyTest/multilevel.json"));
+
+		$parser->addPrimaryKeys([
+			'outer' => "pk",
+			'outer_inner' => "pkey"
+		]);
+		$parser->process($data, 'outer');
+		foreach($parser->getCsvFiles() as $type => $file) {
+			$this->assertEquals(
+				file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv"),
+				file_get_contents($file->getPathname())
 			);
 		}
 	}
@@ -199,8 +249,8 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$parser->process($data, 'hash');
 		foreach($parser->getCsvFiles() as $type => $file) {
 			$this->assertEquals(
-				file_get_contents($file->getPathname()),
-				file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv")
+				file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv"),
+				file_get_contents($file->getPathname())
 			);
 		}
 	}
@@ -272,12 +322,15 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		]');
 
 		$parser->process($data, 'threepack');
-		$this->assertEquals(file($parser->getCsvFiles()['threepack']->getPathname()), [
-			'"field"' . PHP_EOL,
-			'"128"' . PHP_EOL,
-			'"string"' . PHP_EOL,
-			'"1"' . PHP_EOL // true gets converted to "1"! should be documented!
-		]);
+		$this->assertEquals(
+			[
+				'"field"' . PHP_EOL,
+				'"128"' . PHP_EOL,
+				'"string"' . PHP_EOL,
+				'"1"' . PHP_EOL // true gets converted to "1"! should be documented!
+			],
+			file($parser->getCsvFiles()['threepack']->getPathname())
+		);
 	}
 
 	/**
@@ -308,6 +361,26 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$parser->getCsvFiles();
 	}
 
+	public function testArrayParentId()
+	{
+		$parser = $this->getParser();
+
+		$data = json_decode('[
+			{"field": 128},
+			{"field": "string"},
+			{"field": true}
+		]');
+
+		$parser->process($data, 'test', [
+			'first_parent' => 1,
+			'second_parent' => "two"]
+		);
+		$this->assertEquals(
+			file_get_contents($this->getDataDir() . 'ParentIdsTest.csv'),
+			file_get_contents($parser->getCsvFiles()['test'])
+		);
+	}
+
 	protected static function callMethod($obj, $name, array $args)
 	{
 		$class = new \ReflectionClass($obj);
@@ -326,12 +399,4 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 	{
 		return __DIR__ . "/../../_data/";
 	}
-
-	/**
-	 * TODO:
-	 * 	- test array parentId
-	 * 	- test parentId from PKey to deeper level
-	 *  - test proper count of results! (pinkbike returns false for one?!)
-	 *  - test all columns length against header (use tweets)
-	 */
 }

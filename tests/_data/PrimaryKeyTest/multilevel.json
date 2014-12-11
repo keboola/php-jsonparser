@@ -1,0 +1,32 @@
+[
+	{
+		"pk": 1,
+		"inner": [
+			{
+				"pkey": "1.1",
+				"data": "whatever arbitrary sh**",
+				"arr": [1,2]
+			},
+			{
+				"pkey": "1.2",
+				"data": "more arbitrary sh**",
+				"arr": [3,2]
+			}
+
+		]
+	},
+	{
+		"pk": 2,
+		"inner":[
+			{
+				"pkey": "2.1",
+				"data": "even more arbitrary sh**",
+				"arr": [5,4]
+			},{
+				"pkey": "2.2",
+				"data": "seriously?",
+				"arr": [2,4]
+			}
+		]
+	}
+]
