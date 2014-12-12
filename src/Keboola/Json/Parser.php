@@ -426,6 +426,9 @@ class Parser {
 				continue;
 			}
 
+			// TODO consider enabling object support as well
+			// an JSON_parentId => $arrayParentId would have to be
+			// set in the row object
 			if ($this->allowArrayStringMix && $dataType == 'stringOrArray') {
 				$dataType = gettype($dataRow->{$column});
 			}
@@ -609,14 +612,19 @@ class Parser {
 			return $oldType;
 		} elseif (
 			$this->allowArrayStringMix
-			&&$newType == "array"
-			&& (in_array($oldType, $this->scalars) || $oldType == 'stringOrArray')
+			&& (
+				in_array($oldType, array_merge(['array', 'stringOrArray'], $this->scalars))
+// 				&& (in_array($newType, $this->scalars) || $newType == 'array')
+				&& $newType !== 'object'
+			)
 		) {
-			$this->log->log(
-				"WARNING",
-				"An array was encountered where scalar '{$oldType}' was expected!",
-				['row' => $currentRow]
-			);
+			if($oldType != 'stringOrArray') {
+				$this->log->log(
+					"WARNING",
+					"An array was encountered where scalar '{$oldType}' was expected!",
+					['row' => $currentRow]
+				);
+			}
 			return 'stringOrArray';
 		} elseif ($newType != "NULL") {
 			// Throw a JsonParserException 'cos of a type mismatch

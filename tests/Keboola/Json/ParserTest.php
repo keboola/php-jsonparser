@@ -506,9 +506,30 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		];
 
 		$parser->process($data);
-// 		var_dump(file_get_contents($parser->getCsvFiles()['root']));
-// var_dump(	$logHandler->getRecords());
+	}
 
+	/**
+	 * There's no current use case for this.
+	 * It should, however, be supported as it is a valid JSON string
+	 * @expectedException \Keboola\Json\Exception\JsonParserException
+	 * @expectedExceptionMessage Unhandled type change from "array" to "string" in 'root.strArr'
+	 */
+	public function testStringArrayMixFailOppo()
+	{
+		$parser = $this->getParser();
+
+		$data = [
+			(object) [
+				"id" => 1,
+				"strArr" => ["ar", "ra", "y"]
+			],
+			(object) [
+				"id" => 2,
+				"strArr" => "string"
+			]
+		];
+
+		$parser->process($data);
 	}
 
 	public function testStringArrayMix()
@@ -525,16 +546,20 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 			(object) [
 				"id" => 2,
 				"strArr" => ["ar", "ra", "y"]
+			],
+			(object) [
+				"id" => 3,
+				"strArr" => 65536
 			]
 		];
 
 		$parser->process($data);
 
-		var_dump(file_get_contents($parser->getCsvFiles()['root']));
 		$this->assertEquals(
 			'"id","strArr"' . PHP_EOL .
 			'"1","string"' . PHP_EOL .
-			'"2","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL,
+			'"2","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL .
+			'"3","65536"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['root'])
 		);
 		$this->assertEquals(
