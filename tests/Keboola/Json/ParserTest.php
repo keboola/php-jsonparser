@@ -44,6 +44,47 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
 	}
 
+	public function testTypeCharacters()
+	{
+		$parser = $this->getParser();
+
+		$testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
+
+		$data = $this->loadJson('Json_tweets_pinkbike');
+
+		$parser->process($data, 'a/b.c&d@e$f');
+		foreach($parser->getCsvFiles() as $name => $file) {
+			$arr[] = $name;
+		}
+		$this->assertEquals(
+			[
+				'a_b_c_d_e_f',
+				'a_b_c_d_e_f_statuses',
+				'a_b_c_d_e_f_statuses_user_entities_url_urls',
+				'a_b_c_d_e_f_statuses_user_entities_url_urls_indices',
+				'a_b_c_d_e_f_statuses_entities_hashtags',
+				'a_b_c_d_e_f_statuses_entities_hashtags_indices',
+				'a_b_c_d_e_f_statuses_entities_urls',
+				'a_b_c_d_e_f_statuses_entities_urls_indices',
+				'a_b_c_d_e_f_statuses_entities_user_mentions',
+				'a_b_c_d_e_f_statuses_entities_user_mentions_indices',
+				'a_b_c_d_e_f_statuses_retweeted_status_user_entities_url_urls',
+				'abcdefsrueuui__status_user_entities_url_urls_indices',
+				'a_b_c_d_e_f_statuses_retweeted_status_entities_urls',
+				'a_b_c_d_e_f_statuses_retweeted_status_entities_urls_indices',
+				'a_b_c_d_e_f_statuses_retweeted_status_entities_user_mentions',
+				'abcdefsreui__status_entities_user_mentions_indices',
+				'a_b_c_d_e_f_statuses_user_entities_description_urls',
+				'a_b_c_d_e_f_statuses_user_entities_description_urls_indices',
+				'a_b_c_d_e_f_statuses_entities_media',
+				'a_b_c_d_e_f_statuses_entities_media_indices',
+				'a_b_c_d_e_f_statuses_retweeted_status_entities_media',
+				'a_b_c_d_e_f_statuses_retweeted_status_entities_media_indices',
+			],
+			$arr
+		);
+	}
+
 	public function testRowCount()
 	{
 		$parser = $this->getParser();
@@ -440,6 +481,72 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$this->assertEquals(
 			file_get_contents($this->getDataDir() . 'NestedArraysJson.csv'),
 			file_get_contents($parser->getCsvFiles()['root'])
+		);
+	}
+
+	/**
+	 * There's no current use case for this.
+	 * It should, however, be supported as it is a valid JSON string
+	 * @expectedException \Keboola\Json\Exception\JsonParserException
+	 * @expectedExceptionMessage Unhandled type change from "string" to "array" in 'root.strArr'
+	 */
+	public function testStringArrayMixFail()
+	{
+		$parser = $this->getParser();
+
+		$data = [
+			(object) [
+				"id" => 1,
+				"strArr" => "string"
+			],
+			(object) [
+				"id" => 2,
+				"strArr" => ["ar", "ra", "y"]
+			]
+		];
+
+		$parser->process($data);
+// 		var_dump(file_get_contents($parser->getCsvFiles()['root']));
+// var_dump(	$logHandler->getRecords());
+
+	}
+
+	public function testStringArrayMix()
+	{
+		$logHandler = new \Monolog\Handler\TestHandler();
+		$parser = new Parser(new \Monolog\Logger('test', [$logHandler]));
+		$parser->setAllowArrayStringMix(true);
+
+		$data = [
+			(object) [
+				"id" => 1,
+				"strArr" => "string"
+			],
+			(object) [
+				"id" => 2,
+				"strArr" => ["ar", "ra", "y"]
+			]
+		];
+
+		$parser->process($data);
+
+		var_dump(file_get_contents($parser->getCsvFiles()['root']));
+		$this->assertEquals(
+			'"id","strArr"' . PHP_EOL .
+			'"1","string"' . PHP_EOL .
+			'"2","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL,
+			file_get_contents($parser->getCsvFiles()['root'])
+		);
+		$this->assertEquals(
+			'"data","JSON_parentId"' . PHP_EOL .
+			'"ar","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL .
+			'"ra","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL .
+			'"y","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL,
+			file_get_contents($parser->getCsvFiles()['root_strArr'])
+		);
+		$this->assertEquals(
+			true,
+			$logHandler->hasWarningRecords("An array was encountered where scalar 'string' was expected!")
 		);
 	}
 

@@ -131,6 +131,11 @@ class Parser {
 	protected $nestedArrayAsJson = false;
 
 	/**
+	 * @var bool
+	 */
+	protected $allowArrayStringMix = false;
+
+	/**
 	 * @param Logger $logger
 	 * @param array $struct should contain an array with previously cached results from analyze() calls (called automatically by process())
 	 * @param int $analyzeRows determines, how many rows of data (counting only the "root" level of each Json)  will be analyzed [default -1 for infinite/all]
@@ -421,6 +426,10 @@ class Parser {
 				continue;
 			}
 
+			if ($this->allowArrayStringMix && $dataType == 'stringOrArray') {
+				$dataType = gettype($dataRow->{$column});
+			}
+
 			switch ($dataType) {
 				case "array":
 					$row[$column] = $arrayParentId;
@@ -598,6 +607,17 @@ class Parser {
 			// or $this->strict is off AND both values are scalar
 			// do nothing and keep the originally stored type!
 			return $oldType;
+		} elseif (
+			$this->allowArrayStringMix
+			&&$newType == "array"
+			&& (in_array($oldType, $this->scalars) || $oldType == 'stringOrArray')
+		) {
+			$this->log->log(
+				"WARNING",
+				"An array was encountered where scalar '{$oldType}' was expected!",
+				['row' => $currentRow]
+			);
+			return 'stringOrArray';
 		} elseif ($newType != "NULL") {
 			// Throw a JsonParserException 'cos of a type mismatch
 			$old = json_encode($oldType);
@@ -738,5 +758,16 @@ class Parser {
 	public function setNestedArrayAsJson($bool)
 	{
 		$this->nestedArrayAsJson = (bool) $bool;
+	}
+
+	/**
+	 * If enabled, and an object contains an array where
+	 * a string is expected, a "link" ID is saved in place
+	 * of the string and a child CSV is created
+	 * @param bool $bool
+	 */
+	public function setAllowArrayStringMix($allow)
+	{
+		$this->allowArrayStringMix = (bool) $allow;
 	}
 }
