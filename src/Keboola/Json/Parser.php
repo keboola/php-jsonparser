@@ -21,7 +21,8 @@ use Keboola\Json\Exception\JsonParserException;
  * so each of the object's variables will be used as a column name, and it's value analysed:
  *
  * - if it's a scalar, it'll be saved as a value of that column.
- * - if it's another object, it'll be parsed recursively to analyzeRow(), with it's variable names prepended by current object's name
+ * - if it's another object, it'll be parsed recursively to analyzeRow(),
+ * 		with it's variable names prepended by current object's name
  *	- example:
  *			"parent": {
  *				"child" : "value1"
@@ -137,8 +138,11 @@ class Parser {
 
 	/**
 	 * @param Logger $logger
-	 * @param array $struct should contain an array with previously cached results from analyze() calls (called automatically by process())
-	 * @param int $analyzeRows determines, how many rows of data (counting only the "root" level of each Json)  will be analyzed [default -1 for infinite/all]
+	 * @param array $struct should contain an array with previously
+	 * 		cached results from analyze() calls (called automatically by process())
+	 * @param int $analyzeRows determines how many rows of data
+	 * 		(counting only the "root" level of each Json)
+	 * 		will be analyzed [default -1 for infinite/all]
 	 */
 	public function __construct(Logger $logger, array $struct = [], $analyzeRows = -1)
 	{
@@ -149,17 +153,25 @@ class Parser {
 	}
 
 	/**
-	 * Parse an array of results. If their structure isn't known, it is stored, analyzed and then parsed upon retrieval by getCsvFiles()
+	 * Parse an array of results. If their structure isn't known,
+	 * it is stored, analyzed and then parsed upon retrieval by getCsvFiles()
 	 * Expects an array of results in the $data parameter
-	 * Checks whether the data needs to be analyzed, and either analyzes or parses it into $this->csvFiles[$type] ($type is polished to comply with SAPI naming requirements)
-	 * If the data is analyzed, it is stored in Cache and **NOT PARSED** until $this->getCsvFiles() is called
+	 * Checks whether the data needs to be analyzed,
+	 * and either analyzes or parses it into $this->csvFiles[$type]
+	 * ($type is polished to comply with SAPI naming requirements)
+	 * If the data is analyzed, it is stored in Cache
+	 * and **NOT PARSED** until $this->getCsvFiles() is called
 	 *
-	 * @TODO FIXME keep the order of data as on the input - try to parse data from Cache before parsing new data
+	 * @TODO FIXME keep the order of data as on the input
+	 * 	- try to parse data from Cache before parsing new data
 	 * 	- sort of fixed by defaulting to -1 analyze default
 	 *
 	 * @param array $data
 	 * @param string $type is used for naming the resulting table(s)
-	 * @param string|array $parentId may be either a string, which will be saved in a JSON_parentId column, or an array with "column_name" => "value", which will name the column(s) by array key provided
+	 * @param string|array $parentId may be either a string,
+	 * 		which will be saved in a JSON_parentId column,
+	 * 		or an array with "column_name" => "value",
+	 * 		which will name the column(s) by array key provided
 	 *
 	 * @return void
 	 *
@@ -178,7 +190,8 @@ class Parser {
 			return;
 		}
 
-		// If we don't know the data (enough), store it in Cache, analyze, and parse when asked for it in getCsvFiles()
+		// If we don't know the data (enough), store it in Cache,
+		// analyze, and parse when asked for it in getCsvFiles()
 		if (
 			!array_key_exists($type, $this->struct) ||
 			$this->analyzeRows == -1 ||
@@ -240,11 +253,14 @@ class Parser {
 			if (is_array($parent)) {
 				$header = array_merge($header, array_keys($parent));
 			} else {
-				$header[] = "JSON_parentId"; // TODO allow rename on root level/all levels separately - allow the parent to be an array of "parentColName" => id?
+				// TODO allow rename on root level/all levels separately
+				// - allow the parent to be an array of "parentColName" => id?
+				$header[] = "JSON_parentId";
 			}
 		}
 
-		// TODO set $this->headerNames[$type] = array_combine($validatedHeader, $header); & add a getHeaderNames fn()
+		// TODO set $this->headerNames[$type] = array_combine($validatedHeader, $header);
+		// & add a getHeaderNames fn()
 		return $this->validateHeader($header);
 	}
 
@@ -286,7 +302,8 @@ class Parser {
 			}
 			$short .= "_";
 			$remaining = 64 - strlen($short);
-			$nextSpace = strpos($name, " ", (strlen($name)-$remaining)) ? : strpos($name, "_", (strlen($name)-$remaining));
+			$nextSpace = strpos($name, " ", (strlen($name)-$remaining))
+				? : strpos($name, "_", (strlen($name)-$remaining));
 
 			if ($nextSpace !== false) {
 				$newName = $short . substr($name, $nextSpace);
@@ -335,13 +352,19 @@ class Parser {
 		// to allow saving a single type to different files
 		$safeType = $this->createSafeSapiName($type);
 		if (empty($this->csvFiles[$safeType])) {
-			$this->csvFiles[$safeType] = Table::create($safeType, $this->headers[$type], $this->getTemp());
+			$this->csvFiles[$safeType] = Table::create(
+				$safeType,
+				$this->headers[$type],
+				$this->getTemp()
+			);
 			$this->csvFiles[$safeType]->addAttributes(["fullDisplayName" => $type]);
 		}
 
 		if (!empty($parentId)) {
 			if (is_array($parentId)) {
 				// Ensure the parentId array is not multidimensional
+				// TODO should be a different exception
+				// - separate parse and "setup" exceptions
 				if (count($parentId) != count($parentId, COUNT_RECURSIVE)) {
 					throw new JsonParserException(
 						'Error assigning parentId to a CSV file! $parentId array cannot be multidimensional.',
@@ -396,10 +419,13 @@ class Parser {
 	public function parseRow(\stdClass $dataRow, $type, array $parentCols = [])
 	{
 		if ($this->struct[$type] == "NULL") {
-			$this->log->log("WARNING", "Encountered data where 'NULL' was expected from previous analysis", [
-				'type' => $type,
-				'data' => $dataRow
-			]);
+			$this->log->log(
+				"WARNING", "Encountered data where 'NULL' was expected from previous analysis",
+				[
+					'type' => $type,
+					'data' => $dataRow
+				]
+			);
 			return [self::DATA_COLUMN => json_encode($dataRow)];
 		}
 
@@ -452,7 +478,9 @@ class Parser {
 
 						$this->log->log(
 							"ERROR",
-							"Data parse error in '{$column}' - unexpected '" . gettype($dataRow->{$column}) . "' where '{$dataType}' was expected!",
+							"Data parse error in '{$column}' - unexpected '"
+								. gettype($dataRow->{$column})
+								. "' where '{$dataType}' was expected!",
 							[ "data" => $jsonColumn, "row" => json_encode($dataRow) ]
 						);
 
@@ -481,10 +509,13 @@ class Parser {
 			foreach($pKeyCols as $pKeyCol) {
 				if (empty($dataRow->{$pKeyCol})) {
 					$values[] = md5(serialize($dataRow));
-					$this->log->log("WARNING", "Primary key for type '{$type}' was set to '{$pk}', but its column '{$pKeyCol}' does not exist! Using hash to link child objects instead.", [
-						'row' => $dataRow,
-						'hash' => $val
-					]);
+					$this->log->log(
+						"WARNING", "Primary key for type '{$type}' was set to '{$pk}', but its column '{$pKeyCol}' does not exist! Using hash to link child objects instead.",
+						[
+							'row' => $dataRow,
+							'hash' => $val
+						]
+					);
 				} else {
 					$values[] = $dataRow->{$pKeyCol};
 				}
@@ -544,7 +575,10 @@ class Parser {
 				$struct[$key] = $fieldType;
 			}
 		} elseif ($this->nestedArrayAsJson && is_array($row)) {
-			$this->log->log("WARNING", "Unsupported array nesting in '{$type}'! Converted to JSON string.", ['row' => $row]);
+			$this->log->log(
+				"WARNING", "Unsupported array nesting in '{$type}'! Converting to JSON string.",
+				['row' => $row]
+			);
 			$struct[self::DATA_COLUMN] = 'string';
 			$row = (object) [self::DATA_COLUMN => json_encode($row)];
 		} else {

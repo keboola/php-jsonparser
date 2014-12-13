@@ -476,7 +476,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$parser->process($data);
 		$this->assertEquals(
 			true,
-			$logHandler->hasWarning("Unsupported array nesting in 'root'! Converted to JSON string."), "Warning should have been logged"
+			$logHandler->hasWarning("Unsupported array nesting in 'root'! Converting to JSON string."), "Warning should have been logged"
 		);
 		$this->assertEquals(
 			file_get_contents($this->getDataDir() . 'NestedArraysJson.csv'),
