@@ -575,6 +575,25 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
+	public function testUnderscoreHeader()
+	{
+		$parser = $this->getParser();
+		$data = (object) [
+			'ts' => 1423961676,
+			'resends' => NULL,
+			'_id' => '123456',
+			'sender' => 'ka@rel.cz',
+		];
+
+		$parser->process([$data]);
+
+		$this->assertEquals(
+			'"ts","resends","id","sender"' . PHP_EOL .
+			'"1423961676","","123456","ka@rel.cz"' . PHP_EOL,
+			file_get_contents($parser->getCsvFiles()['root'])
+		);
+	}
+
 	/**
 	 * Call a non-public method
 	 * @param mixed $obj

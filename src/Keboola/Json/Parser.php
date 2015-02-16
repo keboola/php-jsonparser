@@ -437,6 +437,9 @@ class Parser {
 
 		$row = [];
 		foreach(array_merge($this->struct[$type], $parentCols) as $column => $dataType) {
+			// TODO validate against header, or ideally save in $struct with already validated name
+			$safeColumn = $this->createSafeSapiName($column);
+
 			// skip empty objects & arrays to prevent creating empty tables
 			// or incomplete column names
 			if (
@@ -446,7 +449,7 @@ class Parser {
 			) {
 				// do not save empty objects to prevent creation of ["obj_name" => null]
 				if ($dataType != 'object') {
-					$row[$column] = null;
+					$row[$safeColumn] = null;
 				}
 
 				continue;
@@ -461,8 +464,8 @@ class Parser {
 
 			switch ($dataType) {
 				case "array":
-					$row[$column] = $arrayParentId;
-					$this->parse($dataRow->{$column}, $type . "." . $column, $row[$column]);
+					$row[$safeColumn] = $arrayParentId;
+					$this->parse($dataRow->{$column}, $type . "." . $column, $row[$safeColumn]);
 					break;
 				case "object":
 					foreach($this->parseRow($dataRow->{$column}, $type . "." . $column) as $col => $val) {
@@ -472,7 +475,7 @@ class Parser {
 				default:
 					// If a column is an object/array while $struct expects a single column, log an error
 					if (is_scalar($dataRow->{$column})) {
-						$row[$column] = $dataRow->{$column};
+						$row[$safeColumn] = $dataRow->{$column};
 					} else {
 						$jsonColumn = json_encode($dataRow->{$column});
 
@@ -484,7 +487,7 @@ class Parser {
 							[ "data" => $jsonColumn, "row" => json_encode($dataRow) ]
 						);
 
-						$row[$column] = $jsonColumn;
+						$row[$safeColumn] = $jsonColumn;
 					}
 					break;
 			}
