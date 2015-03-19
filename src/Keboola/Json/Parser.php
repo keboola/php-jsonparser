@@ -137,6 +137,11 @@ class Parser {
 	protected $allowArrayStringMix = false;
 
 	/**
+	 * @var bool
+	 */
+	protected $autoUpgradeToArray = false;
+
+	/**
 	 * @param Logger $logger
 	 * @param array $struct should contain an array with previously
 	 * 		cached results from analyze() calls (called automatically by process())
@@ -437,7 +442,13 @@ class Parser {
 
 		$row = [];
 		foreach(array_merge($this->struct[$type], $parentCols) as $column => $dataType) {
-			// TODO validate against header, or ideally save in $struct with already validated name
+			// TODO validate against header, or ideally save in $struct with already validated name.
+			// Ideally make the $row an object that contains a $column => "header" map,
+			// and assign data into it by a setter that looks at that header, then perhaps finally
+			// return as an array. It would, therefore, contain even empty values and wouldn't
+			// require the array_merge at getCsvFiles().
+			// getHeader would save a k=>v[mapping struct column to a csv column name] instead
+			// of just v, and then the row object would get that in constructor.
 			$safeColumn = $this->createSafeSapiName($column);
 
 			// skip empty objects & arrays to prevent creating empty tables
@@ -455,9 +466,13 @@ class Parser {
 				continue;
 			}
 
-			// TODO consider enabling object support as well
-			// an JSON_parentId => $arrayParentId would have to be
-			// set in the row object
+			if ($this->autoUpgradeToArray && substr($dataType, 0, 11) == 'autoArrayOf') {
+				if (!is_array($dataRow->{$column})) {
+					$dataRow->{$column} = [$dataRow->{$column}];
+				}
+				$dataType = 'array';
+			}
+
 			if ($this->allowArrayStringMix && $dataType == 'stringOrArray') {
 				$dataType = gettype($dataRow->{$column});
 			}
@@ -638,15 +653,33 @@ class Parser {
 					"slave" => $newType,
 					"master" => $oldType
 				], $this->typeUpgrades)
-			|| (!$this->strict
+			|| (
+				!$this->strict
 				&& in_array($newType, $this->scalars)
-				&& in_array($oldType, $this->scalars))
+				&& in_array($oldType, $this->scalars)
+			)
 		) {
 			// If new type is null, unchanged,
 			// or the master of a master-slave pair,
 			// or $this->strict is off AND both values are scalar
 			// do nothing and keep the originally stored type!
 			return $oldType;
+		} elseif (
+			$this->autoUpgradeToArray
+			&& (
+				(substr($oldType, 0, 11) == 'autoArrayOf' && substr($oldType, 11) == $newType)
+				|| $oldType == 'array'
+				|| $newType == 'array'
+			)
+		) {
+			// TODO No support for scalars in non-strict mode (yet)
+			if (substr($oldType, 0, 11) == 'autoArrayOf') {
+				return $oldType;
+			} elseif ($oldType == 'array') {
+				return 'autoArrayOf' . $newType;
+			} else {
+				return 'autoArrayOf' . $oldType;
+			}
 		} elseif (
 			$this->allowArrayStringMix
 			&& (
@@ -814,5 +847,29 @@ class Parser {
 	public function setAllowArrayStringMix($allow)
 	{
 		$this->allowArrayStringMix = (bool) $allow;
+	}
+
+	/**
+	 * If enabled, and an object contains an array where
+	 * an array is not expected, a "link" ID is saved in place
+	 * of the string and a child CSV is created.
+	 * Takes priority over allowArrayStringMix
+	 *
+	 * This should **only** be used with $analyzeRows = -1
+	 *
+	 * Only enable this as a last resort if you cannot supply a JSON
+	 * without inconsistent array/object conflicts
+	 * @param bool $bool
+	 * @experimental
+	 */
+	public function setAutoUpgradeToArray($enable)
+	{
+		if ($this->analyzeRows != -1) {
+			throw new JsonParserException("autoUpgradeToArray can only be used with \$analyzeRows == -1 to prevent unexpected behavior (parsing before discovering a value should be an array)");
+		}
+
+		$this->log->log('warning', "Using automatic conversion of single values to arrays where required. Strict mode enabled.");
+
+		$this->autoUpgradeToArray = (bool) $enable;
 	}
 }

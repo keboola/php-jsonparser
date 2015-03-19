@@ -534,6 +534,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 
 	public function testStringArrayMix()
 	{
+		// Not using $this->getParser() to preserve $logHandler accessibility
 		$logHandler = new \Monolog\Handler\TestHandler();
 		$parser = new Parser(new \Monolog\Logger('test', [$logHandler]));
 		$parser->setAllowArrayStringMix(true);
@@ -592,6 +593,224 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 			'"1423961676","","123456","ka@rel.cz"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['root'])
 		);
+	}
+
+	public function testAutoUpgradeToArray()
+	{
+		$parser = $this->getParser();
+		$parser->setAutoUpgradeToArray(true);
+
+		// Test with object > array > object
+		$data = [
+			(object) [
+				'key' => (object) [
+					'subKey1' => 'val1.1',
+					'subKey2' => 'val1.2'
+				]
+			],
+			(object) [
+				'key' => [
+					(object) [
+						'subKey1' => 'val2.1.1',
+						'subKey2' => 'val2.1.2'
+					],
+					(object) [
+						'subKey1' => 'val2.2.1',
+						'subKey2' => 'val2.2.2'
+					]
+				]
+			],
+			(object) [
+				'key' => (object) [
+					'subKey1' => 'val3.1',
+					'subKey2' => 'val3.2'
+				]
+			]
+		];
+
+		$parser->process($data);
+
+		// TODO guess this could be in files..
+		$this->assertEquals(
+			'"key"' . PHP_EOL .
+			'"root_eae48f50d1159c41f633f876d6c66411"' . PHP_EOL .
+			'"root_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
+			'"root_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
+			file_get_contents($parser->getCsvFiles()['root'])
+		);
+
+		$this->assertEquals(
+			'"subKey1","subKey2","JSON_parentId"' . PHP_EOL .
+			'"val1.1","val1.2","root_eae48f50d1159c41f633f876d6c66411"' . PHP_EOL .
+			'"val2.1.1","val2.1.2","root_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
+			'"val2.2.1","val2.2.2","root_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
+			'"val3.1","val3.2","root_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
+			file_get_contents($parser->getCsvFiles()['root_key'])
+		);
+
+		// Test with array first
+		$data2 = [
+			(object) [
+				'key' => [
+					(object) [
+						'subKey1' => 'val2.1.1',
+						'subKey2' => 'val2.1.2'
+					],
+					(object) [
+						'subKey1' => 'val2.2.1',
+						'subKey2' => 'val2.2.2'
+					]
+				]
+			],
+			(object) [
+				'key' => (object) [
+					'subKey1' => 'val3.1',
+					'subKey2' => 'val3.2'
+				]
+			]
+		];
+
+		$parser->process($data2, 'arr');
+
+		$this->assertEquals(
+			'"key"' . PHP_EOL .
+			'"arr_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
+			'"arr_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
+			file_get_contents($parser->getCsvFiles()['arr'])
+		);
+
+		$this->assertEquals(
+			'"subKey1","subKey2","JSON_parentId"' . PHP_EOL .
+			'"val2.1.1","val2.1.2","arr_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
+			'"val2.2.1","val2.2.2","arr_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
+			'"val3.1","val3.2","arr_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
+			file_get_contents($parser->getCsvFiles()['arr_key'])
+		);
+
+
+
+		// TODO do $this->testProcess() with setAutoUpgradeToArray(true) (nothing should change there or in any other test, apart from testStringArrayMix)
+	}
+
+	/**
+	 * @expectedException \Keboola\Json\Exception\JsonParserException
+	 * @expectedExceptionMessage Unhandled type change from "autoArrayOfobject" to "string" in 'root.key'
+	 */
+	public function testAutoUpgradeToArrayMismatch()
+	{
+		$parser = $this->getParser();
+		$parser->setAutoUpgradeToArray(true);
+
+		$data = [
+			(object) [
+				'key' => [
+					(object) [
+						'subKey1' => 'val2.1.1',
+						'subKey2' => 'val2.1.2'
+					],
+					(object) [
+						'subKey1' => 'val2.2.1',
+						'subKey2' => 'val2.2.2'
+					]
+				]
+			],
+			(object) [
+				'key' => (object) [
+					'subKey1' => 'val3.1',
+					'subKey2' => 'val3.2'
+				]
+			],
+			(object) [
+				'key' => 'asdf'
+			],
+		];
+		$parser->process($data);
+	}
+
+	/**
+	 * Test with string
+	 */
+	public function testAutoUpgradeToArrayString()
+	{
+		$parser = $this->getParser();
+		$parser->setAutoUpgradeToArray(true);
+
+		// Test with object > array > object
+		$data = [
+			(object) [
+				'key' => 'str1'
+			],
+			(object) [
+				'key' => [
+					'str2.1',
+					'str2.2'
+				]
+			],
+			(object) [
+				'key' => 'str3'
+			]
+		];
+
+		$parser->process($data);
+
+		$this->assertEquals(
+			'"key"' . PHP_EOL .
+			'"root_0c616a2609bd2e8d88574f3f856170c5"' . PHP_EOL .
+			'"root_3cc17a87c69e64707ac357e84e5a9eb8"' . PHP_EOL .
+			'"root_af523454cc66582ad5dcec3f171b35ed"' . PHP_EOL,
+			file_get_contents($parser->getCsvFiles()['root'])
+		);
+
+		$this->assertEquals(
+			'"data","JSON_parentId"' . PHP_EOL .
+			'"str1","root_0c616a2609bd2e8d88574f3f856170c5"' . PHP_EOL .
+			'"str2.1","root_3cc17a87c69e64707ac357e84e5a9eb8"' . PHP_EOL .
+			'"str2.2","root_3cc17a87c69e64707ac357e84e5a9eb8"' . PHP_EOL .
+			'"str3","root_af523454cc66582ad5dcec3f171b35ed"' . PHP_EOL,
+			file_get_contents($parser->getCsvFiles()['root_key'])
+		);
+	}
+
+	/**
+	 * Ensure "proper" JSON that doesn't require the upgrade is parsed the same as before
+	 */
+	public function testProcessWithAutoUpgradeToArray()
+	{
+		$parser = $this->getParser();
+		$parser->setAutoUpgradeToArray(true);
+
+		$testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
+
+		$data = $this->loadJson('Json_tweets_pinkbike');
+
+		$parser->process($data);
+
+		foreach($parser->getCsvFiles() as $name => $table) {
+			// compare result files
+			$this->assertEquals(
+				file_get_contents("{$testFilesPath}/{$name}.csv"),
+				file_get_contents($table->getPathname())
+			);
+
+			// compare column counts
+			$parsedFile = file($table->getPathname());
+			foreach($parsedFile as $row) {
+				if (empty($headerCount)) {
+					$headerCount = count($row);
+				} else {
+					$this->assertEquals($headerCount, count($row));
+				}
+			}
+		}
+
+		// make sure all the files are present
+		$dir = scandir($testFilesPath);
+		array_walk($dir, function (&$val) {
+				$val = str_replace(".csv", "", $val);
+			}
+		);
+		$this->assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
+		$this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
 	}
 
 	/**
