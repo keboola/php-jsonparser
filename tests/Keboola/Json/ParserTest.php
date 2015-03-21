@@ -53,9 +53,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$data = $this->loadJson('Json_tweets_pinkbike');
 
 		$parser->process($data, 'a/b.c&d@e$f');
-		foreach($parser->getCsvFiles() as $name => $file) {
-			$arr[] = $name;
-		}
+
 		$this->assertEquals(
 			[
 				'a_b_c_d_e_f',
@@ -81,7 +79,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 				'a_b_c_d_e_f_statuses_retweeted_status_entities_media',
 				'a_b_c_d_e_f_statuses_retweeted_status_entities_media_indices',
 			],
-			$arr
+			array_keys($parser->getCsvFiles())
 		);
 	}
 
@@ -291,6 +289,70 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
+	 * Linkdex keywords usecase
+	 */
+	public function testParentIdHashSameValues()
+	{
+		$parser = $this->getParser();
+		$parser->setAutoUpgradeToArray(1);
+
+		$data = [];
+		$data[] = json_decode('{
+			"uri": "firstStuff",
+			"createdAt": "30/05/13",
+			"expectedPage": "",
+			"keyphrase": "i fokin bash ur hed in",
+			"keyword": "i fokin bash ur hed in",
+			"tags": {
+				"tag": {
+					"@value": "parking@$$press"
+				}
+			}
+		}');
+		$data[] = json_decode('{
+			"uri": "secondStuff",
+			"createdAt": "30/05/13",
+			"expectedPage": "",
+			"keyphrase": "il rek u m8",
+			"keyword": "il rek u m8",
+			"tags": {
+				"tag": {
+					"@value": "parking@$$press"
+				}
+			}
+		}');
+		$data[] = json_decode('{
+			"uri": "thirdStuff",
+			"createdAt": "24/05/13",
+			"expectedPage": "",
+			"keyphrase": "i sware on me mum",
+			"keyword": "i sware on me mum",
+			"tags": {
+				"tag": [
+					{
+						"@value": "I ARE"
+					},
+					{
+						"@value": "POTATO"
+					}
+				]
+			}
+		}');
+
+		// Shouldn't be any different to parsing just the array..just replicating an use case
+		foreach($data as $json) {
+			$parser->process([$json], 'nested_hash');
+		}
+
+		foreach($parser->getCsvFiles() as $type => $file) {
+			$this->assertEquals(
+				file_get_contents($this->getDataDir() . "{$type}.csv"),
+				file_get_contents($file->getPathname())
+			);
+		}
+	}
+
+	/**
 	 * Process the same dataset with different parentId
 	 */
 	public function testParentIdHashTimeDiff()
@@ -476,7 +538,8 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$parser->process($data);
 		$this->assertEquals(
 			true,
-			$logHandler->hasWarning("Unsupported array nesting in 'root'! Converting to JSON string."), "Warning should have been logged"
+			$logHandler->hasWarning("Unsupported array nesting in 'root'! Converting to JSON string."),
+			"Warning should have been logged"
 		);
 		$this->assertEquals(
 			file_get_contents($this->getDataDir() . 'NestedArraysJson.csv'),
@@ -812,6 +875,8 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$this->assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
 		$this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
 	}
+
+	// TODO test whether rows with identical array within receive unique IDs (also with autoArrayOfobject)
 
 	/**
 	 * Call a non-public method

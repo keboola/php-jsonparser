@@ -419,9 +419,10 @@ class Parser {
 	 * @param \stdClass $dataRow Input data
 	 * @param string $type
 	 * @param array $parentCols to inject parent columns, which aren't part of $this->struct
+	 * @param \stdClass $outerObject Outer object to distinguish different parents in deep nested arrays
 	 * @return array
 	 */
-	public function parseRow(\stdClass $dataRow, $type, array $parentCols = [])
+	public function parseRow(\stdClass $dataRow, $type, array $parentCols = [], \stdClass $outerObject = null)
 	{
 		if ($this->struct[$type] == "NULL") {
 			$this->log->log(
@@ -437,7 +438,8 @@ class Parser {
 		// Generate parent ID for arrays
 		$arrayParentId = $this->getPrimaryKeyValue(
 			$dataRow,
-			$type
+			$type,
+			$outerObject
 		);
 
 		$row = [];
@@ -483,7 +485,7 @@ class Parser {
 					$this->parse($dataRow->{$column}, $type . "." . $column, $row[$safeColumn]);
 					break;
 				case "object":
-					foreach($this->parseRow($dataRow->{$column}, $type . "." . $column) as $col => $val) {
+					foreach($this->parseRow($dataRow->{$column}, $type . "." . $column, [], $dataRow) as $col => $val) {
 						$row[$column . "_" . $col] = $val;
 					}
 					break;
@@ -516,7 +518,7 @@ class Parser {
 	 * @param string $type for logging
 	 * @return string
 	 */
-	protected function getPrimaryKeyValue(\stdClass $dataRow, $type)
+	protected function getPrimaryKeyValue(\stdClass $dataRow, $type, $outerObject)
 	{
 		// Try to find a "real" parent ID
 		if (!empty($this->primaryKeys[$this->createSafeSapiName($type)])) {
@@ -526,7 +528,7 @@ class Parser {
 			$values = [];
 			foreach($pKeyCols as $pKeyCol) {
 				if (empty($dataRow->{$pKeyCol})) {
-					$values[] = md5(serialize($dataRow));
+					$values[] = md5(serialize($dataRow) . serialize($outerObject));
 					$this->log->log(
 						"WARNING", "Primary key for type '{$type}' was set to '{$pk}', but its column '{$pKeyCol}' does not exist! Using hash to link child objects instead.",
 						[
@@ -542,7 +544,7 @@ class Parser {
 			return $type . "_" . join(";", $values);
 		} else {
 			// Of no pkey is specified to get the real ID, use a hash of the row
-			return $type . "_" . md5(serialize($dataRow));
+			return $type . "_" . md5(serialize($dataRow) . serialize($outerObject));
 		}
 	}
 
