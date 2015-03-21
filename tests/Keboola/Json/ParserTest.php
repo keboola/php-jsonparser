@@ -622,15 +622,15 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$this->assertEquals(
 			'"id","strArr"' . PHP_EOL .
 			'"1","string"' . PHP_EOL .
-			'"2","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL .
+			'"2","root_d7135b2b8e2015e3cd4be6d071f880b0"' . PHP_EOL .
 			'"3","65536"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['root'])
 		);
 		$this->assertEquals(
 			'"data","JSON_parentId"' . PHP_EOL .
-			'"ar","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL .
-			'"ra","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL .
-			'"y","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL,
+			'"ar","root_d7135b2b8e2015e3cd4be6d071f880b0"' . PHP_EOL .
+			'"ra","root_d7135b2b8e2015e3cd4be6d071f880b0"' . PHP_EOL .
+			'"y","root_d7135b2b8e2015e3cd4be6d071f880b0"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['root_strArr'])
 		);
 		$this->assertEquals(
@@ -696,18 +696,18 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		// TODO guess this could be in files..
 		$this->assertEquals(
 			'"key"' . PHP_EOL .
-			'"root_eae48f50d1159c41f633f876d6c66411"' . PHP_EOL .
-			'"root_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
-			'"root_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
+			'"root_a83365954a5bf8892d0596229b25f7a2"' . PHP_EOL .
+			'"root_572b95cbb90e943052169c890b067f4d"' . PHP_EOL .
+			'"root_305c2ce4f6faf5fa01fdad118ea1cfe9"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['root'])
 		);
 
 		$this->assertEquals(
 			'"subKey1","subKey2","JSON_parentId"' . PHP_EOL .
-			'"val1.1","val1.2","root_eae48f50d1159c41f633f876d6c66411"' . PHP_EOL .
-			'"val2.1.1","val2.1.2","root_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
-			'"val2.2.1","val2.2.2","root_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
-			'"val3.1","val3.2","root_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
+			'"val1.1","val1.2","root_a83365954a5bf8892d0596229b25f7a2"' . PHP_EOL .
+			'"val2.1.1","val2.1.2","root_572b95cbb90e943052169c890b067f4d"' . PHP_EOL .
+			'"val2.2.1","val2.2.2","root_572b95cbb90e943052169c890b067f4d"' . PHP_EOL .
+			'"val3.1","val3.2","root_305c2ce4f6faf5fa01fdad118ea1cfe9"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['root_key'])
 		);
 
@@ -737,16 +737,16 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 
 		$this->assertEquals(
 			'"key"' . PHP_EOL .
-			'"arr_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
-			'"arr_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
+			'"arr_572b95cbb90e943052169c890b067f4d"' . PHP_EOL .
+			'"arr_305c2ce4f6faf5fa01fdad118ea1cfe9"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['arr'])
 		);
 
 		$this->assertEquals(
 			'"subKey1","subKey2","JSON_parentId"' . PHP_EOL .
-			'"val2.1.1","val2.1.2","arr_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
-			'"val2.2.1","val2.2.2","arr_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
-			'"val3.1","val3.2","arr_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
+			'"val2.1.1","val2.1.2","arr_572b95cbb90e943052169c890b067f4d"' . PHP_EOL .
+			'"val2.2.1","val2.2.2","arr_572b95cbb90e943052169c890b067f4d"' . PHP_EOL .
+			'"val3.1","val3.2","arr_305c2ce4f6faf5fa01fdad118ea1cfe9"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['arr_key'])
 		);
 
@@ -818,18 +818,18 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 
 		$this->assertEquals(
 			'"key"' . PHP_EOL .
-			'"root_0c616a2609bd2e8d88574f3f856170c5"' . PHP_EOL .
-			'"root_3cc17a87c69e64707ac357e84e5a9eb8"' . PHP_EOL .
-			'"root_af523454cc66582ad5dcec3f171b35ed"' . PHP_EOL,
+			'"root_bbce8a190b45b40da599ac5c4996d18e"' . PHP_EOL .
+			'"root_c082d1464d60ad223155f227eae399bd"' . PHP_EOL .
+			'"root_a7be7f6f64e079d830a8cfed00d13d7c"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['root'])
 		);
 
 		$this->assertEquals(
 			'"data","JSON_parentId"' . PHP_EOL .
-			'"str1","root_0c616a2609bd2e8d88574f3f856170c5"' . PHP_EOL .
-			'"str2.1","root_3cc17a87c69e64707ac357e84e5a9eb8"' . PHP_EOL .
-			'"str2.2","root_3cc17a87c69e64707ac357e84e5a9eb8"' . PHP_EOL .
-			'"str3","root_af523454cc66582ad5dcec3f171b35ed"' . PHP_EOL,
+			'"str1","root_bbce8a190b45b40da599ac5c4996d18e"' . PHP_EOL .
+			'"str2.1","root_c082d1464d60ad223155f227eae399bd"' . PHP_EOL .
+			'"str2.2","root_c082d1464d60ad223155f227eae399bd"' . PHP_EOL .
+			'"str3","root_a7be7f6f64e079d830a8cfed00d13d7c"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['root_key'])
 		);
 	}
