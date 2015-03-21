@@ -214,9 +214,7 @@ class Parser {
 				? count($data)
 				: ($this->rowsAnalyzed[$type] + count($data));
 
-			if (empty($this->cache)) {
-				$this->cache = new Cache();
-			}
+			$this->initCache();
 
 			$this->cache->store([
 				"data" => $data,
@@ -516,9 +514,10 @@ class Parser {
 	/**
 	 * @param \stdClass $dataRow
 	 * @param string $type for logging
+	 * @param string $outerObjectHash
 	 * @return string
 	 */
-	protected function getPrimaryKeyValue(\stdClass $dataRow, $type, $outerObjectHash)
+	protected function getPrimaryKeyValue(\stdClass $dataRow, $type, $outerObjectHash = null)
 	{
 		// Try to find a "real" parent ID
 		if (!empty($this->primaryKeys[$this->createSafeSapiName($type)])) {
@@ -764,6 +763,16 @@ class Parser {
 	/**
 	 * @return void
 	 */
+	protected function initCache()
+	{
+		if (empty($this->cache)) {
+			$this->cache = new Cache();
+		}
+	}
+
+	/**
+	 * @return void
+	 */
 	protected function processCache()
 	{
 		if(!empty($this->cache)) {
@@ -873,5 +882,16 @@ class Parser {
 		$this->log->log('warning', "Using automatic conversion of single values to arrays where required. Strict mode enabled.");
 
 		$this->autoUpgradeToArray = (bool) $enable;
+	}
+
+	/**
+	 * Set maximum memory used before Cache starts using php://temp
+	 * @param string|int $limit
+	 */
+	public function setCacheMemoryLimit($limit)
+	{
+		$this->initCache();
+
+		return $this->cache->setMemoryLimit($limit);
 	}
 }

@@ -941,8 +941,6 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
 	}
 
-	// TODO test whether rows with identical array within receive unique IDs (also with autoArrayOfobject)
-
 	/**
 	 * Call a non-public method
 	 * @param mixed $obj
