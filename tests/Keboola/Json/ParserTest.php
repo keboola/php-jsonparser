@@ -723,6 +723,45 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
+	public function testAtSignHeader()
+	{
+		$parser = $this->getParser();
+		$data = json_decode('[
+			{
+				"KeywordRanking": {
+					"@attributes": {
+						"date": "2015-03-20"
+					},
+					"Google": {
+						"Rank": "r",
+						"BaseRank": "a",
+						"Url": "n"
+					},
+					"Yahoo": {
+						"Rank": "d",
+						"Url": "o"
+					},
+					"Bing": {
+						"Rank": "m",
+						"Url": "bs"
+					},
+					"~~stuff°°": {
+						"I ARE POTAT()": "aaa$@!",
+						"!@#$%^&*kek": { "ser!ou$ly": "now"}
+					}
+				}
+			}
+		]');
+
+		$parser->process($data);
+
+		$this->assertEquals(
+			'"KeywordRanking_attributes_date","KeywordRanking_Google_Rank","KeywordRanking_Google_BaseRank","KeywordRanking_Google_Url","KeywordRanking_Yahoo_Rank","KeywordRanking_Yahoo_Url","KeywordRanking_Bing_Rank","KeywordRanking_Bing_Url","KeywordRanking_stuff_I_ARE_POTAT","KeywordRanking_stuff_kek_ser_ou_ly"' . PHP_EOL .
+			'"2015-03-20","r","a","n","d","o","m","bs","aaa$@!","now"' . PHP_EOL,
+			file_get_contents($parser->getCsvFiles()['root'])
+		);
+	}
+
 	public function testAutoUpgradeToArray()
 	{
 		$parser = $this->getParser();

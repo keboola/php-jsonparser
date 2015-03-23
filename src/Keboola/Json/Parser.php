@@ -235,7 +235,7 @@ class Parser {
 	 * @param string|array $parent String with a $parentId or an array with $colName => $parentId
 	 * @return array
 	 */
-	public function getHeader($type, $parent = false)
+	protected function getHeader($type, $parent = false)
 	{
 		$header = [];
 		if (is_scalar($this->struct[$type])) {
@@ -244,7 +244,9 @@ class Parser {
 			foreach($this->struct[$type] as $column => $dataType) {
 				if ($dataType == "object") {
 					foreach($this->getHeader($type . "." . $column) as $col => $val) {
-						$header[] = $column . "_" . $val;
+						// FIXME this is awkward, the createSafeSapiName shouldn't need to be used twice
+						// (here and in validateHeader again)
+						$header[] = $this->createSafeSapiName($column) . "_" . $val;
 					}
 				} else {
 					$header[] = $column;
@@ -256,8 +258,6 @@ class Parser {
 			if (is_array($parent)) {
 				$header = array_merge($header, array_keys($parent));
 			} else {
-				// TODO allow rename on root level/all levels separately
-				// - allow the parent to be an array of "parentColName" => id?
 				$header[] = "JSON_parentId";
 			}
 		}
@@ -316,7 +316,7 @@ class Parser {
 		} else {
 			$newName = $name;
 		}
-
+// print_r([$newName,preg_replace('/[^A-Za-z0-9-]/', '_', $newName),trim(preg_replace('/[^A-Za-z0-9-]/', '_', $newName), "_")]);
 		$newName = preg_replace('/[^A-Za-z0-9-]/', '_', $newName);
 		return trim($newName, "_");
 	}
@@ -400,13 +400,18 @@ class Parser {
 				$row = (object) array_replace((array) $row, $parentId);
 			}
 
-			$parsed = $this->parseRow($row, $type, $parentCols);
+// 			$csvRow = new CsvRow(array_merge($this->headers[$type], array_keys($parentId))); // should be in header already
+			$csvRow = new CsvRow($this->headers[$type]);
 
+			$parsed = $this->parseRow($row, $csvRow, $type, $parentCols);
+// var_dump($parsed, $this->headers[$type], $csvRow);
 			// ensure no fields are missing in CSV row
 			// (required in case an object is null and doesn't generate all columns)
-			$csvRow = array_replace(array_fill_keys($this->headers[$type], null), $parsed);
+// 			$csvRow = array_replace(array_fill_keys($this->headers[$type], null), $parsed);
 
-			$this->csvFiles[$safeType]->writeRow($csvRow);
+
+// 			$this->csvFiles[$safeType]->writeRow($csvRow);
+			$this->csvFiles[$safeType]->writeRow($csvRow->getRow());
 		}
 	}
 
@@ -416,11 +421,12 @@ class Parser {
 	 *
 	 * @param \stdClass $dataRow Input data
 	 * @param string $type
+	 * @param CsvRow $csvRow
 	 * @param array $parentCols to inject parent columns, which aren't part of $this->struct
 	 * @param string $outerObjectHash Outer object hash to distinguish different parents in deep nested arrays
 	 * @return array
 	 */
-	public function parseRow(\stdClass $dataRow, $type, array $parentCols = [], $outerObjectHash = null)
+	public function parseRow(\stdClass $dataRow, CsvRow $csvRow, $type, array $parentCols = [], $outerObjectHash = null)
 	{
 		if ($this->struct[$type] == "NULL") {
 			$this->log->log(
@@ -430,6 +436,7 @@ class Parser {
 					'data' => $dataRow
 				]
 			);
+			$csvRow->setValue(self::DATA_COLUMN, json_encode($dataRow));
 			return [self::DATA_COLUMN => json_encode($dataRow)];
 		}
 
@@ -442,13 +449,7 @@ class Parser {
 
 		$row = [];
 		foreach(array_merge($this->struct[$type], $parentCols) as $column => $dataType) {
-			// TODO validate against header, or ideally save in $struct with already validated name.
-			// Ideally make the $row an object that contains a $column => "header" map,
-			// and assign data into it by a setter that looks at that header, then perhaps finally
-			// return as an array. It would, therefore, contain even empty values and wouldn't
-			// require the array_merge at getCsvFiles().
-			// getHeader would save a k=>v[mapping struct column to a csv column name] instead
-			// of just v, and then the row object would get that in constructor.
+			// TODO safeColumn should be associated with $this->struct[$type] (and parentCols -> create in parse() where the arr is created)
 			$safeColumn = $this->createSafeSapiName($column);
 
 			// skip empty objects & arrays to prevent creating empty tables
@@ -461,6 +462,7 @@ class Parser {
 				// do not save empty objects to prevent creation of ["obj_name" => null]
 				if ($dataType != 'object') {
 					$row[$safeColumn] = null;
+					$csvRow->setValue($safeColumn, null);
 				}
 
 				continue;
@@ -480,17 +482,22 @@ class Parser {
 			switch ($dataType) {
 				case "array":
 					$row[$safeColumn] = $arrayParentId;
+					$csvRow->setValue($safeColumn, $arrayParentId);
 					$this->parse($dataRow->{$column}, $type . "." . $column, $row[$safeColumn]);
 					break;
 				case "object":
-					foreach($this->parseRow($dataRow->{$column}, $type . "." . $column, [], $arrayParentId) as $col => $val) {
+					$childRow = new CsvRow($this->getHeader($type . "." . $column));
+					foreach($this->parseRow($dataRow->{$column}, $childRow, $type . "." . $column, [], $arrayParentId) as $col => $val) {
 						$row[$column . "_" . $col] = $val;
+						// FIXME create own csvRow for the "inner" type and then 'import' it into this?
 					}
+					$csvRow->setChildValues($safeColumn, $childRow);
 					break;
 				default:
 					// If a column is an object/array while $struct expects a single column, log an error
 					if (is_scalar($dataRow->{$column})) {
 						$row[$safeColumn] = $dataRow->{$column};
+						$csvRow->setValue($safeColumn, $dataRow->{$column});
 					} else {
 						$jsonColumn = json_encode($dataRow->{$column});
 
@@ -503,6 +510,7 @@ class Parser {
 						);
 
 						$row[$safeColumn] = $jsonColumn;
+						$csvRow->setValue($safeColumn, $jsonColumn);
 					}
 					break;
 			}
