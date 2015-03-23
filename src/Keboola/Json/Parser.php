@@ -316,7 +316,7 @@ class Parser {
 		} else {
 			$newName = $name;
 		}
-// print_r([$newName,preg_replace('/[^A-Za-z0-9-]/', '_', $newName),trim(preg_replace('/[^A-Za-z0-9-]/', '_', $newName), "_")]);
+
 		$newName = preg_replace('/[^A-Za-z0-9-]/', '_', $newName);
 		return trim($newName, "_");
 	}
@@ -400,17 +400,11 @@ class Parser {
 				$row = (object) array_replace((array) $row, $parentId);
 			}
 
-// 			$csvRow = new CsvRow(array_merge($this->headers[$type], array_keys($parentId))); // should be in header already
 			$csvRow = new CsvRow($this->headers[$type]);
 
-			$parsed = $this->parseRow($row, $csvRow, $type, $parentCols);
-// var_dump($parsed, $this->headers[$type], $csvRow);
-			// ensure no fields are missing in CSV row
-			// (required in case an object is null and doesn't generate all columns)
-// 			$csvRow = array_replace(array_fill_keys($this->headers[$type], null), $parsed);
+			// TODO the $csvRow should ideally be created within the parseRow
+			$this->parseRow($row, $csvRow, $type, $parentCols);
 
-
-// 			$this->csvFiles[$safeType]->writeRow($csvRow);
 			$this->csvFiles[$safeType]->writeRow($csvRow->getRow());
 		}
 	}
@@ -449,7 +443,11 @@ class Parser {
 
 		$row = [];
 		foreach(array_merge($this->struct[$type], $parentCols) as $column => $dataType) {
-			// TODO safeColumn should be associated with $this->struct[$type] (and parentCols -> create in parse() where the arr is created)
+			// TODO safeColumn should be associated with $this->struct[$type]
+			// (and parentCols -> create in parse() where the arr is created)
+			// Actually, the csvRow should REALLY have a pointer to the real name (not validated),
+			// perhaps sorting the child columns on its own?
+			// (because keys in struct don't contain child objects)
 			$safeColumn = $this->createSafeSapiName($column);
 
 			// skip empty objects & arrays to prevent creating empty tables
@@ -487,10 +485,8 @@ class Parser {
 					break;
 				case "object":
 					$childRow = new CsvRow($this->getHeader($type . "." . $column));
-					foreach($this->parseRow($dataRow->{$column}, $childRow, $type . "." . $column, [], $arrayParentId) as $col => $val) {
-						$row[$column . "_" . $col] = $val;
-						// FIXME create own csvRow for the "inner" type and then 'import' it into this?
-					}
+					$this->parseRow($dataRow->{$column}, $childRow, $type . "." . $column, [], $arrayParentId);
+
 					$csvRow->setChildValues($safeColumn, $childRow);
 					break;
 				default:
