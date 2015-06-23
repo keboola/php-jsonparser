@@ -19,7 +19,6 @@ class CsvRow
 	public function setValue($column, $value)
 	{
 		if (!array_key_exists($column, $this->data)) {
-var_dump($this->data);
 			throw new JsonParserException(
 				"Error assigning '{$value}' to a non-existing column '{$column}'!",
 				[
