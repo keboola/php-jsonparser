@@ -6,3 +6,4 @@ vendor
 .DS_Store
 .kdev4
 *.kdev4
+/build
