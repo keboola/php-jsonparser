@@ -698,10 +698,11 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 			'"y","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['root_strArr'])
 		);
-		$this->assertEquals(
-			true,
+
+		$this->assertTrue(
 			$logHandler->hasWarningRecords("An array was encountered where scalar 'string' was expected!")
 		);
+
 	}
 
 	public function testUnderscoreHeader()
