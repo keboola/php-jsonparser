@@ -577,6 +577,9 @@ class Parser
 	 */
 	public function analyzeRow($row, $type)
 	{
+		// Current row's structure
+		$struct = [];
+
 		// If the row is scalar, make it a {"data" => $value} object
 		if (is_scalar($row) || is_null($row)) {
 			$struct[self::DATA_COLUMN] = gettype($row);
@@ -613,7 +616,7 @@ class Parser
 		// Save the analysis result
 		if (empty($this->struct[$type]) || $this->struct[$type] == "NULL") {
 			// if we already know the row's types
-			$this->struct[$type] = is_array($struct) ? $struct : [self::DATA_COLUMN => $struct];
+			$this->struct[$type] = $struct;
 		} elseif ($this->struct[$type] !== $struct) {
 			// If the current row doesn't match the known structure
 			$diff = array_diff_assoc($struct, $this->struct[$type]);

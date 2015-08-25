@@ -981,6 +981,35 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 		$this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
 	}
 
+	public function testAnalyzeRow()
+	{
+		$parser = $this->getParser();
+
+		$parser->analyzeRow(new \stdClass, 'empty');
+		$this->assertEquals(['empty' => []], $parser->getStruct());
+
+		$parser->analyzeRow((object) [
+			'k' => 'v',
+			'field' => [
+				1, 2
+			]
+		], 'test');
+
+		$this->assertEquals(
+			[
+				'empty' => [],
+				'test.field' => [
+					'data' => 'integer'
+				],
+				'test' => [
+					'k' => 'string',
+					'field' => 'array'
+				]
+			],
+			$parser->getStruct()
+		);
+	}
+
 	/**
 	 * Call a non-public method
 	 * @param mixed $obj
