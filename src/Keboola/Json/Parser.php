@@ -41,13 +41,15 @@ use Keboola\Json\Exception\JsonParserException;
  * 		data $type to multiple files
  * 		(ie. type "person" to "customer" and "user")
  */
-class Parser {
+class Parser
+{
 	const DATA_COLUMN = 'data';
+
 	/**
 	 * Structures of analyzed data
 	 * @var array
 	 */
-	protected $struct;
+	protected $struct = [];
 
 	/**
 	 * Headers for each type
