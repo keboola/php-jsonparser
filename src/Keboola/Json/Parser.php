@@ -37,13 +37,19 @@ use Keboola\Json\Exception\JsonParserException;
  * @license		GPL-3.0
  * @link		https://github.com/keboola/php-jsonparser
  *
- * @TODO Use a $file parameter to allow writing the same
+ * @todo Use a $file parameter to allow writing the same
  * 		data $type to multiple files
  * 		(ie. type "person" to "customer" and "user")
+ *
+ * @todo A Struct class that will ensure the struct is free of errors
+ *		- Exactly one level of nesting
+ *		- The data type in each $type is supported (array, object, string, ..., arrayOf$)
  */
 class Parser
 {
 	const DATA_COLUMN = 'data';
+
+	const STRUCT_VERSION = 1.0;
 
 	/**
 	 * Structures of analyzed data
@@ -799,6 +805,15 @@ class Parser
 	public function getStruct()
 	{
 		return $this->struct;
+	}
+
+	/**
+	 * Version of $struct array used in parser
+	 * @return double
+	 */
+	public function getStructVersion()
+	{
+		return static::STRUCT_VERSION;
 	}
 
 	/**

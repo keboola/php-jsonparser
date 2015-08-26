@@ -4,8 +4,8 @@ use Keboola\Json\Parser;
 use Keboola\CsvTable\Table;
 use Keboola\Utils\Utils;
 
-class ParserTest extends \PHPUnit_Framework_TestCase {
-
+class ParserTest extends \PHPUnit_Framework_TestCase
+{
 	public function testProcess()
 	{
 		$parser = $this->getParser();
@@ -853,10 +853,6 @@ class ParserTest extends \PHPUnit_Framework_TestCase {
 			'"val3.1","val3.2","arr_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['arr_key'])
 		);
-
-
-
-		// TODO do $this->testProcess() with setAutoUpgradeToArray(true) (nothing should change there or in any other test, apart from testStringArrayMix)
 	}
 
 	/**
