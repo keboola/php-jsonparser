@@ -52,12 +52,6 @@ class Parser
 	const STRUCT_VERSION = 1.0;
 
 	/**
-	 * Structures of analyzed data
-	 * @var array
-	 */
-	protected $struct = [];
-
-	/**
 	 * Headers for each type
 	 * @var array
 	 */
@@ -81,11 +75,6 @@ class Parser
 	protected $rowsAnalyzed = [];
 
 	/**
-	 * @var int
-	 */
-	protected $analyzeRows;
-
-	/**
 	 * @var Cache
 	 */
 	protected $cache;
@@ -101,30 +90,6 @@ class Parser
 	protected $temp;
 
 	/**
-	 * Mapping of types that can be "upgraded"
-	 * @todo Create an object/method to handle this comparison and return the master
-	 * @var array
-	 */
-	protected $typeUpgrades = [
-		[
-			"slave" => "integer",
-			"master" => "double"
-		]
-	];
-
-	/**
-	 * @var array
-	 */
-	protected $scalars = [
-		"integer",
-		"double",
-		// "float", // get_type returns "double"
-		"string",
-		"boolean",
-		"NULL"
-	];
-
-	/**
 	 * @var array
 	 */
 	protected $primaryKeys = [];
@@ -132,22 +97,17 @@ class Parser
 	/**
 	 * @var bool
 	 */
-	protected $strict = false;
-
-	/**
-	 * @var bool
-	 */
 	protected $nestedArrayAsJson = false;
 
 	/**
-	 * @var bool
+	 * @var Analyzer
 	 */
-	protected $allowArrayStringMix = false;
+	protected $analyzer;
 
 	/**
-	 * @var bool
+	 * @var Struct
 	 */
-	protected $autoUpgradeToArray = false;
+	protected $struct;
 
 	/**
 	 * @param Logger $logger
@@ -157,12 +117,18 @@ class Parser
 	 * 		(counting only the "root" level of each Json)
 	 * 		will be analyzed [default -1 for infinite/all]
 	 */
-	public function __construct(Logger $logger, array $struct = [], $analyzeRows = -1)
+	public function __construct(Logger $logger, Analyzer $analyzer = null)
 	{
-		$this->struct = $struct;
-		$this->analyzeRows = $analyzeRows;
+		$this->analyzer = $analyzer;
 
 		$this->log = $logger;
+	}
+
+	public static function create(Logger $logger, array $struct = [], $analyzeRows = -1)
+	{
+		$analyzer = new Analyzer($logger, $struct, $analyzeRows);
+
+		return new static($logger, $analyzer);
 	}
 
 	/**
@@ -205,6 +171,9 @@ class Parser
 
 		// If we don't know the data (enough), store it in Cache,
 		// analyze, and parse when asked for it in getCsvFiles()
+// TODO leave this IF to analyzer
+// always send it to analyzer, leave it to decide whether to analyze or do nothing.
+// then cache everything, and parse everything upon retrieval by results getter
 		if (
 			!array_key_exists($type, $this->struct) ||
 			$this->analyzeRows == -1 ||
@@ -474,7 +443,7 @@ class Parser
 				continue;
 			}
 
-			if ($this->autoUpgradeToArray && substr($dataType, 0, 11) == 'autoArrayOf') {
+			if ($this->autoUpgradeToArray && substr($dataType, 0, 11) == 'arrayOf') {
 				if (!is_array($dataRow->{$column})) {
 					$dataRow->{$column} = [$dataRow->{$column}];
 				}
@@ -558,204 +527,8 @@ class Parser
 			return $type . "_" . md5(serialize($dataRow) . $outerObjectHash);
 		}
 	}
+/////////////////////////////////////////////////////////
 
-	/**
-	 * Analyze an array of input data and save the result in $this->struct
-	 *
-	 * @param array $data
-	 * @param string $type
-	 * @return void
-	 */
-	public function analyze(array $data, $type)
-	{
-		foreach($data as $row) {
-			$this->analyzeRow($row, $type);
-		}
-		$this->analyzed = true;
-	}
-
-	/**
-	 * Analyze row of input data & create $this->struct
-	 *
-	 * @param mixed $row
-	 * @param string $type
-	 * @return void
-	 */
-	public function analyzeRow($row, $type)
-	{
-		// Current row's structure
-		$struct = [];
-
-		// If the row is scalar, make it a {"data" => $value} object
-		if (is_scalar($row) || is_null($row)) {
-			$struct[self::DATA_COLUMN] = gettype($row);
-			$row = (object) [self::DATA_COLUMN => $row];
-		} elseif (is_object($row)) {
-			// process each property of the object
-			foreach($row as $key => $field) {
-				$fieldType = gettype($field);
-
-				if ($fieldType == "object") {
-					// Only assign the type if the object isn't empty
-					if ($this->isEmptyObject($field)) {
-						continue;
-					}
-
-					$this->analyzeRow($field, $type . "." . $key);
-				} elseif ($fieldType == "array") {
-					$this->analyze($field, $type . "." . $key);
-				}
-
-				$struct[$key] = $fieldType;
-			}
-		} elseif ($this->nestedArrayAsJson && is_array($row)) {
-			$this->log->log(
-				"WARNING", "Unsupported array nesting in '{$type}'! Converting to JSON string.",
-				['row' => $row]
-			);
-			$struct[self::DATA_COLUMN] = 'string';
-			$row = (object) [self::DATA_COLUMN => json_encode($row)];
-		} else {
-			throw new JsonParserException("Unsupported data row in '{$type}'!", ['row' => $row]);
-		}
-
-		// Save the analysis result
-		if (empty($this->struct[$type]) || $this->struct[$type] == "NULL") {
-			// if we already know the row's types
-			$this->struct[$type] = $struct;
-		} elseif ($this->struct[$type] !== $struct) {
-			// If the current row doesn't match the known structure
-			$diff = array_diff_assoc($struct, $this->struct[$type]);
-			// Walk through mismatched fields
-			foreach($diff as $diffKey => $diffVal) {
-				$this->struct[$type][$diffKey] = $this->updateStruct(
-					empty($this->struct[$type][$diffKey]) ? null : $this->struct[$type][$diffKey],
-					$struct[$diffKey],
-					"{$type}.{$diffKey}",
-					$row->{$diffKey}
-				);
-			}
-		}
-	}
-
-	/**
-	 * Return currently stored dataType with currently analyzed one,
-	 * if it is a valid update
-	 * @param string &$oldType
-	 * @param string $newType
-	 * @param string $type for logging
-	 * @param string $currentRow for logging
-	 * @return mixed $oldType|$newType
-	 */
-	protected function updateStruct($oldType, $newType, $type, $currentRow)
-	{
-		if (
-			empty($oldType)
-			|| $oldType == "NULL"
-			|| in_array([
-					"slave" => $oldType,
-					"master" => $newType
-				], $this->typeUpgrades)
-		) {
-			// Assign if the field is new
-			// OR
-			// When current values are in the "master-slave" array
-			// and the "slave" is stored, upgrade type to the "master" type
-			return $newType;
-		} elseif (
-			$newType == "NULL"
-			|| $newType == $oldType
-			|| in_array([
-					"slave" => $newType,
-					"master" => $oldType
-				], $this->typeUpgrades)
-			|| (
-				!$this->strict
-				&& in_array($newType, $this->scalars)
-				&& in_array($oldType, $this->scalars)
-			)
-		) {
-			// If new type is null, unchanged,
-			// or the master of a master-slave pair,
-			// or $this->strict is off AND both values are scalar
-			// do nothing and keep the originally stored type!
-			return $oldType;
-		} elseif (
-			$this->autoUpgradeToArray
-			&& (
-				(substr($oldType, 0, 11) == 'autoArrayOf' && substr($oldType, 11) == $newType)
-				|| $oldType == 'array'
-				|| $newType == 'array'
-			)
-		) {
-			// TODO No support for scalars in non-strict mode (yet)
-			if (substr($oldType, 0, 11) == 'autoArrayOf') {
-				return $oldType;
-			} elseif ($oldType == 'array') {
-				return 'autoArrayOf' . $newType;
-			} else {
-				return 'autoArrayOf' . $oldType;
-			}
-		} elseif (
-			$this->allowArrayStringMix
-			&& (
-				in_array($oldType, array_merge(['array', 'stringOrArray'], $this->scalars))
-// 				&& (in_array($newType, $this->scalars) || $newType == 'array')
-				&& $newType !== 'object'
-			)
-		) {
-			if($oldType != 'stringOrArray') {
-				$this->log->log(
-					"WARNING",
-					"An array was encountered where scalar '{$oldType}' was expected!",
-					['row' => $currentRow]
-				);
-			}
-			return 'stringOrArray';
-		} elseif ($newType != "NULL") {
-			// Throw a JsonParserException 'cos of a type mismatch
-			$old = json_encode($oldType);
-			$new = json_encode($newType);
-			throw new JsonParserException(
-				"Unhandled type change from {$old} to {$new} in '{$type}'",
-				['newValue' => json_encode($currentRow)]
-			);
-		} else {
-			// Now obviously this shouldn't ever possibly happen,
-			// but if it does, let's have something to work with
-			throw new JsonParserException(
-				"Unexpected error occured while updating the structure tree!",
-				[
-					'oldType' => $oldType,
-					'newType' => $newType,
-					'type' => $type,
-					'newValue' => json_encode($currentRow)
-				]
-			);
-		}
-	}
-
-	/**
-	 * Recursively scans $object for non-empty objects
-	 * Returns true if the object contains no scalar nor array
-	 * @param \stdClass $object
-	 * @return bool
-	 */
-	protected function isEmptyObject(\stdClass $object)
-	{
-		$vars = get_object_vars($object);
-		if($vars == []) {
-			return true;
-		} else {
-			foreach($vars as $var) {
-				if (!is_object($var)) {
-					return false;
-				} else {
-					return $this->isEmptyObject((object) $var);
-				}
-			}
-		}
-	}
 
 	/**
 	 * Returns an array of CSV files containing results
@@ -871,41 +644,6 @@ class Parser
 	public function setNestedArrayAsJson($bool)
 	{
 		$this->nestedArrayAsJson = (bool) $bool;
-	}
-
-	/**
-	 * If enabled, and an object contains an array where
-	 * a string is expected, a "link" ID is saved in place
-	 * of the string and a child CSV is created
-	 * @param bool $bool
-	 */
-	public function setAllowArrayStringMix($allow)
-	{
-		$this->allowArrayStringMix = (bool) $allow;
-	}
-
-	/**
-	 * If enabled, and an object contains an array where
-	 * an array is not expected, a "link" ID is saved in place
-	 * of the string and a child CSV is created.
-	 * Takes priority over allowArrayStringMix
-	 *
-	 * This should **only** be used with $analyzeRows = -1
-	 *
-	 * Only enable this as a last resort if you cannot supply a JSON
-	 * without inconsistent array/object conflicts
-	 * @param bool $bool
-	 * @experimental
-	 */
-	public function setAutoUpgradeToArray($enable)
-	{
-		if ($this->analyzeRows != -1) {
-			throw new JsonParserException("autoUpgradeToArray can only be used with \$analyzeRows == -1 to prevent unexpected behavior (parsing before discovering a value should be an array)");
-		}
-
-		$this->log->log('warning', "Using automatic conversion of single values to arrays where required. Strict mode enabled.");
-
-		$this->autoUpgradeToArray = (bool) $enable;
 	}
 
 	/**

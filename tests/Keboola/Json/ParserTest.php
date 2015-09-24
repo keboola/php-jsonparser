@@ -699,9 +699,9 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 			file_get_contents($parser->getCsvFiles()['root_strArr'])
 		);
 
-// 		$this->assertTrue(
-// 			$logHandler->hasWarningRecords("An array was encountered where scalar 'string' was expected!")
-// 		);
+		$this->assertTrue(
+			$logHandler->hasWarningThatContains("An array was encountered where scalar 'string' was expected!")
+		);
 	}
 
 	public function testUnderscoreHeader()
@@ -855,6 +855,44 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 		);
 	}
 
+	public function testAutoUpgradeToArrayNonStrict()
+	{
+		$parser = $this->getParser();
+		$parser->setAutoUpgradeToArray(true);
+
+		$data = [
+			(object) [
+				'id' => 1,
+				'objects' => [
+					(object) [
+						'data' => 'firstInArr'
+					],
+					(object) [
+						'data' => 'secondInArr'
+					]
+				],
+				'scalars' => [
+					1,
+					'second'
+				]
+			],
+			(object) [
+				'id' => 'two',
+				'objects' => (object) [
+					'data' => 'singleObject'
+				],
+				'scalars' => 2.1
+			]
+		];
+		$parser->process($data);
+
+		foreach($parser->getCsvFiles() as $k => $result) {
+			var_dump($k, file_get_contents($result));
+		}
+		var_dump($parser->getStruct());
+
+	}
+
 	/**
 	 * @expectedException \Keboola\Json\Exception\JsonParserException
 	 * @expectedExceptionMessage Unhandled type change from "autoArrayOfobject" to "string" in 'root.key'
@@ -1004,6 +1042,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 			$parser->getStruct()
 		);
 	}
+
 
 	/**
 	 * Call a non-public method
