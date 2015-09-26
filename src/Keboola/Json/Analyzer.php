@@ -1,6 +1,7 @@
 <?php
 namespace Keboola\Json;
 
+use Keboola\Json\Exception\JsonParserException;
 use Monolog\Logger;
 
 class Analyzer
@@ -29,6 +30,11 @@ class Analyzer
 	protected $rowsAnalyzed = [];
 
 	/**
+	 * @var bool
+	 */
+	protected $nestedArrayAsJson = false;
+
+	/**
 	 * @var Logger
 	 */
 	protected $log;
@@ -49,15 +55,9 @@ class Analyzer
 	 */
 	public function analyze(array $data, $type)
 	{
-if ($this->isAnalyzed($type)) {
-	return;
-}
-
-// if (empty($this->rowsAnalyzed[$type])) {
-// 	$this->log->log("debug", "Analyzing {$type}", [
-// 		"rowsAnalyzed" => $this->rowsAnalyzed
-// 	]);
-// }
+		if ($this->isAnalyzed($type)) {
+			return;
+		}
 
 		$this->rowsAnalyzed[$type] = empty($this->rowsAnalyzed[$type])
 			? count($data)
@@ -175,5 +175,22 @@ if ($this->isAnalyzed($type)) {
 	public function getRowsAnalyzed()
 	{
 		return $this->rowsAnalyzed;
+	}
+
+	/**
+	 * If enabled, nested arrays will be saved as JSON strings instead
+	 * @param bool $bool
+	 */
+	public function setNestedArrayAsJson($bool)
+	{
+		$this->nestedArrayAsJson = (bool) $bool;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function getNestedArrayAsJson()
+	{
+		return $this->nestedArrayAsJson;
 	}
 }

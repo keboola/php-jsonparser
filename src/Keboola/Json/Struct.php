@@ -84,7 +84,7 @@ class Struct
 	public function add($type, array $struct)
 	{
 		if (empty($this->struct[$type]) || $this->struct[$type] == "NULL") {
-			// if we already know the row's types
+			// If we don't know the type yet
 			$this->struct[$type] = $struct;
 		} elseif ($this->struct[$type] !== $struct) {
 			// If the current row doesn't match the known structure
@@ -103,6 +103,8 @@ class Struct
 	/**
 	 * Return currently stored dataType with currently analyzed one,
 	 * if it is a valid update
+	 * Should only be called with different $oldType and $newType
+	 * to prevent turning all into 'scalar'
 	 * @param string &$oldType
 	 * @param string $newType
 	 * @param string $type for logging
@@ -137,23 +139,12 @@ class Struct
 			$this->upgradeToArrayCheck($oldType, $newType)
 		) {
 			return $this->upgradeToArray($oldType, $newType);
-		} elseif ($newType != "NULL") {
+		} else {
 			// Throw a JsonParserException 'cos of a type mismatch
 			$old = json_encode($oldType);
 			$new = json_encode($newType);
 			throw new JsonParserException(
 				"Unhandled type change from {$old} to {$new} in '{$type}'"
-			);
-		} else {
-			// Now obviously this shouldn't ever possibly happen,
-			// but if it does, let's have something to work with
-			throw new JsonParserException(
-				"Unexpected error occured while updating the structure tree!",
-				[
-					'oldType' => $oldType,
-					'newType' => $newType,
-					'type' => $type
-				]
 			);
 		}
 	}
@@ -181,9 +172,9 @@ class Struct
 	{
 		return $this->autoUpgradeToArray
 			&& (
-				(substr($oldType, 0, 7) == 'arrayOf' && substr($oldType, 7) == $newType) // the newType will have to be a check for scalar/whatevs (scalar OR object? what about arrays?)
+				($this->isArrayOf($oldType) && substr($oldType, 7) == $newType)
 				|| $oldType == 'array'
-				|| $newType == 'array'
+				|| $newType == 'array' // FIXME need to check contents for type! On analysis of the array?
 			);
 	}
 
@@ -194,13 +185,18 @@ class Struct
 	 */
 	protected function upgradeToArray($oldType, $newType)
 	{
-		if (substr($oldType, 0, 7) == 'arrayOf') {
+		if ($this->isArrayOf($oldType)) {
 			return $oldType;
 		} elseif ($oldType == 'array') {
 			return 'arrayOf' . $newType;
 		} else {
 			return 'arrayOf' . $oldType;
 		}
+	}
+
+	public function isArrayOf($type)
+	{
+		return $this->autoUpgradeToArray && substr($type, 0, 7) == 'arrayOf';
 	}
 
 	/**

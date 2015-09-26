@@ -294,7 +294,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	public function testParentIdHashSameValues()
 	{
 		$parser = $this->getParser();
-		$parser->setAutoUpgradeToArray(1);
+		$parser->getStruct()->setAutoUpgradeToArray(1);
 
 		$data = [];
 		$data[] = json_decode('{
@@ -502,7 +502,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	public function testStrictScalarChange()
 	{
 		$parser = $this->getParser();
-		$parser->setStrict(true);
+		$parser->getStruct()->setStrict(true);
 
 		$data = json_decode('[
 			{"field": 128},
@@ -616,7 +616,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	 * There's no current use case for this.
 	 * It should, however, be supported as it is a valid JSON string
 	 * @expectedException \Keboola\Json\Exception\JsonParserException
-	 * @expectedExceptionMessage Unhandled type change from "string" to "array" in 'root.strArr'
+	 * @expectedExceptionMessage Unhandled type change from "scalar" to "array" in 'root.strArr'
 	 */
 	public function testStringArrayMixFail()
 	{
@@ -637,10 +637,8 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
-	 * There's no current use case for this.
-	 * It should, however, be supported as it is a valid JSON string
 	 * @expectedException \Keboola\Json\Exception\JsonParserException
-	 * @expectedExceptionMessage Unhandled type change from "array" to "string" in 'root.strArr'
+	 * @expectedExceptionMessage Unhandled type change from "array" to "scalar" in 'root.strArr'
 	 */
 	public function testStringArrayMixFailOppo()
 	{
@@ -765,7 +763,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	public function testAutoUpgradeToArray()
 	{
 		$parser = $this->getParser();
-		$parser->setAutoUpgradeToArray(true);
+		$parser->getStruct()->setAutoUpgradeToArray(true);
 
 		// Test with object > array > object
 		$data = [
@@ -858,7 +856,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	public function testAutoUpgradeToArrayNonStrict()
 	{
 		$parser = $this->getParser();
-		$parser->setAutoUpgradeToArray(true);
+		$parser->getStruct()->setAutoUpgradeToArray(true);
 
 		$data = [
 			(object) [
@@ -895,12 +893,12 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
 	/**
 	 * @expectedException \Keboola\Json\Exception\JsonParserException
-	 * @expectedExceptionMessage Unhandled type change from "autoArrayOfobject" to "string" in 'root.key'
+	 * @expectedExceptionMessage Unhandled type change from "arrayOfobject" to "scalar" in 'root.key'
 	 */
 	public function testAutoUpgradeToArrayMismatch()
 	{
 		$parser = $this->getParser();
-		$parser->setAutoUpgradeToArray(true);
+		$parser->getStruct()->setAutoUpgradeToArray(true);
 
 		$data = [
 			(object) [
@@ -934,7 +932,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	public function testAutoUpgradeToArrayString()
 	{
 		$parser = $this->getParser();
-		$parser->setAutoUpgradeToArray(true);
+		$parser->getStruct()->setAutoUpgradeToArray(true);
 
 		// Test with object > array > object
 		$data = [
@@ -978,7 +976,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	public function testProcessWithAutoUpgradeToArray()
 	{
 		$parser = $this->getParser();
-		$parser->setAutoUpgradeToArray(true);
+		$parser->getStruct()->setAutoUpgradeToArray(true);
 
 		$testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
 
@@ -1014,36 +1012,6 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 		$this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
 	}
 
-	public function testAnalyzeRow()
-	{
-		$parser = $this->getParser();
-
-		$parser->analyzeRow(new \stdClass, 'empty');
-		$this->assertEquals(['empty' => []], $parser->getStruct());
-
-		$parser->analyzeRow((object) [
-			'k' => 'v',
-			'field' => [
-				1, 2
-			]
-		], 'test');
-
-		$this->assertEquals(
-			[
-				'empty' => [],
-				'test.field' => [
-					'data' => 'integer'
-				],
-				'test' => [
-					'k' => 'string',
-					'field' => 'array'
-				]
-			],
-			$parser->getStruct()
-		);
-	}
-
-
 	/**
 	 * Call a non-public method
 	 * @param mixed $obj
@@ -1069,7 +1037,8 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
 	protected function getParser()
 	{
-		return new Parser(new \Monolog\Logger('test', [new \Monolog\Handler\TestHandler()]));
+// 		return new Parser(new \Monolog\Logger('test', [new \Monolog\Handler\TestHandler()]));
+		return Parser::create(new \Monolog\Logger('test', [new \Monolog\Handler\TestHandler()]));
 	}
 
 	protected function getDataDir()

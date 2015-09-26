@@ -92,6 +92,65 @@ class AnalyzerTest extends ParserTestCase
 		);
 	}
 
+	// FIXME
+	public function testAnalyzeAutoArraysError()
+	{
+		$data = [
+			(object) [
+				'id' => 1,
+				'arrOfScalars' => 1
+			],
+			(object) [
+				'id' => 2,
+				'arrOfScalars' => [
+					(object) [
+						'certainly' => 'not',
+						'a' => 'scalar'
+					]
+				]
+			]
+		];
+
+		$analyzer = new Analyzer($this->getLogger());
+		$analyzer->getStruct()->setAutoUpgradeToArray(true);
+		$analyzer->analyze($data, 'root');
+// var_dump($analyzer->getStruct()->getStruct());
+// 		$this->assertEquals(
+// 			[
+// 				'root.arrOfObjects' => ['innerId' => 'double'],
+// 				'root.arr' => ['data' => 'string'],
+// 				'root' => [
+// 					'id' => 'integer',
+// 					'arrOfScalars' => 'arrayOfscalar',
+// 					'arrOfObjects' => 'arrayOfobject',
+// 					'arr' => 'array'
+// 				],
+// 				'root.arrOfScalars' => ['data' => 'integer'],
+// 			],
+// 			$analyzer->getStruct()->getStruct()
+// 		);
+	}
+
+	// FIXME
+	public function testAnalyzeBadData()
+	{
+		$data = [
+			(object) [
+				'id' => 1,
+				'arr' => [
+					1,
+					(object) ['two' => 'dva']
+				]
+			]
+		];
+
+		$analyzer = new Analyzer($this->getLogger());
+		$analyzer->getStruct()->setAutoUpgradeToArray(true);
+		$analyzer->analyze($data, 'root');
+
+// var_dump($analyzer->getStruct()->getStruct());
+	}
+
 	// TODO if "autoArray" is an empty array, maybe we should ignore it? / configurable?
 
 	public function testIsAnalyzed()
@@ -112,5 +171,34 @@ class AnalyzerTest extends ParserTestCase
 		$this->assertFalse($analyzer->isAnalyzed('test'));
 		$analyzer->analyze($data, 'test');
 		$this->assertTrue($analyzer->isAnalyzed('test'));
+	}
+
+	public function testAnalyzeRow()
+	{
+		$analyzer = new Analyzer($this->getLogger());
+
+		$this->callMethod($analyzer, 'analyzeRow', [new \stdClass, 'empty']);
+		$this->assertEquals(['empty' => []], $analyzer->getStruct()->getStruct());
+
+		$this->callMethod($analyzer, 'analyzeRow', [(object) [
+			'k' => 'v',
+			'field' => [
+				1, 2
+			]
+		], 'test']);
+
+		$this->assertEquals(
+			[
+				'empty' => [],
+				'test.field' => [
+					'data' => 'integer'
+				],
+				'test' => [
+					'k' => 'string',
+					'field' => 'array'
+				]
+			],
+			$analyzer->getStruct()->getStruct()
+		);
 	}
 }
