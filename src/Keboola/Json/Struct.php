@@ -222,7 +222,6 @@ class Struct
 	 * If enabled, and an object contains an array where
 	 * an array is not expected, a "link" ID is saved in place
 	 * of the string and a child CSV is created.
-	 * Takes priority over allowArrayStringMix
 	 *
 	 * This should **only** be used with $analyzeRows = -1
 	 *

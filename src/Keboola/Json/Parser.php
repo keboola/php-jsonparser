@@ -374,18 +374,6 @@ class Parser
 	 */
 	protected function parseField(\stdclass $dataRow, CsvRow $csvRow, $arrayParentId, $column, $dataType, $type)
 	{
-		if ($dataType == "NULL") {
-			$this->log->log(
-				"WARNING", "Encountered data where 'NULL' was expected from previous analysis",
-				[
-					'type' => $type,
-					'data' => $dataRow
-				]
-			);
-// 			$csvRow->setValue(self::DATA_COLUMN, json_encode($dataRow));
-$csvRow->setValue($column, json_encode($dataRow));
-			return;
-		}
 		// TODO safeColumn should be associated with $this->struct[$type]
 		// (and parentCols -> create in parse() where the arr is created)
 		// Actually, the csvRow should REALLY have a pointer to the real name (not validated),
@@ -402,10 +390,23 @@ $csvRow->setValue($column, json_encode($dataRow));
 		) {
 			// do not save empty objects to prevent creation of ["obj_name" => null]
 			if ($dataType != 'object') {
-// 					$row[$safeColumn] = null;
 				$csvRow->setValue($safeColumn, null);
 			}
 
+			return;
+		}
+
+		if ($dataType == "NULL") {
+			// Throw exception instead? Any usecase? TODO get rid of it maybe?
+			$this->log->log(
+				"WARNING", "Encountered data where 'NULL' was expected from previous analysis",
+				[
+					'type' => $type,
+					'data' => $dataRow
+				]
+			);
+
+			$csvRow->setValue($column, json_encode($dataRow));
 			return;
 		}
 
@@ -418,13 +419,10 @@ $csvRow->setValue($column, json_encode($dataRow));
 
 		switch ($dataType) {
 			case "array":
-				// TODO ignore empty arrays? if(empty($dataRow->{$column})) {break;}
-// 					$row[$safeColumn] = $arrayParentId;
 				$csvRow->setValue($safeColumn, $arrayParentId);
 				$this->parse($dataRow->{$column}, $type . "." . $column, $arrayParentId);
 				break;
 			case "object":
-// 					$childRow = new CsvRow($this->getHeader($type . "." . $column));
 				$childRow = $this->parseRow($dataRow->{$column}, $type . "." . $column, [], $arrayParentId);
 
 				$csvRow->setChildValues($safeColumn, $childRow);
@@ -432,7 +430,6 @@ $csvRow->setValue($column, json_encode($dataRow));
 			default:
 				// If a column is an object/array while $struct expects a single column, log an error
 				if (is_scalar($dataRow->{$column})) {
-// 						$row[$safeColumn] = $dataRow->{$column};
 					$csvRow->setValue($safeColumn, $dataRow->{$column});
 				} else {
 					$jsonColumn = json_encode($dataRow->{$column});
@@ -445,7 +442,6 @@ $csvRow->setValue($column, json_encode($dataRow));
 						[ "data" => $jsonColumn, "row" => json_encode($dataRow) ]
 					);
 
-// 						$row[$safeColumn] = $jsonColumn;
 					$csvRow->setValue($safeColumn, $jsonColumn);
 				}
 				break;
@@ -554,10 +550,19 @@ $csvRow->setValue($column, json_encode($dataRow));
 	/**
 	 * Returns (bool) whether the analyzer analyzed anything in this instance
 	 * @return bool
+	 * @deprecated
 	 */
 	public function hasAnalyzed()
 	{
-		return (bool) $this->analyzed;
+		return !empty($this->getAnalyzer()->getRowsAnalyzed());
+	}
+
+	/**
+	 * @return Analyzer
+	 */
+	public function getAnalyzer()
+	{
+		return $this->analyzer;
 	}
 
 	/**

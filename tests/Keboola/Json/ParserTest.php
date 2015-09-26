@@ -591,8 +591,8 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	public function testNestedArrays()
 	{
 		$logHandler = new \Monolog\Handler\TestHandler();
-		$parser = new Parser(new \Monolog\Logger('test', [$logHandler]));
-		$parser->setNestedArrayAsJson(true);
+		$parser = Parser::create(new \Monolog\Logger('test', [$logHandler]));
+		$parser->getAnalyzer()->setNestedArrayAsJson(true);
 		$data = json_decode('
 			[
 				[1,2,3,[7,8]],
@@ -662,8 +662,8 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	{
 		// Not using $this->getParser() to preserve $logHandler accessibility
 		$logHandler = new \Monolog\Handler\TestHandler();
-		$parser = new Parser(new \Monolog\Logger('test', [$logHandler]));
-		$parser->setAllowArrayStringMix(true);
+		$parser = Parser::create(new \Monolog\Logger('test', [$logHandler]));
+		$parser->getStruct()->setAutoUpgradeToArray(true);
 
 		$data = [
 			(object) [
@@ -684,21 +684,19 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
 		$this->assertEquals(
 			'"id","strArr"' . PHP_EOL .
-			'"1","string"' . PHP_EOL .
+			'"1","root_55377b95653cdb124b0bf4575815bffb"' . PHP_EOL .
 			'"2","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL .
-			'"3","65536"' . PHP_EOL,
+			'"3","root_ee855aa4262a5267f05aa9a3dbf5bbf0"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['root'])
 		);
 		$this->assertEquals(
 			'"data","JSON_parentId"' . PHP_EOL .
+			'"string","root_55377b95653cdb124b0bf4575815bffb"' . PHP_EOL .
 			'"ar","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL .
 			'"ra","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL .
-			'"y","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL,
+			'"y","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL .
+			'"65536","root_ee855aa4262a5267f05aa9a3dbf5bbf0"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['root_strArr'])
-		);
-
-		$this->assertTrue(
-			$logHandler->hasWarningThatContains("An array was encountered where scalar 'string' was expected!")
 		);
 	}
 
@@ -853,10 +851,15 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 		);
 	}
 
-	public function testAutoUpgradeToArrayNonStrict()
+	/**
+	 * @expectedException \Keboola\Json\Exception\JsonParserException
+	 * @expectedExceptionMessage Unhandled type change from "integer" to "string" in 'root.scalars.data'
+	 */
+	public function testAutoUpgradeToArrayStrict()
 	{
 		$parser = $this->getParser();
 		$parser->getStruct()->setAutoUpgradeToArray(true);
+		$parser->getStruct()->setStrict(true);
 
 		$data = [
 			(object) [
@@ -884,11 +887,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 		];
 		$parser->process($data);
 
-		foreach($parser->getCsvFiles() as $k => $result) {
-			var_dump($k, file_get_contents($result));
-		}
-		var_dump($parser->getStruct());
-
+		$parser->getCsvFiles();
 	}
 
 	/**
