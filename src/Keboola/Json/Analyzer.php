@@ -17,6 +17,18 @@ class Analyzer
 	protected $analyzeRows;
 
 	/**
+	 * True if analyze() was called
+	 * @var bool
+	 */
+	protected $analyzed;
+
+	/**
+	 * Counts of analyzed rows per data type
+	 * @var array
+	 */
+	protected $rowsAnalyzed = [];
+
+	/**
 	 * @var Logger
 	 */
 	protected $log;
@@ -37,6 +49,20 @@ class Analyzer
 	 */
 	public function analyze(array $data, $type)
 	{
+if ($this->isAnalyzed($type)) {
+	return;
+}
+
+// if (empty($this->rowsAnalyzed[$type])) {
+// 	$this->log->log("debug", "Analyzing {$type}", [
+// 		"rowsAnalyzed" => $this->rowsAnalyzed
+// 	]);
+// }
+
+		$this->rowsAnalyzed[$type] = empty($this->rowsAnalyzed[$type])
+			? count($data)
+			: ($this->rowsAnalyzed[$type] + count($data));
+
 		foreach($data as $row) {
 			$this->analyzeRow($row, $type);
 		}
@@ -92,6 +118,23 @@ class Analyzer
 	}
 
 	/**
+	 * Check whether the data type has been analyzed (enough)
+	 * @param string $type
+	 * @return bool
+	 */
+	public function isAnalyzed($type)
+	{
+// 		return !(!$this->getStruct()->hasDefinitions($type) ||
+// 			$this->analyzeRows == -1 ||
+// 			(!empty($this->rowsAnalyzed[$type]) && $this->rowsAnalyzed[$type] < $this->analyzeRows));
+
+		return $this->getStruct()->hasDefinitions($type)
+			&& $this->analyzeRows != -1
+			&& !empty($this->rowsAnalyzed[$type])
+			&& $this->rowsAnalyzed[$type] >= $this->analyzeRows;
+	}
+
+	/**
 	 * Recursively scans $object for non-empty objects
 	 * Returns true if the object contains no scalar nor array
 	 * @param \stdClass $object
@@ -124,5 +167,13 @@ class Analyzer
 		}
 
 		return $this->struct;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getRowsAnalyzed()
+	{
+		return $this->rowsAnalyzed;
 	}
 }

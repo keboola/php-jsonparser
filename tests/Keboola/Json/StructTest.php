@@ -67,6 +67,8 @@ class StructTest extends ParserTestCase
 		]));
 	}
 
+	// TODO testLoad() w/ error, add "soft" load that ditches wrong values
+
 	protected function getStruct()
 	{
 		return new Struct(new \Monolog\Logger('test', [new \Monolog\Handler\TestHandler()]));

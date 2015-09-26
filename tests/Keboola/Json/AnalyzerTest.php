@@ -61,12 +61,14 @@ class AnalyzerTest extends ParserTestCase
 				'arrOfScalars' => 1,
 				'arrOfObjects' => [
 					(object) ['innerId' => 1.1]
-				]
+				],
+				'arr' => ["a","b"]
 			],
 			(object) [
 				'id' => 2,
 				'arrOfScalars' => [2,3],
-				'arrOfObjects' => (object) ['innerId' => 2.1]
+				'arrOfObjects' => (object) ['innerId' => 2.1],
+				'arr' => ["c","d"]
 			]
 		];
 
@@ -74,6 +76,41 @@ class AnalyzerTest extends ParserTestCase
 		$analyzer->getStruct()->setAutoUpgradeToArray(true);
 		$analyzer->analyze($data, 'root');
 
-		var_dump($analyzer->getStruct()->getStruct());
+		$this->assertEquals(
+			[
+				'root.arrOfObjects' => ['innerId' => 'double'],
+				'root.arr' => ['data' => 'string'],
+				'root' => [
+					'id' => 'integer',
+					'arrOfScalars' => 'arrayOfscalar',
+					'arrOfObjects' => 'arrayOfobject',
+					'arr' => 'array'
+				],
+				'root.arrOfScalars' => ['data' => 'integer'],
+			],
+			$analyzer->getStruct()->getStruct()
+		);
+	}
+
+	// TODO if "autoArray" is an empty array, maybe we should ignore it? / configurable?
+
+	public function testIsAnalyzed()
+	{
+		$analyzer = new Analyzer($this->getLogger());
+
+		$data = [
+			(object) [
+				'id' => 1,
+				'str' => "hi"
+			]
+		];
+
+		$analyzer->analyze($data, 'test');
+		$this->assertFalse($analyzer->isAnalyzed('test'));
+
+		$analyzer = new Analyzer($this->getLogger(), null, 1);
+		$this->assertFalse($analyzer->isAnalyzed('test'));
+		$analyzer->analyze($data, 'test');
+		$this->assertTrue($analyzer->isAnalyzed('test'));
 	}
 }

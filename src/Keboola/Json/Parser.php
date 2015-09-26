@@ -49,8 +49,6 @@ class Parser
 {
 	const DATA_COLUMN = 'data';
 
-	const STRUCT_VERSION = 1.0;
-
 	/**
 	 * Headers for each type
 	 * @var array
@@ -61,18 +59,6 @@ class Parser
 	 * @var Table[]
 	 */
 	protected $csvFiles = [];
-
-	/**
-	 * True if analyze() was called
-	 * @var bool
-	 */
-	protected $analyzed;
-
-	/**
-	 * Counts of analyzed rows per data type
-	 * @var array
-	 */
-	protected $rowsAnalyzed = [];
 
 	/**
 	 * @var Cache
@@ -124,26 +110,20 @@ class Parser
 		$this->log = $logger;
 	}
 
-	public static function create(Logger $logger, array $struct = [], $analyzeRows = -1)
+	public static function create(Logger $logger, array $definitions = [], $analyzeRows = -1)
 	{
+		$struct = new Struct($logger);
+		$struct->load($definitions);
 		$analyzer = new Analyzer($logger, $struct, $analyzeRows);
 
 		return new static($logger, $analyzer);
 	}
 
 	/**
-	 * Parse an array of results. If their structure isn't known,
-	 * it is stored, analyzed and then parsed upon retrieval by getCsvFiles()
-	 * Expects an array of results in the $data parameter
-	 * Checks whether the data needs to be analyzed,
-	 * and either analyzes or parses it into $this->csvFiles[$type]
-	 * ($type is polished to comply with SAPI naming requirements)
-	 * If the data is analyzed, it is stored in Cache
-	 * and **NOT PARSED** until $this->getCsvFiles() is called
-	 *
-	 * @TODO FIXME keep the order of data as on the input
-	 * 	- try to parse data from Cache before parsing new data
-	 * 	- sort of fixed by defaulting to -1 analyze default
+	 * Analyze and store an array of data for parsing.
+	 * The analysis is done immediately, based on the analyzer settings,
+	 * then the data is stored using \Keboola\Json\Cache and parsed
+	 * upon retrieval using getCsvFiles().
 	 *
 	 * @param array $data
 	 * @param string $type is used for naming the resulting table(s)
@@ -159,7 +139,7 @@ class Parser
 	public function process(array $data, $type = "root", $parentId = null)
 	{
 		// The analyzer wouldn't set the $struct and parse fails!
-		if (empty($data) && empty($this->struct[$type])) {
+		if (empty($data) && empty($this->struct->getTypes($type))) {
 			$this->log->log("warning", "Empty data set received for {$type}", [
 				"data" => $data,
 				"type" => $type,
@@ -169,41 +149,20 @@ class Parser
 			return;
 		}
 
-		// If we don't know the data (enough), store it in Cache,
-		// analyze, and parse when asked for it in getCsvFiles()
-// TODO leave this IF to analyzer
-// always send it to analyzer, leave it to decide whether to analyze or do nothing.
-// then cache everything, and parse everything upon retrieval by results getter
-		if (
-			!array_key_exists($type, $this->struct) ||
-			$this->analyzeRows == -1 ||
-			(!empty($this->rowsAnalyzed[$type]) && $this->rowsAnalyzed[$type] < $this->analyzeRows)
-		) {
-			if (empty($this->rowsAnalyzed[$type])) {
-				$this->log->log("debug", "Analyzing {$type}", [
-// 					"struct" => json_encode($this->struct),
-					"analyzeRows" => $this->analyzeRows,
-					"rowsAnalyzed" => json_encode($this->rowsAnalyzed)
-				]);
-			}
-
-			$this->rowsAnalyzed[$type] = empty($this->rowsAnalyzed[$type])
-				? count($data)
-				: ($this->rowsAnalyzed[$type] + count($data));
-
-			$this->initCache();
-
-			$this->cache->store([
-				"data" => $data,
-				"type" => $type,
-				"parentId" => $parentId
+		// Log it here since we shouln't log children analysis
+		if (empty($this->analyzer->getRowsAnalyzed()[$type])) {
+			$this->log->log("debug", "Analyzing {$type}", [
+				"rowsAnalyzed" => $this->analyzer->getRowsAnalyzed()
 			]);
-
-			$this->analyze($data, $type);
-		} else {
-			$this->parse($data, $type, $parentId);
 		}
-		// TODO return the files written into
+
+		$this->analyzer->analyze($data, $type);
+
+		$this->getCache()->store([
+			"data" => $data,
+			"type" => $type,
+			"parentId" => $parentId
+		]);
 	}
 
 	/**
@@ -215,19 +174,16 @@ class Parser
 	protected function getHeader($type, $parent = false)
 	{
 		$header = [];
-		if (is_scalar($this->struct[$type])) {
-			$header[] = self::DATA_COLUMN;
-		} else {
-			foreach($this->struct[$type] as $column => $dataType) {
-				if ($dataType == "object") {
-					foreach($this->getHeader($type . "." . $column) as $col => $val) {
-						// FIXME this is awkward, the createSafeSapiName shouldn't need to be used twice
-						// (here and in validateHeader again)
-						$header[] = $this->createSafeSapiName($column) . "_" . $val;
-					}
-				} else {
-					$header[] = $column;
+
+		foreach($this->struct->getDefinitions($type) as $column => $dataType) {
+			if ($dataType == "object") {
+				foreach($this->getHeader($type . "." . $column) as $col => $val) {
+					// FIXME this is awkward, the createSafeSapiName shouldn't need to be used twice
+					// (here and in validateHeader again)
+					$header[] = $this->createSafeSapiName($column) . "_" . $val;
 				}
+			} else {
+				$header[] = $column;
 			}
 		}
 
@@ -397,9 +353,14 @@ class Parser
 	 * @param string $outerObjectHash Outer object hash to distinguish different parents in deep nested arrays
 	 * @return array
 	 */
-	public function parseRow(\stdClass $dataRow, CsvRow $csvRow, $type, array $parentCols = [], $outerObjectHash = null)
-	{
-		if ($this->struct[$type] == "NULL") {
+	public function parseRow(
+		\stdClass $dataRow,
+		CsvRow $csvRow,
+		$type,
+		array $parentCols = [],
+		$outerObjectHash = null
+	) {
+		if ($this->getStruct()->getType($type, $column) == "NULL") {
 			$this->log->log(
 				"WARNING", "Encountered data where 'NULL' was expected from previous analysis",
 				[
@@ -456,6 +417,7 @@ class Parser
 
 			switch ($dataType) {
 				case "array":
+					// TODO ignore empty arrays? if(empty($dataRow->{$column})) {break;}
 					$row[$safeColumn] = $arrayParentId;
 					$csvRow->setValue($safeColumn, $arrayParentId);
 					$this->parse($dataRow->{$column}, $type . "." . $column, $row[$safeColumn]);
@@ -549,19 +511,21 @@ class Parser
 	}
 
 	/**
-	 * @return void
+	 * @return Cache
 	 */
-	protected function initCache()
+	protected function getCache()
 	{
 		if (empty($this->cache)) {
 			$this->cache = new Cache();
 		}
+
+		return $this->cache;
 	}
 
 	/**
 	 * @return void
 	 */
-	protected function processCache()
+	public function processCache()
 	{
 		if(!empty($this->cache)) {
 			while ($batch = $this->cache->getNext()) {
@@ -572,8 +536,7 @@ class Parser
 
 
 	/**
-	 * Read results of data analysis from $this->struct
-	 * @return array
+	 * @return Struct
 	 */
 	public function getStruct()
 	{
@@ -583,10 +546,11 @@ class Parser
 	/**
 	 * Version of $struct array used in parser
 	 * @return double
+	 * @deprecated use Struct::getStructVersion()
 	 */
 	public function getStructVersion()
 	{
-		return static::STRUCT_VERSION;
+		return $this->getStruct()->getStructVersion();
 	}
 
 	/**
@@ -628,16 +592,6 @@ class Parser
 	}
 
 	/**
-	 * Set whether scalars are treated as compatible
-	 * within a field (default = false -> compatible)
-	 * @param bool $strict
-	 */
-	public function setStrict($strict)
-	{
-		$this->strict = (bool) $strict;
-	}
-
-	/**
 	 * If enabled, nested arrays will be saved as JSON strings instead
 	 * @param bool $bool
 	 */
@@ -652,8 +606,6 @@ class Parser
 	 */
 	public function setCacheMemoryLimit($limit)
 	{
-		$this->initCache();
-
-		return $this->cache->setMemoryLimit($limit);
+		return $this->getCache()->setMemoryLimit($limit);
 	}
 }

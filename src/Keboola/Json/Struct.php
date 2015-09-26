@@ -34,6 +34,8 @@ class Struct
 		"NULL"
 	];
 
+	const STRUCT_VERSION = 2.0;
+
 	/**
 	 * @var Logger
 	 */
@@ -46,7 +48,17 @@ class Struct
 
 	public function load(array $struct = [])
 	{
-		foreach($struct as $type => $defs) {
+		foreach($struct as $key => $defs) {
+			if (!is_array($defs)) {
+				throw new JsonParserException(
+					"Invalid data definitions in '{$key}'. Each key should contain an array of data types in an associative array.",
+					[
+						'key' => $key,
+						'defs' => $defs
+					]
+				);
+			}
+
 			foreach($defs as $node => $type) {
 				if (
 					!$this->isValidType($type)
@@ -56,7 +68,7 @@ class Struct
 						$type = json_encode($type);
 					}
 
-					throw new JsonParserException("Error loading data structure definition in '{$node}'! '{$type}' is not a valid data type.");
+					throw new JsonParserException("Error loading data structure definition in '{$key}.{$node}'! '{$type}' is not a valid data type.");
 				}
 			}
 		}
@@ -210,7 +222,6 @@ class Struct
 		$this->strict = (bool) $strict;
 	}
 
-
 	/**
 	 * If enabled, and an object contains an array where
 	 * an array is not expected, a "link" ID is saved in place
@@ -238,5 +249,54 @@ class Struct
 	public function getStruct()
 	{
 		return $this->struct;
+	}
+
+	public function hasDefinitions($type)
+	{
+		return !empty($this->struct[$type]);
+	}
+
+	/**
+	 * Get all child data types
+	 * @param string $type Key for which to retrieve data types
+	 * @return array Array of data types within the $type ($type should really be a key!)
+	 */
+	public function getDefinitions($type)
+	{
+		if (!$this->hasDefinitions($type)) {
+			throw new JsonParserException("Trying to retrieve unknown definitions for '{$type}'");
+		}
+
+		return $this->struct[$type];
+	}
+
+	public function hasType($type, $child)
+	{
+		return !empty($this->getDefinitions($type)[$child]);
+	}
+
+	/**
+	 * Get a particular data type of a single key
+	 * @param string $type
+	 * @param string $child
+	 * @return string data type
+	 */
+	public function getType($type, $child)
+	{
+		$definitions = $this->getDefinitions($type);
+		if (!$this->hasType($type, $child)) {
+			throw new JsonParserException("Trying to retrieve type of '{$type}.{$child}'");
+		}
+
+		return [$child];
+	}
+
+	/**
+	 * Version of $struct array used in parser
+	 * @return double
+	 */
+	public function getStructVersion()
+	{
+		return self::STRUCT_VERSION;
 	}
 }
