@@ -9,7 +9,7 @@ Uses Keboola\CsvFile for results
 
 ```php
     use Keboola\Json\Parser;
-	$parser = new Parser(new \Monolog\Logger('json-parser'));
+	$parser = Parser::create(new \Monolog\Logger('json-parser'));
 	$file = file_get_contents("some/data.json");
 	$json = json_decode($file);
 
@@ -23,7 +23,7 @@ Uses Keboola\CsvFile for results
 
 Analyzes and parses JSON data into n*CSV files.
 
-## __construct(\Monolog\Logger $logger, $struct, $analyzeRows)
+## create(\Monolog\Logger $logger, $struct, $analyzeRows)
 - $struct should contain an array with results from previous analyze() calls (called automatically by process())
 - $analyzeRows determines, how many rows of data (counting only the "root" level of each Json)  will be analyzed [default 500, -1 for infinite]
 
