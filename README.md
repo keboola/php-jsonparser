@@ -25,7 +25,7 @@ Analyzes and parses JSON data into n*CSV files.
 
 ## create(\Monolog\Logger $logger, $struct, $analyzeRows)
 - $struct should contain an array with results from previous analyze() calls (called automatically by process())
-- $analyzeRows determines, how many rows of data (counting only the "root" level of each Json)  will be analyzed [default 500, -1 for infinite]
+- $analyzeRows determines, how many rows of data (counting only the "root" level of each Json)  will be analyzed [default -1 for infinite]
 
 ## process($data, $type, $parentId)
 - Expects an array of results as the $data parameter

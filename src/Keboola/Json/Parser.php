@@ -11,7 +11,7 @@ use Keboola\Json\Exception\JsonParserException,
 /**
  * JSON to CSV data analyzer and parser/converter
  *
- * Use to convert JSON data into CSV file(s).
+ * Use to convert JSON objects into CSV file(s).
  * Creates multiple files if the JSON contains arrays
  * to store values of child nodes in a separate table,
  * linked by JSON_parentId column.
@@ -42,12 +42,12 @@ use Keboola\Json\Exception\JsonParserException,
  * 		data $type to multiple files
  * 		(ie. type "person" to "customer" and "user")
  *
- * @todo A Struct class that will ensure the struct is free of errors
- *		- Exactly one level of nesting
- *		- The data type in each $type is supported (array, object, string, ..., arrayOf$)
  */
 class Parser
 {
+	/**
+	 * Column name for an array of scalars
+	 */
 	const DATA_COLUMN = 'data';
 
 	/**
@@ -263,7 +263,7 @@ class Parser
 			// analyse instead of failing if the data is unknown!
 			$this->log->log(
 				"debug",
-				"Json::parse() ran into an unknown data type '{$type}' - trying on-the-fly analysis",
+				"Parser experienced an unknown data type '{$type}'. Trying on-the-fly analysis",
 				[
 					"data" => $data,
 					"type" => $type,
@@ -274,43 +274,9 @@ class Parser
 			$this->analyzer->analyze($data, $type);
 		}
 
-		if (empty($this->headers[$type])) {
-			$this->headers[$type] = $this->getHeader($type, $parentId);
-		}
+		$parentId = $this->validateParentId($parentId);
 
-		// TODO add a $file parameter to use instead of $type
-		// to allow saving a single type to different files
-		$safeType = $this->createSafeName($type);
-		if (empty($this->csvFiles[$safeType])) {
-			$this->csvFiles[$safeType] = Table::create(
-				$safeType,
-				$this->headers[$type],
-				$this->getTemp()
-			);
-			$this->csvFiles[$safeType]->addAttributes(["fullDisplayName" => $type]);
-		}
-
-		if (!empty($parentId)) {
-			if (is_array($parentId)) {
-				// Ensure the parentId array is not multidimensional
-				// TODO should be a different exception
-				// - separate parse and "setup" exceptions
-				if (count($parentId) != count($parentId, COUNT_RECURSIVE)) {
-					throw new JsonParserException(
-						'Error assigning parentId to a CSV file! $parentId array cannot be multidimensional.',
-						[
-							'parentId' => $parentId,
-							'type' => $type,
-							'dataRow' => $row
-						]
-					);
-				}
-			} else {
-				$parentId = ['JSON_parentId' => $parentId];
-			}
-		} else {
-			$parentId = [];
-		}
+		$csvFile = $this->createCsvFile($type, $parentId);
 
 		$parentCols = array_fill_keys(array_keys($parentId), "string");
 
@@ -330,7 +296,7 @@ class Parser
 
 			$csvRow = $this->parseRow($row, $type, $parentCols);
 
-			$this->csvFiles[$safeType]->writeRow($csvRow->getRow());
+			$csvFile->writeRow($csvRow->getRow());
 		}
 	}
 
@@ -460,6 +426,32 @@ class Parser
 	}
 
 	/**
+	 * @todo Add a $file parameter to use instead of $type
+	 * to allow saving a single type to different files
+	 *
+	 * @param string $type
+	 * @return Table
+	 */
+	protected function createCsvFile($type, $parentId)
+	{
+		if (empty($this->headers[$type])) {
+			$this->headers[$type] = $this->getHeader($type, $parentId);
+		}
+
+		$safeType = $this->createSafeName($type);
+		if (empty($this->csvFiles[$safeType])) {
+			$this->csvFiles[$safeType] = Table::create(
+				$safeType,
+				$this->headers[$type],
+				$this->getTemp()
+			);
+			$this->csvFiles[$safeType]->addAttributes(["fullDisplayName" => $type]);
+		}
+
+		return $this->csvFiles[$safeType];
+	}
+
+	/**
 	 * @param \stdClass $dataRow
 	 * @param string $type for logging
 	 * @param string $outerObjectHash
@@ -493,6 +485,35 @@ class Parser
 			// Of no pkey is specified to get the real ID, use a hash of the row
 			return $type . "_" . md5(serialize($dataRow) . $outerObjectHash);
 		}
+	}
+
+	/**
+	 * @param string|array $parentId
+	 * @return array
+	 */
+	protected function validateParentId($parentId)
+	{
+		if (!empty($parentId)) {
+			if (is_array($parentId)) {
+				// Ensure the parentId array is not multidimensional
+				// TODO should be a different exception
+				// - separate parse and "setup" exceptions
+				if (count($parentId) != count($parentId, COUNT_RECURSIVE)) {
+					throw new JsonParserException(
+						'Error assigning parentId to a CSV file! $parentId array cannot be multidimensional.',
+						[
+							'parentId' => $parentId
+						]
+					);
+				}
+			} else {
+				$parentId = ['JSON_parentId' => $parentId];
+			}
+		} else {
+			$parentId = [];
+		}
+
+		return $parentId;
 	}
 
 	/**

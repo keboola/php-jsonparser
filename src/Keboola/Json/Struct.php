@@ -29,6 +29,10 @@ class Struct
 		"NULL"
 	];
 
+	/**
+	 * arrayOfX is always the way an array is stored
+	 * scalar is default in non-strict
+	 */
 	const STRUCT_VERSION = 2.0;
 
 	/**
@@ -41,6 +45,10 @@ class Struct
 		$this->log = $logger;
 	}
 
+	/**
+	 * Initialize the structure with an array of definitions
+	 * @param array $struct
+	 */
 	public function load(array $struct = [])
 	{
 		foreach($struct as $key => $defs) {
@@ -158,7 +166,7 @@ class Struct
 		return $this->autoUpgradeToArray
 			&& (
 				($this->isArrayOf($oldType) && substr($oldType, 7) == $newType)
-				|| $newType == 'arrayOf' . $oldType // FIXME need to check contents for type! On analysis of the array?
+				|| $newType == 'arrayOf' . $oldType
 			);
 	}
 
@@ -217,7 +225,7 @@ class Struct
 	}
 
 	/**
-	 * Return structure definitions as an array
+	 * Return all structure definitions as an array
 	 * @return array
 	 */
 	public function getStruct()
@@ -225,6 +233,10 @@ class Struct
 		return $this->struct;
 	}
 
+	/**
+	 * @param string $type
+	 * @return bool
+	 */
 	public function hasDefinitions($type)
 	{
 		return !empty($this->struct[$type]);
@@ -244,6 +256,11 @@ class Struct
 		return $this->struct[$type];
 	}
 
+	/**
+	 * @param string $type
+	 * @param string $child
+	 * @return bool
+	 */
 	public function hasType($type, $child)
 	{
 		return $this->hasDefinitions($type) && !empty($this->getDefinitions($type)[$child]);
@@ -263,6 +280,30 @@ class Struct
 		}
 
 		return $this->getDefinitions($type)[$child];
+	}
+
+	/**
+	 * Gets the contents type of an array from Struct
+	 * @param string $type
+	 * @return string|null
+	 */
+	public function getArrayType($type)
+	{
+		$separator = strrpos($type, '.');
+		if (!$separator) {
+			$parent = $type;
+			$child = Parser::DATA_COLUMN;
+		} else {
+			$parent = substr($type, 0, $separator);
+			$child = substr($type, $separator + 1);
+		}
+
+		if ($this->hasType($parent, $child)) {
+			$array = $this->getType($parent, $child);
+			return str_replace('arrayOf', '', $array);
+		} else {
+			return null;
+		}
 	}
 
 	/**

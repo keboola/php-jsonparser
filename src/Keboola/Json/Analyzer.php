@@ -68,7 +68,7 @@ class Analyzer
 			? count($data)
 			: ($this->rowsAnalyzed[$type] + count($data));
 
-		$rowType = $this->getArrayType($type);
+		$rowType = $this->getStruct()->getArrayType($type);
 		foreach($data as $row) {
 			$newType = $this->analyzeRow($row, $type);
 			if (
@@ -143,25 +143,11 @@ class Analyzer
 		return $rowType;
 	}
 
-	protected function getArrayType($type)
-	{
-		$separator = strrpos($type, '.');
-		if (!$separator) {
-			$parent = $type;
-			$child = Parser::DATA_COLUMN;
-		} else {
-			$parent = substr($type, 0, $separator);
-			$child = substr($type, $separator + 1);
-		}
-
-		if ($this->getStruct()->hasType($parent, $child)) {
-			$array = $this->getStruct()->getType($parent, $child);
-			return str_replace('arrayOf', '', $array);
-		} else {
-			return null;
-		}
-	}
-
+	/**
+	 * Returns data type of a variable based on 'strict' setting
+	 * @param mixed $var
+	 * @return string
+	 */
 	public function getType($var)
 	{
 		return $this->strict ? gettype($var) :
@@ -175,10 +161,6 @@ class Analyzer
 	 */
 	public function isAnalyzed($type)
 	{
-// 		return !(!$this->getStruct()->hasDefinitions($type) ||
-// 			$this->analyzeRows == -1 ||
-// 			(!empty($this->rowsAnalyzed[$type]) && $this->rowsAnalyzed[$type] < $this->analyzeRows));
-
 		return $this->getStruct()->hasDefinitions($type)
 			&& $this->analyzeRows != -1
 			&& !empty($this->rowsAnalyzed[$type])
