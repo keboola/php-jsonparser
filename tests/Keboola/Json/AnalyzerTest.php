@@ -168,7 +168,7 @@ class AnalyzerTest extends ParserTestCase
 
 	/**
 	 * @expectedException \Keboola\Json\Exception\JsonParserException
-	 * @expectedExceptionMessage Unhandled type change from "scalar" to "arrayOfobject" in 'root.arrOfScalars'
+	 * @expectedExceptionMessage Data array in 'test.arrOfScalars' contains incompatible data types 'scalar' and 'object'!
 	 */
 	public function testAnalyzeAutoArraysError()
 	{
@@ -343,7 +343,7 @@ class AnalyzerTest extends ParserTestCase
 
 	/**
 	 * @expectedException \Keboola\Json\Exception\JsonParserException
-	 * @expectedExceptionMessage Unhandled type change from "arrayOfscalar" to "arrayOfobject" in 'test.arr'
+	 * @expectedExceptionMessage Data array in 'test.arr' contains incompatible data types 'scalar' and 'object'!
 	 */
 	public function testAnalyzeKnownArrayMismatch2()
 	{

@@ -68,8 +68,7 @@ class Analyzer
 			? count($data)
 			: ($this->rowsAnalyzed[$type] + count($data));
 
-		// TODO get from struct if exists
-		$rowType = null;
+		$rowType = $this->getArrayType($type);
 		foreach($data as $row) {
 			$newType = $this->analyzeRow($row, $type);
 			if (
@@ -139,19 +138,28 @@ class Analyzer
 			throw new JsonParserException("Unsupported data row in '{$type}'!", ['row' => $row]);
 		}
 
-foreach($struct as $k => $v) {
-	if ($v == 'arrayOf') {
-		var_dump($k, $row); die();
-
-	}
-
-}
-
-
-
 		$this->getStruct()->add($type, $struct);
 
 		return $rowType;
+	}
+
+	protected function getArrayType($type)
+	{
+		$separator = strrpos($type, '.');
+		if (!$separator) {
+			$parent = $type;
+			$child = Parser::DATA_COLUMN;
+		} else {
+			$parent = substr($type, 0, $separator);
+			$child = substr($type, $separator + 1);
+		}
+
+		if ($this->getStruct()->hasType($parent, $child)) {
+			$array = $this->getStruct()->getType($parent, $child);
+			return str_replace('arrayOf', '', $array);
+		} else {
+			return null;
+		}
 	}
 
 	public function getType($var)

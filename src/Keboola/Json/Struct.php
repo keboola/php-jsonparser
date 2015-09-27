@@ -246,7 +246,7 @@ class Struct
 
 	public function hasType($type, $child)
 	{
-		return !empty($this->getDefinitions($type)[$child]);
+		return $this->hasDefinitions($type) && !empty($this->getDefinitions($type)[$child]);
 	}
 
 	/**
@@ -262,7 +262,7 @@ class Struct
 			throw new JsonParserException("Trying to retrieve type of '{$type}.{$child}'");
 		}
 
-		return [$child];
+		return $this->getDefinitions($type)[$child];
 	}
 
 	/**
