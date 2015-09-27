@@ -43,7 +43,7 @@ class AnalyzerTest extends ParserTestCase
 				],
 				'root' => [
 					'id' => 'scalar',
-					'arr' => 'array',
+					'arr' => 'arrayOfscalar',
 					'obj' => 'object',
 				],
 			],
@@ -84,7 +84,7 @@ class AnalyzerTest extends ParserTestCase
 				],
 				'root' => [
 					'id' => 'integer',
-					'arr' => 'array',
+					'arr' => 'arrayOfinteger',
 					'obj' => 'object',
 				],
 			],
@@ -158,7 +158,7 @@ class AnalyzerTest extends ParserTestCase
 					'id' => 'scalar',
 					'arrOfScalars' => 'arrayOfscalar',
 					'arrOfObjects' => 'arrayOfobject',
-					'arr' => 'array'
+					'arr' => 'arrayOfscalar'
 				],
 				'root.arrOfScalars' => ['data' => 'scalar'],
 			],
@@ -166,7 +166,10 @@ class AnalyzerTest extends ParserTestCase
 		);
 	}
 
-	// FIXME
+	/**
+	 * @expectedException \Keboola\Json\Exception\JsonParserException
+	 * @expectedExceptionMessage Unhandled type change from "scalar" to "arrayOfobject" in 'root.arrOfScalars'
+	 */
 	public function testAnalyzeAutoArraysError()
 	{
 		$data = [
@@ -192,21 +195,6 @@ class AnalyzerTest extends ParserTestCase
 		$analyzer = new Analyzer($this->getLogger('analyzer', true));
 		$analyzer->getStruct()->setAutoUpgradeToArray(true);
 		$analyzer->analyze($data, 'root');
-// var_dump($analyzer->getStruct()->getStruct());
-// 		$this->assertEquals(
-// 			[
-// 				'root.arrOfObjects' => ['innerId' => 'double'],
-// 				'root.arr' => ['data' => 'string'],
-// 				'root' => [
-// 					'id' => 'integer',
-// 					'arrOfScalars' => 'arrayOfscalar',
-// 					'arrOfObjects' => 'arrayOfobject',
-// 					'arr' => 'array'
-// 				],
-// 				'root.arrOfScalars' => ['data' => 'integer'],
-// 			],
-// 			$analyzer->getStruct()->getStruct()
-// 		);
 	}
 
 	/**
@@ -274,7 +262,7 @@ class AnalyzerTest extends ParserTestCase
 				],
 				'test' => [
 					'k' => 'scalar',
-					'field' => 'array'
+					'field' => 'arrayOfscalar'
 				]
 			],
 			$analyzer->getStruct()->getStruct()

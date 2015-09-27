@@ -158,8 +158,7 @@ class Struct
 		return $this->autoUpgradeToArray
 			&& (
 				($this->isArrayOf($oldType) && substr($oldType, 7) == $newType)
-				|| $oldType == 'array'
-				|| $newType == 'array' // FIXME need to check contents for type! On analysis of the array?
+				|| $newType == 'arrayOf' . $oldType // FIXME need to check contents for type! On analysis of the array?
 			);
 	}
 
@@ -179,9 +178,14 @@ class Struct
 		}
 	}
 
+	/**
+	 * @param string $type
+	 * @return bool
+	 * @todo return the type without arrayOf?
+	 */
 	public function isArrayOf($type)
 	{
-		return $this->autoUpgradeToArray && substr($type, 0, 7) == 'arrayOf';
+		return substr($type, 0, 7) == 'arrayOf';
 	}
 
 	/**

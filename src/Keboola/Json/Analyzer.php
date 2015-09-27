@@ -60,8 +60,8 @@ class Analyzer
 	 */
 	public function analyze(array $data, $type)
 	{
-		if ($this->isAnalyzed($type)) {
-			return;
+		if ($this->isAnalyzed($type) || empty($data)) {
+			return false;
 		}
 
 		$this->rowsAnalyzed[$type] = empty($this->rowsAnalyzed[$type])
@@ -82,6 +82,8 @@ class Analyzer
 			$rowType = $newType;
 		}
 		$this->analyzed = true;
+
+		return $rowType;
 	}
 
 	/**
@@ -115,7 +117,12 @@ class Analyzer
 
 					$this->analyzeRow($field, $type . "." . $key);
 				} elseif ($fieldType == "array") {
-					$this->analyze($field, $type . "." . $key);
+					$arrayType = $this->analyze($field, $type . "." . $key);
+					if (false !== $arrayType) {
+						$fieldType = 'arrayOf' . $arrayType;
+					} else {
+						$fieldType = 'NULL';
+					}
 				}
 
 				$struct[$key] = $fieldType;
@@ -130,6 +137,16 @@ class Analyzer
 		} else {
 			throw new JsonParserException("Unsupported data row in '{$type}'!", ['row' => $row]);
 		}
+
+foreach($struct as $k => $v) {
+	if ($v == 'arrayOf') {
+		var_dump($k, $row); die();
+
+	}
+
+}
+
+
 
 		$this->getStruct()->add($type, $struct);
 

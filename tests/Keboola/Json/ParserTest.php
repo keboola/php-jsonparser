@@ -616,7 +616,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	 * There's no current use case for this.
 	 * It should, however, be supported as it is a valid JSON string
 	 * @expectedException \Keboola\Json\Exception\JsonParserException
-	 * @expectedExceptionMessage Unhandled type change from "scalar" to "array" in 'root.strArr'
+	 * @expectedExceptionMessage Unhandled type change from "scalar" to "arrayOfscalar" in 'root.strArr'
 	 */
 	public function testStringArrayMixFail()
 	{
@@ -638,7 +638,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
 	/**
 	 * @expectedException \Keboola\Json\Exception\JsonParserException
-	 * @expectedExceptionMessage Unhandled type change from "array" to "scalar" in 'root.strArr'
+	 * @expectedExceptionMessage Unhandled type change from "arrayOfscalar" to "scalar" in 'root.strArr'
 	 */
 	public function testStringArrayMixFailOppo()
 	{
