@@ -1010,6 +1010,26 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 		$this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
 	}
 
+	public function testIncompleteData()
+	{
+		$parser = $this->getParser();
+
+		$parser->getStruct()->load([
+			'root' => [
+				'id' => 'scalar',
+				'value' => 'scalar'
+			]
+		]);
+
+		$parser->process([(object) ['id' => 1]]);
+
+		$this->assertEquals(
+			'"id","value"' . PHP_EOL .
+			'"1",""' . PHP_EOL,
+			file_get_contents($parser->getCsvFiles()['root'])
+		);
+	}
+
 	/**
 	 * Call a non-public method
 	 * @param mixed $obj
@@ -1035,7 +1055,6 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
 	protected function getParser()
 	{
-// 		return new Parser(new \Monolog\Logger('test', [new \Monolog\Handler\TestHandler()]));
 		return Parser::create(new \Monolog\Logger('test', [new \Monolog\Handler\TestHandler()]));
 	}
 
