@@ -68,8 +68,18 @@ class Analyzer
 			? count($data)
 			: ($this->rowsAnalyzed[$type] + count($data));
 
+		$rowType = null; // TODO get from struct if exists
 		foreach($data as $row) {
-			$this->analyzeRow($row, $type);
+			$newType = $this->analyzeRow($row, $type);
+			if (
+				!is_null($rowType)
+				&& $newType != $rowType
+				&& $newType != 'NULL'
+				&& $rowType != 'NULL'
+			) {
+				throw new JsonParserException("Data array in '{$type}' contains incompatible data types '{$rowType}' and '{$newType}'!");
+			}
+			$rowType = $newType;
 		}
 		$this->analyzed = true;
 	}
@@ -85,6 +95,8 @@ class Analyzer
 	{
 		// Current row's structure
 		$struct = [];
+
+		$rowType = $this->getType($row);
 
 		// If the row is scalar, make it a {"data" => $value} object
 		if (is_scalar($row) || is_null($row)) {
@@ -120,6 +132,8 @@ class Analyzer
 		}
 
 		$this->getStruct()->add($type, $struct);
+
+		return $rowType;
 	}
 
 	public function getType($var)

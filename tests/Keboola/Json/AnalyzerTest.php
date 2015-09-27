@@ -209,7 +209,10 @@ class AnalyzerTest extends ParserTestCase
 // 		);
 	}
 
-	// FIXME
+	/**
+	 * @expectedException \Keboola\Json\Exception\JsonParserException
+	 * @expectedExceptionMessage Data array in 'root.arr' contains incompatible data types 'scalar' and 'object'!
+	 */
 	public function testAnalyzeBadData()
 	{
 		$data = [
@@ -225,8 +228,6 @@ class AnalyzerTest extends ParserTestCase
 		$analyzer = new Analyzer($this->getLogger('analyzer', true));
 		$analyzer->getStruct()->setAutoUpgradeToArray(true);
 		$analyzer->analyze($data, 'root');
-
-// var_dump($analyzer->getStruct()->getStruct());
 	}
 
 	// TODO if "autoArray" is an empty array, maybe we should ignore it? / configurable?

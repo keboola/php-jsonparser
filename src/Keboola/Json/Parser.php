@@ -369,10 +369,22 @@ class Parser
 
 	/**
 	 * Handle the actual write to CsvRow
+	 * @param object $dataRow
+	 * @param CsvRow $csvRow
+	 * @param string $arrayParentId
+	 * @param string $column
+	 * @param string $dataType
+	 * @param string $type
 	 * @return void
 	 */
-	protected function parseField(\stdclass $dataRow, CsvRow $csvRow, $arrayParentId, $column, $dataType, $type)
-	{
+	protected function parseField(
+		\stdclass $dataRow,
+		CsvRow $csvRow,
+		$arrayParentId,
+		$column,
+		$dataType,
+		$type
+	) {
 		// TODO safeColumn should be associated with $this->struct[$type]
 		// (and parentCols -> create in parse() where the arr is created)
 		// Actually, the csvRow should REALLY have a pointer to the real name (not validated),
@@ -482,8 +494,6 @@ class Parser
 			return $type . "_" . md5(serialize($dataRow) . $outerObjectHash);
 		}
 	}
-/////////////////////////////////////////////////////////
-
 
 	/**
 	 * Returns an array of CSV files containing results
@@ -526,7 +536,6 @@ class Parser
 			}
 		}
 	}
-
 
 	/**
 	 * @return Struct
