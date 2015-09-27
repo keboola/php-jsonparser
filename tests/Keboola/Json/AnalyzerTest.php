@@ -218,8 +218,6 @@ class AnalyzerTest extends ParserTestCase
 		$analyzer->analyze($data, 'root');
 	}
 
-	// TODO if "autoArray" is an empty array, maybe we should ignore it? / configurable?
-
 	public function testIsAnalyzed()
 	{
 		$analyzer = new Analyzer($this->getLogger('analyzer', true));
@@ -263,6 +261,160 @@ class AnalyzerTest extends ParserTestCase
 				'test' => [
 					'k' => 'scalar',
 					'field' => 'arrayOfscalar'
+				]
+			],
+			$analyzer->getStruct()->getStruct()
+		);
+	}
+
+	public function testAnalyzeKnownArray()
+	{
+		$analyzer = new Analyzer($this->getLogger('analyzer', true)/*, $struct*/);
+		$analyzer->getStruct()->setAutoUpgradeToArray(true);
+
+		$data1 = [
+			(object) [
+				'id' => 1,
+				'arr' => [1,2]
+			]
+		];
+
+		$data2 = [
+			(object) [
+				'id' => 2,
+				'arr' => 3
+			]
+		];
+
+		$analyzer->analyze($data1, 'test');
+		$analyzer->analyze($data2, 'test');
+
+		$this->assertEquals(
+			[
+				'test.arr' => ['data' => 'scalar'],
+				'test' => [
+					'id' => 'scalar',
+					'arr' => 'arrayOfscalar'
+				]
+			],
+			$analyzer->getStruct()->getStruct()
+		);
+	}
+
+	/**
+	 * @expectedException \Keboola\Json\Exception\JsonParserException
+	 * @expectedExceptionMessage Unhandled type change from "arrayOfscalar" to "object" in 'test.arr'
+	 */
+	public function testAnalyzeKnownArrayMismatch()
+	{
+		$analyzer = new Analyzer($this->getLogger('analyzer', true)/*, $struct*/);
+		$analyzer->getStruct()->setAutoUpgradeToArray(true);
+
+		$data1 = [
+			(object) [
+				'id' => 1,
+				'arr' => [1,2]
+			]
+		];
+
+		$data2 = [
+			(object) [
+				'id' => 2,
+				'arr' => (object) [
+					'innerId' => 2.1
+				]
+			]
+		];
+
+		$analyzer->analyze($data1, 'test');
+		$analyzer->analyze($data2, 'test');
+
+		$this->assertEquals(
+			[
+				'test.arr' => ['data' => 'scalar'],
+				'test' => [
+					'id' => 'scalar',
+					'arr' => 'arrayOfscalar'
+				]
+			],
+			$analyzer->getStruct()->getStruct()
+		);
+	}
+
+	/**
+	 * @expectedException \Keboola\Json\Exception\JsonParserException
+	 * @expectedExceptionMessage Unhandled type change from "arrayOfscalar" to "arrayOfobject" in 'test.arr'
+	 */
+	public function testAnalyzeKnownArrayMismatch2()
+	{
+		$analyzer = new Analyzer($this->getLogger('analyzer', true)/*, $struct*/);
+		$analyzer->getStruct()->setAutoUpgradeToArray(true);
+
+		$data1 = [
+			(object) [
+				'id' => 1,
+				'arr' => [1,2]
+			]
+		];
+
+		$data2 = [
+			(object) [
+				'id' => 2,
+				'arr' => [
+					(object) [
+						'innerId' => 2.1
+					]
+				]
+			]
+		];
+
+		$analyzer->analyze($data1, 'test');
+		$analyzer->analyze($data2, 'test');
+
+		$this->assertEquals(
+			[
+				'test.arr' => ['data' => 'scalar'],
+				'test' => [
+					'id' => 'scalar',
+					'arr' => 'arrayOfscalar'
+				]
+			],
+			$analyzer->getStruct()->getStruct()
+		);
+	}
+
+	/**
+	 * @expectedException \Keboola\Json\Exception\JsonParserException
+	 * @expectedExceptionMessage Unhandled type change from "integer" to "string" in 'test.arr.data'
+	 */
+	public function testAnalyzeKnownArrayMismatch3()
+	{
+		$analyzer = new Analyzer($this->getLogger('analyzer', true)/*, $struct*/);
+		$analyzer->setStrict(true);
+
+		$data1 = [
+			(object) [
+				'id' => 1,
+				'arr' => [1,2]
+			]
+		];
+
+		$data2 = [
+			(object) [
+				'id' => 2,
+				'arr' => ["a","b"]
+			]
+		];
+
+		$analyzer->analyze($data1, 'test');
+		$analyzer->analyze($data2, 'test');
+
+		$this->assertEquals(
+			[
+				'test.arr' => ['data' => 'scalar'],
+				'test' => [
+					'id' => 'scalar',
+					'arr' => 'arrayOfscalar'
 				]
 			],
 			$analyzer->getStruct()->getStruct()

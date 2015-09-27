@@ -68,7 +68,8 @@ class Analyzer
 			? count($data)
 			: ($this->rowsAnalyzed[$type] + count($data));
 
-		$rowType = null; // TODO get from struct if exists
+		// TODO get from struct if exists
+		$rowType = null;
 		foreach($data as $row) {
 			$newType = $this->analyzeRow($row, $type);
 			if (
