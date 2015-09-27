@@ -66,7 +66,7 @@ class Struct
 				if (
 					!is_scalar($type)
 					|| (!$this->isValidType($type)
-					&& !($this->isArrayOf($type) && $this->isValidType(substr($type, 7))))
+					&& !($this->isValidType($this->isArrayOf($type))))
 				) {
 					if (!is_scalar($type)) {
 						$type = json_encode($type);
@@ -166,7 +166,7 @@ class Struct
 	{
 		return $this->autoUpgradeToArray
 			&& (
-				($this->isArrayOf($oldType) && substr($oldType, 7) == $newType)
+				($this->isArrayOf($oldType) == $newType)
 				|| $newType == 'arrayOf' . $oldType
 			);
 	}
@@ -189,12 +189,11 @@ class Struct
 
 	/**
 	 * @param string $type
-	 * @return bool
-	 * @todo return the type without arrayOf?
+	 * @return string type of array chuldren
 	 */
 	public function isArrayOf($type)
 	{
-		return substr($type, 0, 7) == 'arrayOf';
+		return substr($type, 0, 7) == 'arrayOf' ? substr($type, 7) : false;
 	}
 
 	/**
