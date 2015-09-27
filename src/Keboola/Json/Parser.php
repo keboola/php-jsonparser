@@ -5,7 +5,8 @@ namespace Keboola\Json;
 use Keboola\CsvTable\Table;
 use Keboola\Temp\Temp;
 use Monolog\Logger;
-use Keboola\Json\Exception\JsonParserException;
+use Keboola\Json\Exception\JsonParserException,
+	Keboola\Json\Exception\NoDataException;
 
 /**
  * JSON to CSV data analyzer and parser/converter
@@ -135,13 +136,11 @@ class Parser
 	{
 		// The analyzer wouldn't set the $struct and parse fails!
 		if (empty($data) && empty($this->struct->getTypes($type))) {
-			$this->log->log("warning", "Empty data set received for {$type}", [
+			throw new NoDataException("Empty data set received for {$type}", [
 				"data" => $data,
 				"type" => $type,
 				"parentId" => $parentId
 			]);
-
-			return;
 		}
 
 		// Log it here since we shouln't log children analysis
