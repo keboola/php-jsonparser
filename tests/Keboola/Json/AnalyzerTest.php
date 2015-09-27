@@ -2,8 +2,6 @@
 
 use Keboola\Json\Analyzer,
 	Keboola\Json\Struct;
-// use Keboola\CsvTable\Table;
-// use Keboola\Utils\Utils;
 
 require_once 'tests/ParserTestCase.php';
 
@@ -32,7 +30,49 @@ class AnalyzerTest extends ParserTestCase
 				]
 			]
 		];
-		$analyzer = new Analyzer($this->getLogger());
+		$analyzer = new Analyzer($this->getLogger('analyzer', true));
+		$analyzer->analyze($data, 'root');
+
+		$this->assertEquals(
+			[
+				'root.arr' => ['data' => 'scalar'],
+				'root.obj' => [
+					'str' => 'scalar',
+					'double' => 'scalar',
+					'scalar' => 'scalar',
+				],
+				'root' => [
+					'id' => 'scalar',
+					'arr' => 'array',
+					'obj' => 'object',
+				],
+			],
+			$analyzer->getStruct()->getStruct()
+		);
+	}
+
+	public function testAnalyzeStrict()
+	{
+		$data = [
+			(object) [
+				"id" => 1,
+				"arr" => [1,2],
+				"obj" => (object) [
+					"str" => "string",
+					"double" => 1.1
+				]
+			],
+			(object) [
+				"id" => 2,
+				"arr" => [2,3],
+				"obj" => (object) [
+					"str" => "another string",
+					"double" => 2.1
+				]
+			]
+		];
+		$analyzer = new Analyzer($this->getLogger('analyzer', true));
+		$analyzer->setStrict(true);
 		$analyzer->analyze($data, 'root');
 
 		$this->assertEquals(
@@ -40,8 +80,42 @@ class AnalyzerTest extends ParserTestCase
 				'root.arr' => ['data' => 'integer'],
 				'root.obj' => [
 					'str' => 'string',
-					'double' => 'double',
-					'scalar' => 'scalar',
+					'double' => 'double'
+				],
+				'root' => [
+					'id' => 'integer',
+					'arr' => 'array',
+					'obj' => 'object',
+				],
+			],
+			$analyzer->getStruct()->getStruct()
+		);
+	}
+
+	/**
+	 * @expectedException \Keboola\Json\Exception\JsonParserException
+	 * @expectedExceptionMessage Unhandled type change from "integer" to "double" in 'root.id'
+	 */
+	public function testAnalyzeStrictError()
+	{
+		$data = [
+			(object) [
+				"id" => 1
+			],
+			(object) [
+				"id" => 2.2
+			]
+		];
+		$analyzer = new Analyzer($this->getLogger('analyzer', true));
+		$analyzer->setStrict(true);
+		$analyzer->analyze($data, 'root');
+
+		$this->assertEquals(
+			[
+				'root.arr' => ['data' => 'integer'],
+				'root.obj' => [
+					'str' => 'string',
+					'double' => 'double'
 				],
 				'root' => [
 					'id' => 'integer',
@@ -72,21 +146,21 @@ class AnalyzerTest extends ParserTestCase
 			]
 		];
 
-		$analyzer = new Analyzer($this->getLogger());
+		$analyzer = new Analyzer($this->getLogger('analyzer', true));
 		$analyzer->getStruct()->setAutoUpgradeToArray(true);
 		$analyzer->analyze($data, 'root');
 
 		$this->assertEquals(
 			[
-				'root.arrOfObjects' => ['innerId' => 'double'],
-				'root.arr' => ['data' => 'string'],
+				'root.arrOfObjects' => ['innerId' => 'scalar'],
+				'root.arr' => ['data' => 'scalar'],
 				'root' => [
-					'id' => 'integer',
+					'id' => 'scalar',
 					'arrOfScalars' => 'arrayOfscalar',
 					'arrOfObjects' => 'arrayOfobject',
 					'arr' => 'array'
 				],
-				'root.arrOfScalars' => ['data' => 'integer'],
+				'root.arrOfScalars' => ['data' => 'scalar'],
 			],
 			$analyzer->getStruct()->getStruct()
 		);
@@ -108,10 +182,14 @@ class AnalyzerTest extends ParserTestCase
 						'a' => 'scalar'
 					]
 				]
+			],
+			(object) [
+				'id' => 3,
+				'arrOfScalars' => 3
 			]
 		];
 
-		$analyzer = new Analyzer($this->getLogger());
+		$analyzer = new Analyzer($this->getLogger('analyzer', true));
 		$analyzer->getStruct()->setAutoUpgradeToArray(true);
 		$analyzer->analyze($data, 'root');
 // var_dump($analyzer->getStruct()->getStruct());
@@ -144,7 +222,7 @@ class AnalyzerTest extends ParserTestCase
 			]
 		];
 
-		$analyzer = new Analyzer($this->getLogger());
+		$analyzer = new Analyzer($this->getLogger('analyzer', true));
 		$analyzer->getStruct()->setAutoUpgradeToArray(true);
 		$analyzer->analyze($data, 'root');
 
@@ -155,7 +233,7 @@ class AnalyzerTest extends ParserTestCase
 
 	public function testIsAnalyzed()
 	{
-		$analyzer = new Analyzer($this->getLogger());
+		$analyzer = new Analyzer($this->getLogger('analyzer', true));
 
 		$data = [
 			(object) [
@@ -167,7 +245,7 @@ class AnalyzerTest extends ParserTestCase
 		$analyzer->analyze($data, 'test');
 		$this->assertFalse($analyzer->isAnalyzed('test'));
 
-		$analyzer = new Analyzer($this->getLogger(), null, 1);
+		$analyzer = new Analyzer($this->getLogger('analyzer', true), null, 1);
 		$this->assertFalse($analyzer->isAnalyzed('test'));
 		$analyzer->analyze($data, 'test');
 		$this->assertTrue($analyzer->isAnalyzed('test'));
@@ -175,7 +253,7 @@ class AnalyzerTest extends ParserTestCase
 
 	public function testAnalyzeRow()
 	{
-		$analyzer = new Analyzer($this->getLogger());
+		$analyzer = new Analyzer($this->getLogger('analyzer', true));
 
 		$this->callMethod($analyzer, 'analyzeRow', [new \stdClass, 'empty']);
 		$this->assertEquals(['empty' => []], $analyzer->getStruct()->getStruct());
@@ -191,10 +269,10 @@ class AnalyzerTest extends ParserTestCase
 			[
 				'empty' => [],
 				'test.field' => [
-					'data' => 'integer'
+					'data' => 'scalar'
 				],
 				'test' => [
-					'k' => 'string',
+					'k' => 'scalar',
 					'field' => 'array'
 				]
 			],

@@ -15,11 +15,6 @@ class Struct
 	/**
 	 * @var bool
 	 */
-	protected $strict = false;
-
-	/**
-	 * @var bool
-	 */
 	protected $autoUpgradeToArray = false;
 
 	/**
@@ -112,16 +107,6 @@ class Struct
 	 */
 	public function update($oldType, $newType, $type)
 	{
-		if (!$this->strict) {
-			if ($this->typeIsScalar($oldType)) {
-				$oldType = 'scalar';
-			}
-
-			if ($this->typeIsScalar($newType)) {
-				$newType = 'scalar';
-			}
-		}
-
 		if (
 			empty($oldType)
 			|| $oldType == "NULL"
@@ -206,16 +191,6 @@ class Struct
 	protected function typeIsScalar($type)
 	{
 		return in_array($type, $this->scalars);
-	}
-
-	/**
-	 * Set whether scalars are treated as compatible
-	 * within a field (default = false -> compatible)
-	 * @param bool $strict
-	 */
-	public function setStrict($strict)
-	{
-		$this->strict = (bool) $strict;
 	}
 
 	/**

@@ -18,6 +18,11 @@ class Analyzer
 	protected $analyzeRows;
 
 	/**
+	 * @var bool
+	 */
+	protected $strict = false;
+
+	/**
 	 * True if analyze() was called
 	 * @var bool
 	 */
@@ -83,12 +88,12 @@ class Analyzer
 
 		// If the row is scalar, make it a {"data" => $value} object
 		if (is_scalar($row) || is_null($row)) {
-			$struct[Parser::DATA_COLUMN] = gettype($row);
+			$struct[Parser::DATA_COLUMN] = $this->getType($row);
 			$row = (object) [Parser::DATA_COLUMN => $row];
 		} elseif (is_object($row)) {
 			// process each property of the object
 			foreach($row as $key => $field) {
-				$fieldType = gettype($field);
+				$fieldType = $this->getType($field);
 
 				if ($fieldType == "object") {
 					// Only assign the type if the object isn't empty
@@ -115,6 +120,12 @@ class Analyzer
 		}
 
 		$this->getStruct()->add($type, $struct);
+	}
+
+	public function getType($var)
+	{
+		return $this->strict ? gettype($var) :
+			(is_scalar($var) ? 'scalar' : gettype($var));
 	}
 
 	/**
@@ -192,5 +203,15 @@ class Analyzer
 	public function getNestedArrayAsJson()
 	{
 		return $this->nestedArrayAsJson;
+	}
+
+	/**
+	 * Set whether scalars are treated as compatible
+	 * within a field (default = false -> compatible)
+	 * @param bool $strict
+	 */
+	public function setStrict($strict)
+	{
+		$this->strict = (bool) $strict;
 	}
 }

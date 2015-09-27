@@ -37,34 +37,17 @@ class StructTest extends ParserTestCase
 	{
 		$struct = $this->getStruct();
 
-		// TODO test all options/flags/combinations/types!
-
-		// setAutoUpgradeToArray
 		$struct->setAutoUpgradeToArray(true);
-		$this->assertEquals('arrayOfscalar', $this->callMethod($struct, 'update', [
+		$this->assertEquals('arrayOfinteger', $this->callMethod($struct, 'update', [
 			'array',
 			'integer',
 			'test0',
 			new \stdClass
 		]));
-		$this->assertEquals('arrayOfscalar', $this->callMethod($struct, 'update', [
+		$this->assertEquals('arrayOfinteger', $this->callMethod($struct, 'update', [
 			'integer',
 			'array',
 			'test1',
-			new \stdClass
-		]));
-
-		$struct->setStrict(true);
-		$this->assertEquals('arrayOfinteger', $this->callMethod($struct, 'update', [
-			'array',
-			'integer',
-			'test2',
-			new \stdClass
-		]));
-		$this->assertEquals('arrayOfstring', $this->callMethod($struct, 'update', [
-			'string',
-			'array',
-			'test3',
 			new \stdClass
 		]));
 	}

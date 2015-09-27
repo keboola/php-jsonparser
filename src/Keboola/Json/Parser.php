@@ -437,7 +437,7 @@ class Parser
 					$this->log->log(
 						"ERROR",
 						"Data parse error in '{$column}' - unexpected '"
-							. gettype($dataRow->{$column})
+							. $this->analyzer->getType($dataRow->{$column})
 							. "' where '{$dataType}' was expected!",
 						[ "data" => $jsonColumn, "row" => json_encode($dataRow) ]
 					);

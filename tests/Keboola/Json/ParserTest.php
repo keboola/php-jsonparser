@@ -502,7 +502,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	public function testStrictScalarChange()
 	{
 		$parser = $this->getParser();
-		$parser->getStruct()->setStrict(true);
+		$parser->getAnalyzer()->setStrict(true);
 
 		$data = json_decode('[
 			{"field": 128},
@@ -859,7 +859,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	{
 		$parser = $this->getParser();
 		$parser->getStruct()->setAutoUpgradeToArray(true);
-		$parser->getStruct()->setStrict(true);
+		$parser->getAnalyzer()->setStrict(true);
 
 		$data = [
 			(object) [
