@@ -575,7 +575,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	 * @expectedException \Keboola\Json\Exception\JsonParserException
 	 * @expectedExceptionMessage Unsupported data row in 'root'!
 	 */
-	public function testNestedArraysError()
+	public function testNestedArraysDisabledError()
 	{
 		$parser = $this->getParser();
 		$data = json_decode('
@@ -593,12 +593,11 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 		$logHandler = new \Monolog\Handler\TestHandler();
 		$parser = Parser::create(new \Monolog\Logger('test', [$logHandler]));
 		$parser->getAnalyzer()->setNestedArrayAsJson(true);
-		$data = json_decode('
-			[
-				[1,2,3,[7,8]],
-				[4,5,6]
-			]
-		');
+
+		$data = [
+			[1,2,3,[7,8]],
+			[4,5,6]
+		];
 
 		$parser->process($data);
 		$this->assertEquals(

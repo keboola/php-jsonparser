@@ -132,7 +132,7 @@ class Analyzer
 				"WARNING", "Unsupported array nesting in '{$type}'! Converting to JSON string.",
 				['row' => $row]
 			);
-			$struct[Parser::DATA_COLUMN] = 'string';
+			$rowType = $struct[Parser::DATA_COLUMN] = 'string';
 			$row = (object) [Parser::DATA_COLUMN => json_encode($row)];
 		} else {
 			throw new JsonParserException("Unsupported data row in '{$type}'!", ['row' => $row]);

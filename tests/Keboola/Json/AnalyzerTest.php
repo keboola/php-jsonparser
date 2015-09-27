@@ -168,7 +168,7 @@ class AnalyzerTest extends ParserTestCase
 
 	/**
 	 * @expectedException \Keboola\Json\Exception\JsonParserException
-	 * @expectedExceptionMessage Data array in 'test.arrOfScalars' contains incompatible data types 'scalar' and 'object'!
+	 * @expectedExceptionMessage Data array in 'root.arrOfScalars' contains incompatible data types 'scalar' and 'object'!
 	 */
 	public function testAnalyzeAutoArraysError()
 	{
