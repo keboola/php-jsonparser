@@ -52,6 +52,61 @@ class StructTest extends ParserTestCase
 		]));
 	}
 
+	public function testLoad()
+	{
+		$struct = $this->getStruct();
+
+		$data = [
+			'root.arr' => ['data' => 'scalar'],
+			'root.obj' => [
+				'str' => 'scalar',
+				'double' => 'scalar',
+				'scalar' => 'scalar',
+			],
+			'root' => [
+				'id' => 'scalar',
+				'arr' => 'arrayOfscalar',
+				'obj' => 'object',
+			],
+		];
+
+		$struct->load($data);
+
+		$this->assertEquals($data, $struct->getStruct());
+	}
+
+	/**
+	 * @expectedException \Keboola\Json\Exception\JsonParserException
+	 * @expectedExceptionMessage Error loading data structure definition in 'root.arr.data'! 'potato' is not a valid data type.
+	 */
+	public function testLoadInvalidType()
+	{
+
+		$struct = $this->getStruct();
+
+		$data = [
+			'root.arr' => ['data' => 'potato']
+		];
+
+		$struct->load($data);
+	}
+
+	/**
+	 * @expectedException \Keboola\Json\Exception\JsonParserException
+	 * @expectedExceptionMessage Error loading data structure definition in 'root.arr.oneTooMany'! '{"data":"potato"}' is not a valid data type.
+	 */
+	public function testLoadTooDeep()
+	{
+
+		$struct = $this->getStruct();
+
+		$data = [
+			'root.arr' => [ 'oneTooMany' => ['data' => 'potato']]
+		];
+
+		$struct->load($data);
+	}
+
 	// TODO testLoad() w/ error, add "soft" load that ditches wrong values
 
 	protected function getStruct()

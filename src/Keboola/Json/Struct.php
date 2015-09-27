@@ -64,8 +64,9 @@ class Struct
 
 			foreach($defs as $node => $type) {
 				if (
-					!$this->isValidType($type)
-					&& !(substr($type, 0, 11) == 'arrayOf' && $this->isValidType(substr($type, 11)))
+					!is_scalar($type)
+					|| (!$this->isValidType($type)
+					&& !($this->isArrayOf($type) && $this->isValidType(substr($type, 7))))
 				) {
 					if (!is_scalar($type)) {
 						$type = json_encode($type);
