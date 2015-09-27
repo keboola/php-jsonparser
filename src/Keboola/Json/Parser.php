@@ -160,95 +160,6 @@ class Parser
 	}
 
 	/**
-	 * Get header for a data type
-	 * @param string $type Data type
-	 * @param string|array $parent String with a $parentId or an array with $colName => $parentId
-	 * @return array
-	 */
-	protected function getHeader($type, $parent = false)
-	{
-		$header = [];
-
-		foreach($this->struct->getDefinitions($type) as $column => $dataType) {
-			if ($dataType == "object") {
-				foreach($this->getHeader($type . "." . $column) as $col => $val) {
-					// FIXME this is awkward, the createSafeName shouldn't need to be used twice
-					// (here and in validateHeader again)
-					$header[] = $this->createSafeName($column) . "_" . $val;
-				}
-			} else {
-				$header[] = $column;
-			}
-		}
-
-		if ($parent) {
-			if (is_array($parent)) {
-				$header = array_merge($header, array_keys($parent));
-			} else {
-				$header[] = "JSON_parentId";
-			}
-		}
-
-		// TODO set $this->headerNames[$type] = array_combine($validatedHeader, $header);
-		// & add a getHeaderNames fn()
-		return $this->validateHeader($header);
-	}
-
-	/**
-	 * Validate header column names to comply with MySQL limitations
-	 *
-	 * @param array $header Input header
-	 * @return array
-	 */
-	protected function validateHeader(array $header)
-	{
-		$newHeader = [];
-		foreach($header as $key => $colName) {
-			$newName = $this->createSafeName($colName);
-
-			// prevent duplicates
-			if (in_array($newName, $newHeader)) {
-				$newHeader[$key] = md5($colName);
-			} else {
-				$newHeader[$key] = $newName;
-			}
-		}
-		return $newHeader;
-	}
-
-	/**
-	 * Validates a string for use as MySQL column/table name
-	 *
-	 * @param string $name A string to be validated
-	 * @return string
-	 */
-	protected function createSafeName($name)
-	{
-		if (strlen($name) > 64) {
-			if(str_word_count($name) > 1 && preg_match_all('/\b(\w)/', $name, $m)) {
-				$short = implode('',$m[1]);
-			} else {
-				$short = md5($name);
-			}
-			$short .= "_";
-			$remaining = 64 - strlen($short);
-			$nextSpace = strpos($name, " ", (strlen($name)-$remaining))
-				? : strpos($name, "_", (strlen($name)-$remaining));
-
-			if ($nextSpace !== false) {
-				$newName = $short . substr($name, $nextSpace);
-			} else {
-				$newName = $short;
-			}
-		} else {
-			$newName = $name;
-		}
-
-		$newName = preg_replace('/[^A-Za-z0-9-]/', '_', $newName);
-		return trim($newName, "_");
-	}
-
-	/**
 	 * Parse data of known type
 	 *
 	 * @param array $data
@@ -423,6 +334,95 @@ class Parser
 				}
 				break;
 		}
+	}
+
+	/**
+	 * Get header for a data type
+	 * @param string $type Data type
+	 * @param string|array $parent String with a $parentId or an array with $colName => $parentId
+	 * @return array
+	 */
+	protected function getHeader($type, $parent = false)
+	{
+		$header = [];
+
+		foreach($this->struct->getDefinitions($type) as $column => $dataType) {
+			if ($dataType == "object") {
+				foreach($this->getHeader($type . "." . $column) as $col => $val) {
+					// FIXME this is awkward, the createSafeName shouldn't need to be used twice
+					// (here and in validateHeader again)
+					$header[] = $this->createSafeName($column) . "_" . $val;
+				}
+			} else {
+				$header[] = $column;
+			}
+		}
+
+		if ($parent) {
+			if (is_array($parent)) {
+				$header = array_merge($header, array_keys($parent));
+			} else {
+				$header[] = "JSON_parentId";
+			}
+		}
+
+		// TODO set $this->headerNames[$type] = array_combine($validatedHeader, $header);
+		// & add a getHeaderNames fn()
+		return $this->validateHeader($header);
+	}
+
+	/**
+	 * Validate header column names to comply with MySQL limitations
+	 *
+	 * @param array $header Input header
+	 * @return array
+	 */
+	protected function validateHeader(array $header)
+	{
+		$newHeader = [];
+		foreach($header as $key => $colName) {
+			$newName = $this->createSafeName($colName);
+
+			// prevent duplicates
+			if (in_array($newName, $newHeader)) {
+				$newHeader[$key] = md5($colName);
+			} else {
+				$newHeader[$key] = $newName;
+			}
+		}
+		return $newHeader;
+	}
+
+	/**
+	 * Validates a string for use as MySQL column/table name
+	 *
+	 * @param string $name A string to be validated
+	 * @return string
+	 */
+	protected function createSafeName($name)
+	{
+		if (strlen($name) > 64) {
+			if(str_word_count($name) > 1 && preg_match_all('/\b(\w)/', $name, $m)) {
+				$short = implode('',$m[1]);
+			} else {
+				$short = md5($name);
+			}
+			$short .= "_";
+			$remaining = 64 - strlen($short);
+			$nextSpace = strpos($name, " ", (strlen($name)-$remaining))
+				? : strpos($name, "_", (strlen($name)-$remaining));
+
+			if ($nextSpace !== false) {
+				$newName = $short . substr($name, $nextSpace);
+			} else {
+				$newName = $short;
+			}
+		} else {
+			$newName = $name;
+		}
+
+		$newName = preg_replace('/[^A-Za-z0-9-]/', '_', $newName);
+		return trim($newName, "_");
 	}
 
 	/**
