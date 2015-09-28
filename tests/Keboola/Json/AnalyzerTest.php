@@ -389,7 +389,7 @@ class AnalyzerTest extends ParserTestCase
 	 */
 	public function testAnalyzeKnownArrayMismatch3()
 	{
-		$analyzer = new Analyzer($this->getLogger('analyzer', true)/*, $struct*/);
+		$analyzer = new Analyzer($this->getLogger('analyzer', true));
 		$analyzer->setStrict(true);
 
 		$data1 = [
@@ -415,6 +415,82 @@ class AnalyzerTest extends ParserTestCase
 				'test' => [
 					'id' => 'scalar',
 					'arr' => 'arrayOfscalar'
+				]
+			],
+			$analyzer->getStruct()->getStruct()
+		);
+	}
+
+	public function testAnalyzeEmptyArrayOfObject()
+	{
+		$data = [
+			(object) [
+				'id' => 1,
+				'arr' => []
+			],
+			(object) [
+				'id' => 2,
+				'arr' => [
+					(object) ['val' => 'value']
+				]
+			]
+		];
+
+		$analyzer = new Analyzer($this->getLogger('analyzer', true));
+
+		$analyzer->analyze($data, 'test');
+
+		$this->assertEquals(
+			[
+				'test' => [
+					'id' => 'scalar',
+					'arr' => 'arrayOfobject'
+				],
+				'test.arr' => [
+					'val' => 'scalar'
+				]
+			],
+			$analyzer->getStruct()->getStruct()
+		);
+	}
+
+	public function testAnalyzeEmptyArrayOfObjectAutoUpgrade()
+	{
+		$data = [
+			(object) [
+				'id' => 1,
+				'arr' => []
+			],
+			(object) [
+				'id' => 2,
+				'arr' => (object) ['val' => 'value']
+			],
+			(object) [
+				'id' => 3,
+				'arr' => [
+					(object) ['val' => 'value2'],
+					(object) ['val' => 'value3']
+				]
+			],
+			(object) [
+				'id' => 4,
+				'arr' => (object) ['val' => 'value4']
+			]
+		];
+
+		$analyzer = new Analyzer($this->getLogger('analyzer', true));
+		$analyzer->getStruct()->setAutoUpgradeToArray(true);
+
+		$analyzer->analyze($data, 'test');
+
+		$this->assertEquals(
+			[
+				'test' => [
+					'id' => 'scalar',
+					'arr' => 'arrayOfobject'
+				],
+				'test.arr' => [
+					'val' => 'scalar'
 				]
 			],
 			$analyzer->getStruct()->getStruct()

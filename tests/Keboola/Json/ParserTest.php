@@ -1031,6 +1031,17 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 	}
 
 	/**
+	 * @expectedException \Keboola\Json\Exception\NoDataException
+	 * @expectedExceptionMessage Empty data set received for root
+	 */
+	public function testEmptyData()
+	{
+		$parser = $this->getParser();
+
+		$parser->process([]);
+	}
+
+	/**
 	 * Call a non-public method
 	 * @param mixed $obj
 	 * @param string $name

@@ -135,7 +135,7 @@ class Parser
 	public function process(array $data, $type = "root", $parentId = null)
 	{
 		// The analyzer wouldn't set the $struct and parse fails!
-		if (empty($data) && empty($this->struct->getTypes($type))) {
+		if (empty($data) && !$this->struct->hasDefinitions($type)) {
 			throw new NoDataException("Empty data set received for {$type}", [
 				"data" => $data,
 				"type" => $type,
