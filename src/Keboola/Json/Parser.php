@@ -170,7 +170,11 @@ class Parser
 	 */
 	public function parse(array $data, $type, $parentId = null)
 	{
-		if (!$this->analyzer->isAnalyzed($type)) {
+		if (
+			!$this->analyzer->isAnalyzed($type)
+			&& (empty($this->analyzer->getRowsAnalyzed()[$type])
+				|| $this->analyzer->getRowsAnalyzed()[$type] < count($data))
+		) {
 			// analyse instead of failing if the data is unknown!
 			$this->log->log(
 				"debug",
