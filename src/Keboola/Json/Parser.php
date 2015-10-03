@@ -146,7 +146,8 @@ class Parser
 		// Log it here since we shouln't log children analysis
 		if (empty($this->analyzer->getRowsAnalyzed()[$type])) {
 			$this->log->log("debug", "Analyzing {$type}", [
-				"rowsAnalyzed" => $this->analyzer->getRowsAnalyzed()
+				"rowsAnalyzed" => $this->analyzer->getRowsAnalyzed(),
+				"rowsToAnalyze" => count($data)
 			]);
 		}
 
@@ -259,7 +260,7 @@ class Parser
 	 * @return void
 	 */
 	protected function parseField(
-		\stdclass $dataRow,
+		\stdClass $dataRow,
 		CsvRow $csvRow,
 		$arrayParentId,
 		$column,
