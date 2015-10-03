@@ -2,6 +2,7 @@
 namespace Keboola\Json;
 
 use Keboola\Json\Exception\JsonParserException;
+use Keboola\Utils\Utils;
 use Monolog\Logger;
 
 class Analyzer
@@ -111,7 +112,7 @@ class Analyzer
 
 				if ($fieldType == "object") {
 					// Only assign the type if the object isn't empty
-					if ($this->isEmptyObject($field)) {
+					if (Utils::isEmptyObject($field)) {
 						continue;
 					}
 
@@ -165,28 +166,6 @@ class Analyzer
 			&& $this->analyzeRows != -1
 			&& !empty($this->rowsAnalyzed[$type])
 			&& $this->rowsAnalyzed[$type] >= $this->analyzeRows;
-	}
-
-	/**
-	 * Recursively scans $object for non-empty objects
-	 * Returns true if the object contains no scalar nor array
-	 * @param \stdClass $object
-	 * @return bool
-	 */
-	protected function isEmptyObject(\stdClass $object)
-	{
-		$vars = get_object_vars($object);
-		if($vars == []) {
-			return true;
-		} else {
-			foreach($vars as $var) {
-				if (!is_object($var)) {
-					return false;
-				} else {
-					return $this->isEmptyObject((object) $var);
-				}
-			}
-		}
 	}
 
 	/**
