@@ -496,4 +496,64 @@ class AnalyzerTest extends ParserTestCase
             $analyzer->getStruct()->getStruct()
         );
     }
+
+    public function testArrayOfNull()
+    {
+        $analyzer = new Analyzer($this->getLogger('analyzer', true));
+        $analyzer->getStruct()->setAutoUpgradeToArray(true);
+
+        $analyzer->analyze(
+            [
+                (object) [
+                    'val' => ['stringArr'],
+                    'obj' => [(object) ['key' => 'objValue']]
+                ],
+                (object) [
+                    'val' => [null],
+                    'obj' => [null]
+                ]
+            ],
+            's2null'
+        );
+
+        $analyzer->analyze(
+            [
+                (object) [
+                    'val' => ['stringArr'],
+                    'obj' => [(object) ['key' => 'objValue']]
+                ],
+                (object) [
+                    'val' => [null],
+                    'obj' => [null]
+                ]
+            ],
+            'null2s'
+        );
+
+        $this->assertEquals(
+            [
+                's2null' => [
+                    'val' => 'arrayOfscalar',
+                    'obj' => 'arrayOfobject'
+                ],
+                's2null.val' => [
+                    'data' => 'scalar'
+                ],
+                'null2s' => [
+                    'val' => 'arrayOfscalar',
+                    'obj' => 'arrayOfobject'
+                ],
+                'null2s.val' => [
+                    'data' => 'scalar'
+                ],
+                's2null.obj' => [
+                    'key' => 'scalar'
+                ],
+                'null2s.obj' => [
+                    'key' => 'scalar'
+                ]
+            ],
+            $analyzer->getStruct()->getStruct()
+        );
+    }
 }

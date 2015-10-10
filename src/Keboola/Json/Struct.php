@@ -87,6 +87,7 @@ class Struct
      */
     public function add($type, array $struct)
     {
+        // TODO $this->struct[$type] should NEVER be 'NULL' - remove in the future
         if (empty($this->struct[$type]) || $this->struct[$type] == "NULL") {
             // If we don't know the type yet
             $this->struct[$type] = $struct;
@@ -168,6 +169,8 @@ class Struct
             && (
                 ($this->isArrayOf($oldType) == $newType)
                 || $newType == 'arrayOf' . $oldType
+                || $this->isArrayOf($oldType) == 'NULL'
+                || $this->isArrayOf($newType) == 'NULL'
             );
     }
 
@@ -179,6 +182,10 @@ class Struct
     protected function upgradeToArray($oldType, $newType)
     {
         if ($this->isArrayOf($oldType)) {
+            if ($this->isArrayOf($oldType) == 'NULL') {
+                return $this->isArrayOf($newType) ? $newType : 'arrayOf' . $newType;
+            }
+
             return $oldType;
         } elseif ($oldType == 'array') {
             return 'arrayOf' . $newType;

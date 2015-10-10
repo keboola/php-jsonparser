@@ -742,4 +742,81 @@ class ParserTest extends ParserTestCase
 
         $parser->process([]);
     }
+
+    public function testArrayOfNull()
+    {
+        $parser = $this->getParser();
+        $parser->getStruct()->setAutoUpgradeToArray(true);
+
+        $parser->process(
+            [
+                (object) [
+                    'val' => ['stringArr'],
+                    'obj' => [(object) ['key' => 'objValue']]
+                ],
+                (object) [
+                    'val' => [null],
+                    'obj' => [null]
+                ]
+            ],
+            's2null'
+        );
+
+        $parser->process(
+            [
+                (object) [
+                    'val' => ['stringArr'],
+                    'obj' => [(object) ['key' => 'objValue']]
+                ],
+                (object) [
+                    'val' => [null],
+                    'obj' => [null]
+                ]
+            ],
+            'null2s'
+        );
+
+        self::assertEquals(
+            '"val","obj"' . PHP_EOL .
+            '"s2null_eb89917794221aeda822735efbab9069","s2null_eb89917794221aeda822735efbab9069"' . PHP_EOL .
+            '"s2null_77cca534224f13ec1fa45c6c0c98557d","s2null_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
+            '',
+            file_get_contents($parser->getCsvFiles()['s2null'])
+        );
+
+        self::assertEquals('"data","JSON_parentId"' . PHP_EOL .
+            '"stringArr","s2null_eb89917794221aeda822735efbab9069"' . PHP_EOL .
+            '"","s2null_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
+            '',
+            file_get_contents($parser->getCsvFiles()['s2null_val'])
+        );
+
+        self::assertEquals('"key","JSON_parentId"' . PHP_EOL .
+            '"objValue","s2null_eb89917794221aeda822735efbab9069"' . PHP_EOL .
+            '"","s2null_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
+            '',
+            file_get_contents($parser->getCsvFiles()['s2null_obj'])
+        );
+
+        self::assertEquals('"val","obj"' . PHP_EOL .
+            '"null2s_eb89917794221aeda822735efbab9069","null2s_eb89917794221aeda822735efbab9069"' . PHP_EOL .
+            '"null2s_77cca534224f13ec1fa45c6c0c98557d","null2s_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
+            '',
+            file_get_contents($parser->getCsvFiles()['null2s'])
+        );
+
+        self::assertEquals('"data","JSON_parentId"' . PHP_EOL .
+            '"stringArr","null2s_eb89917794221aeda822735efbab9069"' . PHP_EOL .
+            '"","null2s_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
+            '',
+            file_get_contents($parser->getCsvFiles()['null2s_val'])
+        );
+
+        self::assertEquals('"key","JSON_parentId"' . PHP_EOL .
+            '"objValue","null2s_eb89917794221aeda822735efbab9069"' . PHP_EOL .
+            '"","null2s_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
+            '',
+            file_get_contents($parser->getCsvFiles()['null2s_obj'])
+        );
+    }
 }

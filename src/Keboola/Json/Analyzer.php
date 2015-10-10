@@ -102,9 +102,8 @@ class Analyzer
         $rowType = $this->getType($row);
 
         // If the row is scalar, make it a {"data" => $value} object
-        if (is_scalar($row) || is_null($row)) {
+        if (is_scalar($row)) {
             $struct[Parser::DATA_COLUMN] = $this->getType($row);
-            $row = (object) [Parser::DATA_COLUMN => $row];
         } elseif (is_object($row)) {
             // process each property of the object
             foreach($row as $key => $field) {
@@ -125,7 +124,6 @@ class Analyzer
                         $fieldType = 'NULL';
                     }
                 }
-
                 $struct[$key] = $fieldType;
             }
         } elseif ($this->nestedArrayAsJson && is_array($row)) {
@@ -134,7 +132,8 @@ class Analyzer
                 ['row' => $row]
             );
             $rowType = $struct[Parser::DATA_COLUMN] = 'string';
-            $row = (object) [Parser::DATA_COLUMN => json_encode($row)];
+        } elseif (is_null($row)) {
+            // do nothing
         } else {
             throw new JsonParserException("Unsupported data row in '{$type}'!", ['row' => $row]);
         }
