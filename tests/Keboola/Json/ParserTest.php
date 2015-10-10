@@ -29,7 +29,14 @@ class ParserTest extends ParserTestCase
 
 		$parser->process($json, 'entities');
 		// yo dawg
-		$this->assertEquals("0", str_getcsv(file($parser->getCsvFiles()['entities_hashtags_indices']->getPathname())[1])[0]);
+		$this->assertEquals(
+			"0",
+			str_getcsv(
+				file(
+					$parser->getCsvFiles()['entities_hashtags_indices']
+				)[1] // 2nd row
+			)[0] // 1st column
+		);
 	}
 
 	public function testParentIdPrimaryKey()
@@ -325,12 +332,19 @@ class ParserTest extends ParserTestCase
 		$parser->process($data);
 	}
 
+	/**
+	 * @todo Purpose of this?
+	 */
 	public function testProcessEmptyObjects()
 	{
 		$json = $this->loadJson('Json_zendesk_comments_empty_objects');
 		$parser = $this->getParser();
 		$parser->process($json->data);
-		$parser->getCsvFiles();
+		$files = $parser->getCsvFiles();
+
+// 		foreach($files as $k => $file) {
+// 			var_dump(file_get_contents($file));
+// 		}
 	}
 
 	public function testArrayParentId()
@@ -515,7 +529,6 @@ class ParserTest extends ParserTestCase
 					],
 					(object) [
 						'subKey1' => 'val2.2.1',
-						'subKey2' => 'val2.2.2'
 					]
 				]
 			],
@@ -533,7 +546,7 @@ class ParserTest extends ParserTestCase
 		$this->assertEquals(
 			'"key"' . PHP_EOL .
 			'"root_eae48f50d1159c41f633f876d6c66411"' . PHP_EOL .
-			'"root_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
+			'"root_83cb9491934903381f6808ac79842022"' . PHP_EOL .
 			'"root_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['root'])
 		);
@@ -541,8 +554,8 @@ class ParserTest extends ParserTestCase
 		$this->assertEquals(
 			'"subKey1","subKey2","JSON_parentId"' . PHP_EOL .
 			'"val1.1","val1.2","root_eae48f50d1159c41f633f876d6c66411"' . PHP_EOL .
-			'"val2.1.1","val2.1.2","root_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
-			'"val2.2.1","val2.2.2","root_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
+			'"val2.1.1","val2.1.2","root_83cb9491934903381f6808ac79842022"' . PHP_EOL .
+			'"val2.2.1","","root_83cb9491934903381f6808ac79842022"' . PHP_EOL .
 			'"val3.1","val3.2","root_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
 			file_get_contents($parser->getCsvFiles()['root_key'])
 		);
