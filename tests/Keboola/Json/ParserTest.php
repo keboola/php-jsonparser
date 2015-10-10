@@ -4,7 +4,7 @@ use Keboola\Json\Parser;
 use Keboola\CsvTable\Table;
 use Keboola\Utils\Utils;
 
-class ParserTest extends \PHPUnit_Framework_TestCase
+class ParserTest extends ParserTestCase
 {
 	public function testZeroValues()
 	{
@@ -423,9 +423,34 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 		);
 	}
 
+	public function testHeaderSpecialChars()
+	{
+		$parser = $this->getParser();
+		$data = json_decode('[
+			{
+				"_id": 123456,
+				"KeywordRanking": {
+					"@attributes": {
+						"date": "2015-03-20"
+					},
+					"~~stuff°°": {
+						"I ARE POTAT()": "aaa$@!",
+						"!@#$%^&*kek": { "ser!ou$ly": "now"}
+					}
+				}
+			}
+		]');
+
+		$parser->process($data);
+
+		$this->assertEquals(
+			'"id","KeywordRanking_attributes_date","KeywordRanking_stuff_I_ARE_POTAT","KeywordRanking_stuff_kek_ser_ou_ly"' . PHP_EOL .
+			'"123456","2015-03-20","aaa$@!","now"' . PHP_EOL,
+			file_get_contents($parser->getCsvFiles()['root'])
+		);
+	}
+
 	/**
-	 * There's no current use case for this.
-	 * It should, however, be supported as it is a valid JSON string
 	 * @expectedException \Keboola\Json\Exception\JsonParserException
 	 * @expectedExceptionMessage Unhandled type change from "scalar" to "arrayOfscalar" in 'root.strArr'
 	 */
@@ -467,93 +492,6 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 		];
 
 		$parser->process($data);
-	}
-
-	public function testStringArrayMix()
-	{
-		// Not using $this->getParser() to preserve $logHandler accessibility
-		$logHandler = new \Monolog\Handler\TestHandler();
-		$parser = Parser::create(new \Monolog\Logger('test', [$logHandler]));
-		$parser->getStruct()->setAutoUpgradeToArray(true);
-
-		$data = [
-			(object) [
-				"id" => 1,
-				"strArr" => "string"
-			],
-			(object) [
-				"id" => 2,
-				"strArr" => ["ar", "ra", "y"]
-			],
-			(object) [
-				"id" => 3,
-				"strArr" => 65536
-			]
-		];
-
-		$parser->process($data);
-
-		$this->assertEquals(
-			'"id","strArr"' . PHP_EOL .
-			'"1","root_55377b95653cdb124b0bf4575815bffb"' . PHP_EOL .
-			'"2","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL .
-			'"3","root_ee855aa4262a5267f05aa9a3dbf5bbf0"' . PHP_EOL,
-			file_get_contents($parser->getCsvFiles()['root'])
-		);
-		$this->assertEquals(
-			'"data","JSON_parentId"' . PHP_EOL .
-			'"string","root_55377b95653cdb124b0bf4575815bffb"' . PHP_EOL .
-			'"ar","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL .
-			'"ra","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL .
-			'"y","root_98a518645e9454497f58cc42d66ce0eb"' . PHP_EOL .
-			'"65536","root_ee855aa4262a5267f05aa9a3dbf5bbf0"' . PHP_EOL,
-			file_get_contents($parser->getCsvFiles()['root_strArr'])
-		);
-	}
-
-	public function testUnderscoreHeader()
-	{
-		$parser = $this->getParser();
-		$data = (object) [
-			'ts' => 1423961676,
-			'resends' => NULL,
-			'_id' => '123456',
-			'sender' => 'ka@rel.cz',
-		];
-
-		$parser->process([$data]);
-
-		$this->assertEquals(
-			'"ts","resends","id","sender"' . PHP_EOL .
-			'"1423961676","","123456","ka@rel.cz"' . PHP_EOL,
-			file_get_contents($parser->getCsvFiles()['root'])
-		);
-	}
-
-	public function testAtSignHeader()
-	{
-		$parser = $this->getParser();
-		$data = json_decode('[
-			{
-				"KeywordRanking": {
-					"@attributes": {
-						"date": "2015-03-20"
-					},
-					"~~stuff°°": {
-						"I ARE POTAT()": "aaa$@!",
-						"!@#$%^&*kek": { "ser!ou$ly": "now"}
-					}
-				}
-			}
-		]');
-
-		$parser->process($data);
-
-		$this->assertEquals(
-			'"KeywordRanking_attributes_date","KeywordRanking_stuff_I_ARE_POTAT","KeywordRanking_stuff_kek_ser_ou_ly"' . PHP_EOL .
-			'"2015-03-20","aaa$@!","now"' . PHP_EOL,
-			file_get_contents($parser->getCsvFiles()['root'])
-		);
 	}
 
 	public function testAutoUpgradeToArray()
@@ -767,48 +705,6 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 		);
 	}
 
-	/**
-	 * Ensure "proper" JSON that doesn't require the upgrade is parsed the same as before
-	 */
-	public function testProcessWithAutoUpgradeToArray()
-	{
-		$parser = $this->getParser();
-		$parser->getStruct()->setAutoUpgradeToArray(true);
-
-		$testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
-
-		$data = $this->loadJson('Json_tweets_pinkbike');
-
-		$parser->process($data);
-
-		foreach($parser->getCsvFiles() as $name => $table) {
-			// compare result files
-			$this->assertEquals(
-				file_get_contents("{$testFilesPath}/{$name}.csv"),
-				file_get_contents($table->getPathname())
-			);
-
-			// compare column counts
-			$parsedFile = file($table->getPathname());
-			foreach($parsedFile as $row) {
-				if (empty($headerCount)) {
-					$headerCount = count($row);
-				} else {
-					$this->assertEquals($headerCount, count($row));
-				}
-			}
-		}
-
-		// make sure all the files are present
-		$dir = scandir($testFilesPath);
-		array_walk($dir, function (&$val) {
-				$val = str_replace(".csv", "", $val);
-			}
-		);
-		$this->assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
-		$this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
-	}
-
 	public function testIncompleteData()
 	{
 		$parser = $this->getParser();
@@ -838,38 +734,5 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 		$parser = $this->getParser();
 
 		$parser->process([]);
-	}
-
-	/**
-	 * Call a non-public method
-	 * @param mixed $obj
-	 * @param string $name
-	 * @param array $args
-	 * @return mixed the class' return value
-	 */
-	protected static function callMethod($obj, $name, array $args)
-	{
-		$class = new \ReflectionClass($obj);
-		$method = $class->getMethod($name);
-		$method->setAccessible(true);
-
-		return $method->invokeArgs($obj, $args);
-	}
-
-	protected function loadJson($fileName)
-	{
-		$testFilesPath = $this->getDataDir() . $fileName . ".json";
-		$file = file_get_contents($testFilesPath);
-		return Utils::json_decode($file);
-	}
-
-	protected function getParser()
-	{
-		return Parser::create(new \Monolog\Logger('test', [new \Monolog\Handler\TestHandler()]));
-	}
-
-	protected function getDataDir()
-	{
-		return __DIR__ . "/../../_data/";
 	}
 }

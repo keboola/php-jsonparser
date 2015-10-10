@@ -4,7 +4,7 @@ use Keboola\Json\Parser;
 use Keboola\CsvTable\Table;
 use Keboola\Utils\Utils;
 
-class RealDataTest extends ParserTest
+class RealDataTest extends ParserTestCase
 {
 	public function testProcess()
 	{
@@ -194,5 +194,45 @@ class RealDataTest extends ParserTest
 		$this->assertEquals(null, $files['root']->getPrimaryKey());
 	}
 
+	/**
+	 * Ensure "proper" JSON that doesn't require the upgrade is parsed the same as before
+	 */
+	public function testProcessWithAutoUpgradeToArray()
+	{
+		$parser = $this->getParser();
+		$parser->getStruct()->setAutoUpgradeToArray(true);
 
+		$testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
+
+		$data = $this->loadJson('Json_tweets_pinkbike');
+
+		$parser->process($data);
+
+		foreach($parser->getCsvFiles() as $name => $table) {
+			// compare result files
+			$this->assertEquals(
+				file_get_contents("{$testFilesPath}/{$name}.csv"),
+				file_get_contents($table->getPathname())
+			);
+
+			// compare column counts
+			$parsedFile = file($table->getPathname());
+			foreach($parsedFile as $row) {
+				if (empty($headerCount)) {
+					$headerCount = count($row);
+				} else {
+					$this->assertEquals($headerCount, count($row));
+				}
+			}
+		}
+
+		// make sure all the files are present
+		$dir = scandir($testFilesPath);
+		array_walk($dir, function (&$val) {
+				$val = str_replace(".csv", "", $val);
+			}
+		);
+		$this->assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
+		$this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
+	}
 }
