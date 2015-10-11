@@ -199,7 +199,7 @@ class Parser
 
         $parentCols = array_fill_keys(array_keys($parentId), "string");
 
-        foreach($data as $row) {
+        foreach ($data as $row) {
             // in case of non-associative array of strings
             // prepare {"data": $value} objects for each row
             if (is_scalar($row) || is_null($row)) {
@@ -245,7 +245,7 @@ class Parser
             $outerObjectHash
         );
 
-        foreach(array_merge($this->getStruct()->getDefinitions($type), $parentCols) as $column => $dataType) {
+        foreach (array_merge($this->getStruct()->getDefinitions($type), $parentCols) as $column => $dataType) {
             $this->parseField($dataRow, $csvRow, $arrayParentId, $column, $dataType, $type);
         }
 
@@ -354,11 +354,12 @@ class Parser
     {
         $header = [];
 
-        foreach($this->struct->getDefinitions($type) as $column => $dataType) {
+        foreach ($this->struct->getDefinitions($type) as $column => $dataType) {
             if ($dataType == "object") {
-                foreach($this->getHeader($type . "." . $column) as $col => $val) {
+                foreach ($this->getHeader($type . "." . $column) as $val) {
                     // FIXME this is awkward, the createSafeName shouldn't need to be used twice
                     // (here and in validateHeader again)
+                    // Is used to trim multiple "_" in column name before appending
                     $header[] = $this->createSafeName($column) . "_" . $val;
                 }
             } else {
@@ -388,7 +389,7 @@ class Parser
     protected function validateHeader(array $header)
     {
         $newHeader = [];
-        foreach($header as $key => $colName) {
+        foreach ($header as $key => $colName) {
             $newName = $this->createSafeName($colName);
 
             // prevent duplicates
@@ -410,8 +411,9 @@ class Parser
     protected function createSafeName($name)
     {
         if (strlen($name) > 64) {
-            if(str_word_count($name) > 1 && preg_match_all('/\b(\w)/', $name, $m)) {
-                $short = implode('',$m[1]);
+            if (str_word_count($name) > 1 && preg_match_all('/\b(\w)/', $name, $m)) {
+                // Create an "acronym" from first letters
+                $short = implode('', $m[1]);
             } else {
                 $short = md5($name);
             }
@@ -420,11 +422,9 @@ class Parser
             $nextSpace = strpos($name, " ", (strlen($name)-$remaining))
                 ? : strpos($name, "_", (strlen($name)-$remaining));
 
-            if ($nextSpace !== false) {
-                $newName = $short . substr($name, $nextSpace);
-            } else {
-                $newName = $short;
-            }
+            $newName = $nextSpace === false
+                ? $short
+                : $short . substr($name, $nextSpace);
         } else {
             $newName = $name;
         }
@@ -473,15 +473,13 @@ class Parser
             $pKeyCols = explode(',', $pk);
             $pKeyCols = array_map('trim', $pKeyCols);
             $values = [];
-            foreach($pKeyCols as $pKeyCol) {
+            foreach ($pKeyCols as $pKeyCol) {
                 if (empty($dataRow->{$pKeyCol})) {
                     $values[] = md5(serialize($dataRow) . $outerObjectHash);
                     $this->log->log(
-                        "WARNING", "Primary key for type '{$type}' was set to '{$pk}', but its column '{$pKeyCol}' does not exist! Using hash to link child objects instead.",
-                        [
-                            'row' => $dataRow,
-                            'hash' => $val
-                        ]
+                        "WARNING",
+                        "Primary key for type '{$type}' was set to '{$pk}', but its column '{$pKeyCol}' does not exist! Using hash to link child objects instead.",
+                        ['row' => $dataRow]
                     );
                 } else {
                     $values[] = $dataRow->{$pKeyCol};
@@ -496,6 +494,8 @@ class Parser
     }
 
     /**
+     * Ensure the parentId array is not multidimensional
+     *
      * @param string|array $parentId
      * @return array
      */
@@ -503,9 +503,6 @@ class Parser
     {
         if (!empty($parentId)) {
             if (is_array($parentId)) {
-                // Ensure the parentId array is not multidimensional
-                // TODO should be a different exception
-                // - separate parse and "setup" exceptions
                 if (count($parentId) != count($parentId, COUNT_RECURSIVE)) {
                     throw new JsonParserException(
                         'Error assigning parentId to a CSV file! $parentId array cannot be multidimensional.',
@@ -533,7 +530,7 @@ class Parser
         // parse what's in cache before returning results
         $this->processCache();
 
-        foreach($this->primaryKeys as $table => $pk) {
+        foreach ($this->primaryKeys as $table => $pk) {
             if (array_key_exists($table, $this->csvFiles)) {
                 $this->csvFiles[$table]->setPrimaryKey($pk);
             }
@@ -559,7 +556,7 @@ class Parser
      */
     public function processCache()
     {
-        if(!empty($this->cache)) {
+        if (!empty($this->cache)) {
             while ($batch = $this->cache->getNext()) {
                 $this->parse($batch["data"], $batch["type"], $batch["parentId"]);
             }
@@ -608,7 +605,7 @@ class Parser
      */
     protected function getTemp()
     {
-        if(!($this->temp instanceof Temp)) {
+        if (!($this->temp instanceof Temp)) {
             $this->temp = new Temp("ex-parser-data");
         }
         return $this->temp;
