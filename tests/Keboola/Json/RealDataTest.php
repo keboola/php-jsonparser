@@ -18,7 +18,7 @@ class RealDataTest extends ParserTestCase
 
         foreach($parser->getCsvFiles() as $name => $table) {
             // compare result files
-            $this->assertEquals(
+            self::assertEquals(
                 file_get_contents("{$testFilesPath}/{$name}.csv"),
                 file_get_contents($table->getPathname())
             );
@@ -29,7 +29,7 @@ class RealDataTest extends ParserTestCase
                 if (empty($headerCount)) {
                     $headerCount = count($row);
                 } else {
-                    $this->assertEquals($headerCount, count($row));
+                    self::assertEquals($headerCount, count($row));
                 }
             }
         }
@@ -40,8 +40,8 @@ class RealDataTest extends ParserTestCase
                 $val = str_replace(".csv", "", $val);
             }
         );
-        $this->assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
-        $this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
+        self::assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
+        self::assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
     }
 
     public function testTypeCharacters()
@@ -54,7 +54,7 @@ class RealDataTest extends ParserTestCase
 
         $parser->process($data, 'a/b.c&d@e$f');
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'a_b_c_d_e_f',
                 'a_b_c_d_e_f_statuses',
@@ -97,7 +97,7 @@ class RealDataTest extends ParserTestCase
         while($row = fgetcsv($handle)) {
             $rows++;
         }
-        $this->assertEquals(count($data[0]->statuses), $rows);
+        self::assertEquals(count($data[0]->statuses), $rows);
     }
 
     public function testValidateHeader()
@@ -171,7 +171,7 @@ class RealDataTest extends ParserTestCase
             "KKTR____KIND_Projects_Conversions_Submissions__Total_Revenue"
         );
 
-        $this->assertEquals($expectedHeader, $validHeader);
+        self::assertEquals($expectedHeader, $validHeader);
     }
 
     public function testPrimaryKeys()
@@ -189,9 +189,9 @@ class RealDataTest extends ParserTestCase
 
         $files = $parser->getCsvFiles();
         foreach($pks as $table => $pk) {
-            $this->assertEquals($pk, $files[$table]->getPrimaryKey());
+            self::assertEquals($pk, $files[$table]->getPrimaryKey());
         }
-        $this->assertEquals(null, $files['root']->getPrimaryKey());
+        self::assertEquals(null, $files['root']->getPrimaryKey());
     }
 
     /**
@@ -210,7 +210,7 @@ class RealDataTest extends ParserTestCase
 
         foreach($parser->getCsvFiles() as $name => $table) {
             // compare result files
-            $this->assertEquals(
+            self::assertEquals(
                 file_get_contents("{$testFilesPath}/{$name}.csv"),
                 file_get_contents($table->getPathname())
             );
@@ -221,7 +221,7 @@ class RealDataTest extends ParserTestCase
                 if (empty($headerCount)) {
                     $headerCount = count($row);
                 } else {
-                    $this->assertEquals($headerCount, count($row));
+                    self::assertEquals($headerCount, count($row));
                 }
             }
         }
@@ -232,7 +232,7 @@ class RealDataTest extends ParserTestCase
                 $val = str_replace(".csv", "", $val);
             }
         );
-        $this->assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
-        $this->assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
+        self::assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
+        self::assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
     }
 }

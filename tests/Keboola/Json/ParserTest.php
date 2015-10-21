@@ -29,7 +29,7 @@ class ParserTest extends ParserTestCase
 
         $parser->process($json, 'entities');
         // yo dawg
-        $this->assertEquals(
+        self::assertEquals(
             "0",
             str_getcsv(
                 file(
@@ -78,7 +78,7 @@ class ParserTest extends ParserTestCase
         $parser->addPrimaryKeys(['test' => "pk"]);
         $parser->process($data, 'test');
         foreach($parser->getCsvFiles() as $type => $file) {
-            $this->assertEquals(
+            self::assertEquals(
                 file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv"),
                 file_get_contents($file->getPathname())
             );
@@ -97,7 +97,7 @@ class ParserTest extends ParserTestCase
         ]);
         $parser->process($data, 'outer');
         foreach($parser->getCsvFiles() as $type => $file) {
-            $this->assertEquals(
+            self::assertEquals(
                 file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv"),
                 file_get_contents($file->getPathname())
             );
@@ -121,7 +121,7 @@ class ParserTest extends ParserTestCase
 
         $parser->process($data, 'hash');
         foreach($parser->getCsvFiles() as $type => $file) {
-            $this->assertEquals(
+            self::assertEquals(
                 file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv"),
                 file_get_contents($file->getPathname())
             );
@@ -185,7 +185,7 @@ class ParserTest extends ParserTestCase
         }
 
         foreach($parser->getCsvFiles() as $type => $file) {
-            $this->assertEquals(
+            self::assertEquals(
                 file_get_contents($this->getDataDir() . "{$type}.csv"),
                 file_get_contents($file->getPathname())
             );
@@ -250,7 +250,7 @@ class ParserTest extends ParserTestCase
         $parser->process($data, 'nested_hash_deep');
 
         foreach($parser->getCsvFiles() as $type => $file) {
-            $this->assertEquals(
+            self::assertEquals(
                 file_get_contents($this->getDataDir() . "{$type}.csv"),
                 file_get_contents($file->getPathname())
             );
@@ -295,7 +295,7 @@ class ParserTest extends ParserTestCase
         foreach(['hash' => 'later', 'hash_arr' => 'later_arr'] as $file => $later) {
             $old = file($files[$file]->getPathname());
             $new = file($files[$later]->getPathname());
-            $this->assertNotEquals(
+            self::assertNotEquals(
                 $old,
                 $new
             );
@@ -307,8 +307,8 @@ class ParserTest extends ParserTestCase
             foreach($old as $key => $row) {
                 $oldRow = str_getcsv($row);
                 $newRow = str_getcsv($new[$key]);
-                $this->assertEquals($oldRow[0], $newRow[0]);
-                $this->assertNotEquals($oldRow[1], $newRow[1]);
+                self::assertEquals($oldRow[0], $newRow[0]);
+                self::assertNotEquals($oldRow[1], $newRow[1]);
             }
         }
     }
@@ -324,7 +324,7 @@ class ParserTest extends ParserTestCase
         ]');
 
         $parser->process($data, 'threepack');
-        $this->assertEquals(
+        self::assertEquals(
             [
                 '"field"' . PHP_EOL,
                 '"128"' . PHP_EOL,
@@ -382,7 +382,7 @@ class ParserTest extends ParserTestCase
             'first_parent' => 1,
             'second_parent' => "two"]
         );
-        $this->assertEquals(
+        self::assertEquals(
             file_get_contents($this->getDataDir() . 'ParentIdsTest.csv'),
             file_get_contents($parser->getCsvFiles()['test'])
         );
@@ -392,7 +392,7 @@ class ParserTest extends ParserTestCase
     {
         $parser = $this->getParser();
         $parser->process(json_decode('["a","b"]'));
-        $this->assertEquals(
+        self::assertEquals(
             [
                 '"data"' . PHP_EOL,
                 '"a"' . PHP_EOL,
@@ -412,8 +412,8 @@ class ParserTest extends ParserTestCase
         $parser->process($inputData);
         $parser->getCsvFiles();
 
-        $this->assertEquals($originalData, $inputData);
-        $this->assertEquals(serialize($originalData), serialize($inputData), "The object does not match original.");
+        self::assertEquals($originalData, $inputData);
+        self::assertEquals(serialize($originalData), serialize($inputData), "The object does not match original.");
     }
 
     /**
@@ -447,12 +447,12 @@ class ParserTest extends ParserTestCase
         ];
 
         $parser->process($data);
-        $this->assertEquals(
+        self::assertEquals(
             true,
             $logHandler->hasWarning("Unsupported array nesting in 'root'! Converting to JSON string."),
             "Warning should have been logged"
         );
-        $this->assertEquals(
+        self::assertEquals(
             file_get_contents($this->getDataDir() . 'NestedArraysJson.csv'),
             file_get_contents($parser->getCsvFiles()['root'])
         );
@@ -478,7 +478,7 @@ class ParserTest extends ParserTestCase
 
         $parser->process($data);
 
-        $this->assertEquals(
+        self::assertEquals(
             '"id","KeywordRanking_attributes_date","KeywordRanking_stuff_I_ARE_POTAT","KeywordRanking_stuff_kek_ser_ou_ly"' . PHP_EOL .
             '"123456","2015-03-20","aaa$@!","now"' . PHP_EOL,
             file_get_contents($parser->getCsvFiles()['root'])
@@ -564,7 +564,7 @@ class ParserTest extends ParserTestCase
         $parser->process($data);
 
         // TODO guess this could be in files..
-        $this->assertEquals(
+        self::assertEquals(
             '"key"' . PHP_EOL .
             '"root_eae48f50d1159c41f633f876d6c66411"' . PHP_EOL .
             '"root_83cb9491934903381f6808ac79842022"' . PHP_EOL .
@@ -572,7 +572,7 @@ class ParserTest extends ParserTestCase
             file_get_contents($parser->getCsvFiles()['root'])
         );
 
-        $this->assertEquals(
+        self::assertEquals(
             '"subKey1","subKey2","JSON_parentId"' . PHP_EOL .
             '"val1.1","val1.2","root_eae48f50d1159c41f633f876d6c66411"' . PHP_EOL .
             '"val2.1.1","val2.1.2","root_83cb9491934903381f6808ac79842022"' . PHP_EOL .
@@ -605,14 +605,14 @@ class ParserTest extends ParserTestCase
 
         $parser->process($data2, 'arr');
 
-        $this->assertEquals(
+        self::assertEquals(
             '"key"' . PHP_EOL .
             '"arr_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
             '"arr_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
             file_get_contents($parser->getCsvFiles()['arr'])
         );
 
-        $this->assertEquals(
+        self::assertEquals(
             '"subKey1","subKey2","JSON_parentId"' . PHP_EOL .
             '"val2.1.1","val2.1.2","arr_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
             '"val2.2.1","val2.2.2","arr_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
@@ -715,7 +715,7 @@ class ParserTest extends ParserTestCase
 
         $parser->process($data);
 
-        $this->assertEquals(
+        self::assertEquals(
             '"key"' . PHP_EOL .
             '"root_0c616a2609bd2e8d88574f3f856170c5"' . PHP_EOL .
             '"root_3cc17a87c69e64707ac357e84e5a9eb8"' . PHP_EOL .
@@ -723,7 +723,7 @@ class ParserTest extends ParserTestCase
             file_get_contents($parser->getCsvFiles()['root'])
         );
 
-        $this->assertEquals(
+        self::assertEquals(
             '"data","JSON_parentId"' . PHP_EOL .
             '"str1","root_0c616a2609bd2e8d88574f3f856170c5"' . PHP_EOL .
             '"str2.1","root_3cc17a87c69e64707ac357e84e5a9eb8"' . PHP_EOL .
@@ -746,7 +746,7 @@ class ParserTest extends ParserTestCase
 
         $parser->process([(object) ['id' => 1]]);
 
-        $this->assertEquals(
+        self::assertEquals(
             '"id","value"' . PHP_EOL .
             '"1",""' . PHP_EOL,
             file_get_contents($parser->getCsvFiles()['root'])

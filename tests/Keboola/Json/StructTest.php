@@ -13,12 +13,12 @@ class StructTest extends ParserTestCase
     {
         $struct = $this->getStruct();
 
-        $this->assertTrue($this->callMethod($struct, 'typeIsScalar', ['integer']));
-        $this->assertTrue($this->callMethod($struct, 'typeIsScalar', ['string']));
-        $this->assertTrue($this->callMethod($struct, 'typeIsScalar', ['double']));
-        $this->assertTrue($this->callMethod($struct, 'typeIsScalar', ['boolean']));
-        $this->assertFalse($this->callMethod($struct, 'typeIsScalar', ['array']));
-        $this->assertFalse($this->callMethod($struct, 'typeIsScalar', ['object']));
+        self::assertTrue($this->callMethod($struct, 'typeIsScalar', ['integer']));
+        self::assertTrue($this->callMethod($struct, 'typeIsScalar', ['string']));
+        self::assertTrue($this->callMethod($struct, 'typeIsScalar', ['double']));
+        self::assertTrue($this->callMethod($struct, 'typeIsScalar', ['boolean']));
+        self::assertFalse($this->callMethod($struct, 'typeIsScalar', ['array']));
+        self::assertFalse($this->callMethod($struct, 'typeIsScalar', ['object']));
     }
 
     public function testUpgradeToArrayCheck()
@@ -27,10 +27,10 @@ class StructTest extends ParserTestCase
         $struct->setAutoUpgradeToArray(true);
 
         // scalar strict
-        $this->assertTrue($this->callMethod($struct, 'upgradeToArrayCheck', ['arrayOfinteger', 'integer']));
-        $this->assertTrue($this->callMethod($struct, 'upgradeToArrayCheck', ['integer', 'arrayOfinteger']));
-        $this->assertFalse($this->callMethod($struct, 'upgradeToArrayCheck', ['integer', 'object']));
-        $this->assertFalse($this->callMethod($struct, 'upgradeToArrayCheck', ['arrayOfscalar', 'object']));
+        self::assertTrue($this->callMethod($struct, 'upgradeToArrayCheck', ['arrayOfinteger', 'integer']));
+        self::assertTrue($this->callMethod($struct, 'upgradeToArrayCheck', ['integer', 'arrayOfinteger']));
+        self::assertFalse($this->callMethod($struct, 'upgradeToArrayCheck', ['integer', 'object']));
+        self::assertFalse($this->callMethod($struct, 'upgradeToArrayCheck', ['arrayOfscalar', 'object']));
     }
 
     public function testAutoUpgradeToArray()
@@ -38,13 +38,13 @@ class StructTest extends ParserTestCase
         $struct = $this->getStruct();
 
         $struct->setAutoUpgradeToArray(true);
-        $this->assertEquals('arrayOfinteger', $this->callMethod($struct, 'update', [
+        self::assertEquals('arrayOfinteger', $this->callMethod($struct, 'update', [
             'arrayOfinteger',
             'integer',
             'a2s',
             new \stdClass
         ]));
-        $this->assertEquals('arrayOfinteger', $this->callMethod($struct, 'update', [
+        self::assertEquals('arrayOfinteger', $this->callMethod($struct, 'update', [
             'integer',
             'arrayOfinteger',
             's2a',
@@ -72,7 +72,7 @@ class StructTest extends ParserTestCase
 
         $struct->load($data);
 
-        $this->assertEquals($data, $struct->getStruct());
+        self::assertEquals($data, $struct->getStruct());
     }
 
     /**

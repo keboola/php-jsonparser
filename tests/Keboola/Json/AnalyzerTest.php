@@ -33,7 +33,7 @@ class AnalyzerTest extends ParserTestCase
         $analyzer = new Analyzer($this->getLogger('analyzer', true));
         $analyzer->analyze($data, 'root');
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'root.arr' => ['data' => 'scalar'],
                 'root.obj' => [
@@ -75,7 +75,7 @@ class AnalyzerTest extends ParserTestCase
         $analyzer->setStrict(true);
         $analyzer->analyze($data, 'root');
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'root.arr' => ['data' => 'integer'],
                 'root.obj' => [
@@ -110,7 +110,7 @@ class AnalyzerTest extends ParserTestCase
         $analyzer->setStrict(true);
         $analyzer->analyze($data, 'root');
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'root.arr' => ['data' => 'integer'],
                 'root.obj' => [
@@ -150,7 +150,7 @@ class AnalyzerTest extends ParserTestCase
         $analyzer->getStruct()->setAutoUpgradeToArray(true);
         $analyzer->analyze($data, 'root');
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'root.arrOfObjects' => ['innerId' => 'scalar'],
                 'root.arr' => ['data' => 'scalar'],
@@ -230,12 +230,12 @@ class AnalyzerTest extends ParserTestCase
         ];
 
         $analyzer->analyze($data, 'test');
-        $this->assertFalse($analyzer->isAnalyzed('test'));
+        self::assertFalse($analyzer->isAnalyzed('test'));
 
         $analyzer = new Analyzer($this->getLogger('analyzer', true), null, 1);
-        $this->assertFalse($analyzer->isAnalyzed('test'));
+        self::assertFalse($analyzer->isAnalyzed('test'));
         $analyzer->analyze($data, 'test');
-        $this->assertTrue($analyzer->isAnalyzed('test'));
+        self::assertTrue($analyzer->isAnalyzed('test'));
     }
 
     public function testAnalyzeRow()
@@ -243,7 +243,7 @@ class AnalyzerTest extends ParserTestCase
         $analyzer = new Analyzer($this->getLogger('analyzer', true));
 
         $this->callMethod($analyzer, 'analyzeRow', [new \stdClass, 'empty']);
-        $this->assertEquals(['empty' => []], $analyzer->getStruct()->getStruct());
+        self::assertEquals(['empty' => []], $analyzer->getStruct()->getStruct());
 
         $this->callMethod($analyzer, 'analyzeRow', [(object) [
             'k' => 'v',
@@ -252,7 +252,7 @@ class AnalyzerTest extends ParserTestCase
             ]
         ], 'test']);
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'empty' => [],
                 'test.field' => [
@@ -289,7 +289,7 @@ class AnalyzerTest extends ParserTestCase
         $analyzer->analyze($data1, 'test');
         $analyzer->analyze($data2, 'test');
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'test.arr' => ['data' => 'scalar'],
                 'test' => [
@@ -329,7 +329,7 @@ class AnalyzerTest extends ParserTestCase
         $analyzer->analyze($data1, 'test');
         $analyzer->analyze($data2, 'test');
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'test.arr' => ['data' => 'scalar'],
                 'test' => [
@@ -371,7 +371,7 @@ class AnalyzerTest extends ParserTestCase
         $analyzer->analyze($data1, 'test');
         $analyzer->analyze($data2, 'test');
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'test.arr' => ['data' => 'scalar'],
                 'test' => [
@@ -409,7 +409,7 @@ class AnalyzerTest extends ParserTestCase
         $analyzer->analyze($data1, 'test');
         $analyzer->analyze($data2, 'test');
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'test.arr' => ['data' => 'scalar'],
                 'test' => [
@@ -440,7 +440,7 @@ class AnalyzerTest extends ParserTestCase
 
         $analyzer->analyze($data, 'test');
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'test' => [
                     'id' => 'scalar',
@@ -483,7 +483,7 @@ class AnalyzerTest extends ParserTestCase
 
         $analyzer->analyze($data, 'test');
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'test' => [
                     'id' => 'scalar',
@@ -530,7 +530,7 @@ class AnalyzerTest extends ParserTestCase
             'null2s'
         );
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 's2null' => [
                     'val' => 'arrayOfscalar',
