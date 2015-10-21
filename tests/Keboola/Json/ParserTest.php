@@ -764,21 +764,16 @@ class ParserTest extends ParserTestCase
         $parser->process([]);
     }
 
-//     /**
-//      * @expectedException \Keboola\Json\Exception\NoDataException
-//      * @expectedExceptionMessage Empty data set received for root
-//      */
-//     public function testNullData()
-//     {
-//         $parser = $this->getParser();
-//
-//         $parser->process([null]);
-// ini_set('xdebug.var_display_max_depth', -1);
-// ini_set('xdebug.var_display_max_children', -1);
-// ini_set('xdebug.var_display_max_data', -1);
-// var_dump($parser);
-//         $parser->getCsvFiles();
-//     }
+    /**
+     * @expectedException \Keboola\Json\Exception\NoDataException
+     * @expectedExceptionMessage Empty data set received for root
+     */
+    public function testNullData()
+    {
+        $parser = $this->getParser();
+
+        $parser->process([null]);
+    }
 
     public function testArrayOfNull()
     {

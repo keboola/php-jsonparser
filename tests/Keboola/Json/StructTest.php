@@ -6,7 +6,6 @@ use Keboola\Json\Struct;
 
 require_once 'tests/ParserTestCase.php';
 
-
 class StructTest extends ParserTestCase
 {
     public function testTypeIsScalar()
