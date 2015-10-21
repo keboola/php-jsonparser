@@ -39,6 +39,27 @@ class ParserTest extends ParserTestCase
         );
     }
 
+    public function testPrimaryKey()
+    {
+        $parser = $this->getParser();
+
+        $parser->addPrimaryKeys(['root' => 'id,date']);
+
+        $parser->process([
+            (object) [
+                'id' => 1,
+                'date' => '2015-10-21',
+                'data' => ['stuff']
+            ]
+        ]);
+
+        self::assertEquals('id,date', $parser->getCsvFiles()['root']->getPrimaryKey());
+        self::assertEquals(
+            '"stuff","root_1;2015-10-21"' . PHP_EOL,
+            file($parser->getCsvFiles()['root_data'])[1]
+        );
+    }
+
     public function testParentIdPrimaryKey()
     {
         $parser = $this->getParser();
@@ -742,6 +763,22 @@ class ParserTest extends ParserTestCase
 
         $parser->process([]);
     }
+
+//     /**
+//      * @expectedException \Keboola\Json\Exception\NoDataException
+//      * @expectedExceptionMessage Empty data set received for root
+//      */
+//     public function testNullData()
+//     {
+//         $parser = $this->getParser();
+//
+//         $parser->process([null]);
+// ini_set('xdebug.var_display_max_depth', -1);
+// ini_set('xdebug.var_display_max_children', -1);
+// ini_set('xdebug.var_display_max_data', -1);
+// var_dump($parser);
+//         $parser->getCsvFiles();
+//     }
 
     public function testArrayOfNull()
     {

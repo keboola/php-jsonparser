@@ -182,7 +182,7 @@ class Parser
             // analyse instead of failing if the data is unknown!
             $this->log->log(
                 "debug",
-                "Parser experienced an unknown data type '{$type}'. Trying on-the-fly analysis",
+                "Trying to parse an unknown data type '{$type}'. Trying on-the-fly analysis",
                 [
                     "data" => $data,
                     "type" => $type,
@@ -407,6 +407,7 @@ class Parser
      *
      * @param string $name A string to be validated
      * @return string
+     * @todo Could use just a part of the md5 hash
      */
     protected function createSafeName($name)
     {
@@ -454,6 +455,9 @@ class Parser
                 $this->getTemp()
             );
             $this->csvFiles[$safeType]->addAttributes(["fullDisplayName" => $type]);
+            if (!empty($this->primaryKeys[$safeType])) {
+                $this->csvFiles[$safeType]->setPrimaryKey($this->primaryKeys[$safeType]);
+            }
         }
 
         return $this->csvFiles[$safeType];
@@ -529,12 +533,6 @@ class Parser
     {
         // parse what's in cache before returning results
         $this->processCache();
-
-        foreach ($this->primaryKeys as $table => $pk) {
-            if (array_key_exists($table, $this->csvFiles)) {
-                $this->csvFiles[$table]->setPrimaryKey($pk);
-            }
-        }
 
         return $this->csvFiles;
     }
@@ -625,6 +623,10 @@ class Parser
      */
     public function addPrimaryKeys(array $pks)
     {
+        if (!empty($this->csvFiles)) {
+            throw new JsonParserException('"addPrimaryKeys" must be used before any data is parsed');
+        }
+
         $this->primaryKeys += $pks;
     }
 
