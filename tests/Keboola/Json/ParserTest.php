@@ -755,7 +755,7 @@ class ParserTest extends ParserTestCase
 
     /**
      * @expectedException \Keboola\Json\Exception\NoDataException
-     * @expectedExceptionMessage Empty data set received for root
+     * @expectedExceptionMessage Empty data set received for 'root'
      */
     public function testEmptyData()
     {
@@ -766,7 +766,7 @@ class ParserTest extends ParserTestCase
 
     /**
      * @expectedException \Keboola\Json\Exception\NoDataException
-     * @expectedExceptionMessage Empty data set received for root
+     * @expectedExceptionMessage Empty data set received for 'root'
      */
     public function testNullData()
     {
