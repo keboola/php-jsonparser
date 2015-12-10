@@ -321,7 +321,10 @@ class Parser
             case "object":
                 $childRow = $this->parseRow($dataRow->{$column}, $type . "." . $column, [], $arrayParentId);
 
-                $csvRow->setChildValues($safeColumn, $childRow);
+                foreach($childRow->getRow() as $key => $value) {
+                    // FIXME createSafeName is duplicated here
+                    $csvRow->setValue($this->createSafeName($safeColumn . '_' . $key), $value);
+                }
                 break;
             default:
                 // If a column is an object/array while $struct expects a single column, log an error

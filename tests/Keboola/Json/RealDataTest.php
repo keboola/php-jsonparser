@@ -235,4 +235,21 @@ class RealDataTest extends ParserTestCase
         self::assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
         self::assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
     }
+
+    public function testAssignLongColName()
+    {
+        $parser = $this->getParser();
+        $parser->getStruct()->setAutoUpgradeToArray(true);
+
+        $testFile = $this->loadJson('kbc_components');
+
+        $parser->process($testFile->components);
+
+        $result = '"id","d__DistributionGroups_outputs_histogramEstimates_persistent",' .
+            '"d__m__DistributionGroups_outputs_groupCharacteristics_persistent"' . PHP_EOL .
+            '"ag-forecastio","",""' . PHP_EOL .
+            '"rcp-distribution-groups","1","1"' . PHP_EOL;
+
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+    }
 }

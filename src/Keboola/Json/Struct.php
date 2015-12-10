@@ -321,4 +321,9 @@ class Struct
     {
         return self::STRUCT_VERSION;
     }
+
+    public function __toString()
+    {
+        return json_encode($this->getStruct());
+    }
 }

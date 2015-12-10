@@ -40,13 +40,6 @@ class CsvRow
         $this->data[$column] = $value;
     }
 
-    public function setChildValues($column, self $childRow)
-    {
-        foreach($childRow->getRow() as $key => $value) {
-            $this->setValue($column . '_' . $key, $value);
-        }
-    }
-
     /**
      * @return array
      */

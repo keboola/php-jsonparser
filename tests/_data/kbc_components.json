@@ -1,0 +1,27 @@
+{
+  "components": [
+    {
+      "id": "ag-forecastio",
+      "data": {
+
+      }
+    },
+    {
+      "id": "rcp-distribution-groups",
+      "data": {
+        "modules": {
+          "#DistributionGroups": {
+            "outputs": {
+              "histogramEstimates": {
+                "persistent": 1
+              },
+              "groupCharacteristics": {
+                "persistent": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
