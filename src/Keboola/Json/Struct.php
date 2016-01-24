@@ -323,7 +323,7 @@ class Struct
      * Version of $struct array used in parser
      * @return double
      */
-    public function getStructVersion()
+    public static function getStructVersion()
     {
         return self::STRUCT_VERSION;
     }
