@@ -234,8 +234,14 @@ class Struct
     /**
      * Return all structure definitions as an array
      * @return array
+     * @deprecated
      */
     public function getStruct()
+    {
+        return $this->getData();
+    }
+
+    public function getData()
     {
         return $this->struct;
     }
