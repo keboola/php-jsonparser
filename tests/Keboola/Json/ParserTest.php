@@ -851,4 +851,23 @@ class ParserTest extends ParserTestCase
             file_get_contents($parser->getCsvFiles()['null2s_obj'])
         );
     }
+
+    public function testParseRowNumeric()
+    {
+        $parser = $this->getParser();
+        $parser->getStruct()->add('root', [
+            '1' => 'scalar',
+            '2' => 'scalar'
+        ]);
+
+        $object = (object) [
+            '1' => 'one',
+            '2' => 'two'
+        ];
+
+        $row = self::callMethod($parser, 'parseRow', [$object, 'root']);
+
+        $expected = (array) $object;
+        self::assertEquals($expected, $row->getRow());
+    }
 }

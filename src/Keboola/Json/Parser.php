@@ -245,7 +245,7 @@ class Parser
             $outerObjectHash
         );
 
-        foreach (array_merge($this->getStruct()->getDefinitions($type), $parentCols) as $column => $dataType) {
+        foreach (array_replace($this->getStruct()->getDefinitions($type), $parentCols) as $column => $dataType) {
             $this->parseField($dataRow, $csvRow, $arrayParentId, $column, $dataType, $type);
         }
 
@@ -276,6 +276,14 @@ class Parser
         // perhaps sorting the child columns on its own?
         // (because keys in struct don't contain child objects)
         $safeColumn = $this->createSafeName($column);
+
+        // A hack allowing access to numeric keys in object
+        if (
+            !isset($dataRow->{$column})
+            && isset(json_decode(json_encode($dataRow), true)[$column])
+        ) {
+            $dataRow->{$column} = json_decode(json_encode($dataRow), true)[$column];
+        }
 
         // skip empty objects & arrays to prevent creating empty tables
         // or incomplete column names
