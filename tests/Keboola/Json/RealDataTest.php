@@ -48,8 +48,6 @@ class RealDataTest extends ParserTestCase
     {
         $parser = $this->getParser();
 
-        $testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
-
         $data = $this->loadJson('Json_tweets_pinkbike');
 
         $parser->process($data, 'a/b.c&d@e$f');
@@ -94,7 +92,7 @@ class RealDataTest extends ParserTestCase
         // -1 offset to compensate for header
         $rows = -1;
         $handle = fopen($parser->getCsvFiles()['root_statuses'], 'r');
-        while($row = fgetcsv($handle)) {
+        while(fgetcsv($handle)) {
             $rows++;
         }
         self::assertEquals(count($data[0]->statuses), $rows);
