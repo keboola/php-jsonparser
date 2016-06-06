@@ -131,7 +131,7 @@ class Analyzer
                 "WARNING", "Unsupported array nesting in '{$type}'! Converting to JSON string.",
                 ['row' => $row]
             );
-            $rowType = $struct[Parser::DATA_COLUMN] = 'string';
+            $rowType = $struct[Parser::DATA_COLUMN] = $this->strict ? 'string' : 'scalar';
         } elseif (is_null($row)) {
             // do nothing
         } else {

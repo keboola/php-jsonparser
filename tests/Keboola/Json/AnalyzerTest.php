@@ -387,7 +387,7 @@ class AnalyzerTest extends ParserTestCase
      * @expectedException \Keboola\Json\Exception\JsonParserException
      * @expectedExceptionMessage Unhandled type change from "integer" to "string" in 'test.arr.data'
      */
-    public function testAnalyzeKnownArrayMismatch3()
+    public function testAnalyzeKnownArrayMismatchStrict()
     {
         $analyzer = new Analyzer($this->getLogger('analyzer', true));
         $analyzer->setStrict(true);
@@ -555,5 +555,32 @@ class AnalyzerTest extends ParserTestCase
             ],
             $analyzer->getStruct()->getStruct()
         );
+    }
+
+    /**
+     * @dataProvider unsupportedNestingProvider
+     */
+    public function testUnsupportedNesting($strict, $expectedType)
+    {
+        $logHandler = new \Monolog\Handler\TestHandler();
+        $analyzer = new Analyzer(new \Monolog\Logger('test', [$logHandler]));
+        $analyzer->setNestedArrayAsJson(true);
+        $analyzer->setStrict($strict);
+
+        $data = [
+            [1,2,3,[7,8]],
+            [4,5,6]
+        ];
+
+        $type = $this->callMethod($analyzer, 'analyzeRow', [$data, 'nest']);
+        $this->assertEquals($expectedType, $type);
+    }
+
+    public function unsupportedNestingProvider()
+    {
+        return [
+            [true, 'string'],
+            [false, 'scalar']
+        ];
     }
 }
