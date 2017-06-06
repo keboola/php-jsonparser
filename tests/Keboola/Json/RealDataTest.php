@@ -1,8 +1,7 @@
 <?php
+namespace Keboola\Json;
 
-use Keboola\Json\Parser;
-use Keboola\CsvTable\Table;
-use Keboola\Utils\Utils;
+use Keboola\Json\Test\ParserTestCase;
 
 class RealDataTest extends ParserTestCase
 {
@@ -16,7 +15,7 @@ class RealDataTest extends ParserTestCase
 
         $parser->process($data);
 
-        foreach($parser->getCsvFiles() as $name => $table) {
+        foreach ($parser->getCsvFiles() as $name => $table) {
             // compare result files
             self::assertEquals(
                 file_get_contents("{$testFilesPath}/{$name}.csv"),
@@ -25,7 +24,7 @@ class RealDataTest extends ParserTestCase
 
             // compare column counts
             $parsedFile = file($table->getPathname());
-            foreach($parsedFile as $row) {
+            foreach ($parsedFile as $row) {
                 if (empty($headerCount)) {
                     $headerCount = count($row);
                 } else {
@@ -37,9 +36,8 @@ class RealDataTest extends ParserTestCase
         // make sure all the files are present
         $dir = scandir($testFilesPath);
         array_walk($dir, function (&$val) {
-                $val = str_replace(".csv", "", $val);
-            }
-        );
+            $val = str_replace(".csv", "", $val);
+        });
         self::assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
         self::assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
     }
@@ -92,7 +90,7 @@ class RealDataTest extends ParserTestCase
         // -1 offset to compensate for header
         $rows = -1;
         $handle = fopen($parser->getCsvFiles()['root_statuses'], 'r');
-        while(fgetcsv($handle)) {
+        while (fgetcsv($handle)) {
             $rows++;
         }
         self::assertEquals(count($data[0]->statuses), $rows);
@@ -186,7 +184,7 @@ class RealDataTest extends ParserTestCase
         $parser->addPrimaryKeys($pks);
 
         $files = $parser->getCsvFiles();
-        foreach($pks as $table => $pk) {
+        foreach ($pks as $table => $pk) {
             self::assertEquals($pk, $files[$table]->getPrimaryKey());
         }
         self::assertEquals(null, $files['root']->getPrimaryKey());
@@ -206,7 +204,7 @@ class RealDataTest extends ParserTestCase
 
         $parser->process($data);
 
-        foreach($parser->getCsvFiles() as $name => $table) {
+        foreach ($parser->getCsvFiles() as $name => $table) {
             // compare result files
             self::assertEquals(
                 file_get_contents("{$testFilesPath}/{$name}.csv"),
@@ -215,7 +213,7 @@ class RealDataTest extends ParserTestCase
 
             // compare column counts
             $parsedFile = file($table->getPathname());
-            foreach($parsedFile as $row) {
+            foreach ($parsedFile as $row) {
                 if (empty($headerCount)) {
                     $headerCount = count($row);
                 } else {
@@ -227,9 +225,8 @@ class RealDataTest extends ParserTestCase
         // make sure all the files are present
         $dir = scandir($testFilesPath);
         array_walk($dir, function (&$val) {
-                $val = str_replace(".csv", "", $val);
-            }
-        );
+            $val = str_replace(".csv", "", $val);
+        });
         self::assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
         self::assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
     }

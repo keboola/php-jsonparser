@@ -48,10 +48,11 @@ class Struct
     /**
      * Initialize the structure with an array of definitions
      * @param array $struct
+     * @throws JsonParserException
      */
     public function load(array $struct = [])
     {
-        foreach($struct as $key => $defs) {
+        foreach ($struct as $key => $defs) {
             if (!is_array($defs)) {
                 throw new JsonParserException(
                     "Invalid data definitions in '{$key}'. Each key should contain an array of data types in an associative array.",
@@ -62,9 +63,8 @@ class Struct
                 );
             }
 
-            foreach($defs as $node => $type) {
-                if (
-                    !is_scalar($type)
+            foreach ($defs as $node => $type) {
+                if (!is_scalar($type)
                     || (!$this->isValidType($type)
                     && !($this->isValidType($this->isArrayOf($type))))
                 ) {
@@ -95,7 +95,7 @@ class Struct
             // If the current row doesn't match the known structure
             $diff = array_diff_assoc($struct, $this->struct[$type]);
             // Walk through mismatched fields
-            foreach($diff as $diffKey => $diffVal) {
+            foreach ($diff as $diffKey => $diffVal) {
                 $this->struct[$type][$diffKey] = $this->update(
                     empty($this->struct[$type][$diffKey]) ? null : $this->struct[$type][$diffKey],
                     $struct[$diffKey],
@@ -114,25 +114,18 @@ class Struct
      * @param string $newType
      * @param string $type for logging
      * @return string $oldType|$newType
+     * @throws JsonParserException
      */
     public function update($oldType, $newType, $type)
     {
-        if (
-            empty($oldType)
-            || $oldType == "NULL"
-        ) {
+        if (empty($oldType) || $oldType == "NULL") {
             // Assign if the field is new
             return $newType;
-        } elseif (
-            $newType == "NULL"
-            || $newType == $oldType
-        ) {
+        } elseif ($newType == "NULL" || $newType == $oldType) {
             // If new type is null or unchanged
             // do nothing and keep the originally stored type!
             return $oldType;
-        } elseif (
-            $this->upgradeToArrayCheck($oldType, $newType)
-        ) {
+        } elseif ($this->upgradeToArrayCheck($oldType, $newType)) {
             return $this->upgradeToArray($oldType, $newType);
         } else {
             // Throw a JsonParserException 'cos of a type mismatch
@@ -284,10 +277,11 @@ class Struct
      * @param string $type
      * @param string $child
      * @return string data type
+     * @throws JsonParserException
      */
     public function getType($type, $child)
     {
-        $definitions = $this->getDefinitions($type);
+        $this->getDefinitions($type);
         if (!$this->hasType($type, $child)) {
             throw new JsonParserException("Trying to retrieve type of '{$type}.{$child}'");
         }

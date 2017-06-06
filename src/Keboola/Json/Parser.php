@@ -5,8 +5,8 @@ namespace Keboola\Json;
 use Keboola\CsvTable\Table;
 use Keboola\Temp\Temp;
 use Monolog\Logger;
-use Keboola\Json\Exception\JsonParserException,
-    Keboola\Json\Exception\NoDataException;
+use Keboola\Json\Exception\JsonParserException;
+use Keboola\Json\Exception\NoDataException;
 
 /**
  * JSON to CSV data analyzer and parser/converter
@@ -174,10 +174,9 @@ class Parser
      */
     public function parse(array $data, $type, $parentId = null)
     {
-        if (
-            !$this->analyzer->isAnalyzed($type)
+        if (!$this->analyzer->isAnalyzed($type)
             && (empty($this->analyzer->getRowsAnalyzed()[$type])
-                || $this->analyzer->getRowsAnalyzed()[$type] < count($data))
+            || $this->analyzer->getRowsAnalyzed()[$type] < count($data))
         ) {
             // analyse instead of failing if the data is unknown!
             $this->log->log(
@@ -278,8 +277,7 @@ class Parser
         $safeColumn = $this->createSafeName($column);
 
         // A hack allowing access to numeric keys in object
-        if (
-            !isset($dataRow->{$column})
+        if (!isset($dataRow->{$column})
             && isset(json_decode(json_encode($dataRow), true)[$column])
         ) {
             $dataRow->{$column} = json_decode(json_encode($dataRow), true)[$column];
@@ -287,8 +285,7 @@ class Parser
 
         // skip empty objects & arrays to prevent creating empty tables
         // or incomplete column names
-        if (
-            !isset($dataRow->{$column})
+        if (!isset($dataRow->{$column})
             || is_null($dataRow->{$column})
             || (empty($dataRow->{$column}) && !is_scalar($dataRow->{$column}))
         ) {
@@ -303,7 +300,8 @@ class Parser
         if ($dataType == "NULL") {
             // Throw exception instead? Any usecase? TODO get rid of it maybe?
             $this->log->log(
-                "WARNING", "Encountered data where 'NULL' was expected from previous analysis",
+                "WARNING",
+                "Encountered data where 'NULL' was expected from previous analysis",
                 [
                     'type' => $type,
                     'data' => $dataRow
@@ -329,7 +327,7 @@ class Parser
             case "object":
                 $childRow = $this->parseRow($dataRow->{$column}, $type . "." . $column, [], $arrayParentId);
 
-                foreach($childRow->getRow() as $key => $value) {
+                foreach ($childRow->getRow() as $key => $value) {
                     // FIXME createSafeName is duplicated here
                     $csvRow->setValue($this->createSafeName($safeColumn . '_' . $key), $value);
                 }

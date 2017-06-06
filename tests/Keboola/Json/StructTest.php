@@ -1,10 +1,7 @@
 <?php
+namespace Keboola\Json;
 
-use Keboola\Json\Struct;
-// use Keboola\CsvTable\Table;
-// use Keboola\Utils\Utils;
-
-require_once 'tests/ParserTestCase.php';
+use Keboola\Json\Test\ParserTestCase;
 
 class StructTest extends ParserTestCase
 {
@@ -112,5 +109,4 @@ class StructTest extends ParserTestCase
     {
         return new Struct(new \Monolog\Logger('test', [new \Monolog\Handler\TestHandler()]));
     }
-
 }

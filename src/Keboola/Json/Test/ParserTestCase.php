@@ -1,4 +1,6 @@
 <?php
+namespace Keboola\Json\Test;
+
 use Keboola\Json\Parser;
 
 class ParserTestCase extends \PHPUnit_Framework_TestCase
@@ -41,6 +43,6 @@ class ParserTestCase extends \PHPUnit_Framework_TestCase
 
     protected function getDataDir()
     {
-        return __DIR__ . "/_data/";
+        return __DIR__ . "/../../../../tests/_data/";
     }
 }

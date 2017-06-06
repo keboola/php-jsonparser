@@ -1,6 +1,7 @@
 <?php
+namespace Keboola\Json;
 
-use Keboola\Json\Parser;
+use Keboola\Json\Test\ParserTestCase;
 
 class ParserTest extends ParserTestCase
 {
@@ -75,7 +76,7 @@ class ParserTest extends ParserTestCase
 
         $parser->addPrimaryKeys(['test' => "pk"]);
         $parser->process($data, 'test');
-        foreach($parser->getCsvFiles() as $type => $file) {
+        foreach ($parser->getCsvFiles() as $type => $file) {
             self::assertEquals(
                 file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv"),
                 file_get_contents($file->getPathname())
@@ -94,7 +95,7 @@ class ParserTest extends ParserTestCase
             'outer_inner' => "pkey"
         ]);
         $parser->process($data, 'outer');
-        foreach($parser->getCsvFiles() as $type => $file) {
+        foreach ($parser->getCsvFiles() as $type => $file) {
             self::assertEquals(
                 file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv"),
                 file_get_contents($file->getPathname())
@@ -118,7 +119,7 @@ class ParserTest extends ParserTestCase
         ]');
 
         $parser->process($data, 'hash');
-        foreach($parser->getCsvFiles() as $type => $file) {
+        foreach ($parser->getCsvFiles() as $type => $file) {
             self::assertEquals(
                 file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv"),
                 file_get_contents($file->getPathname())
@@ -178,11 +179,11 @@ class ParserTest extends ParserTestCase
         }');
 
         // Shouldn't be any different to parsing just the array..just replicating an use case
-        foreach($data as $json) {
+        foreach ($data as $json) {
             $parser->process([$json], 'nested_hash');
         }
 
-        foreach($parser->getCsvFiles() as $type => $file) {
+        foreach ($parser->getCsvFiles() as $type => $file) {
             self::assertEquals(
                 file_get_contents($this->getDataDir() . "{$type}.csv"),
                 file_get_contents($file->getPathname())
@@ -247,7 +248,7 @@ class ParserTest extends ParserTestCase
 
         $parser->process($data, 'nested_hash_deep');
 
-        foreach($parser->getCsvFiles() as $type => $file) {
+        foreach ($parser->getCsvFiles() as $type => $file) {
             self::assertEquals(
                 file_get_contents($this->getDataDir() . "{$type}.csv"),
                 file_get_contents($file->getPathname())
@@ -290,7 +291,7 @@ class ParserTest extends ParserTestCase
         sleep(1);
         $parser->process($data, 'later', ['time' =>time()]);
         $files = $parser->getCsvFiles();
-        foreach(['hash' => 'later', 'hash_arr' => 'later_arr'] as $file => $later) {
+        foreach (['hash' => 'later', 'hash_arr' => 'later_arr'] as $file => $later) {
             $old = file($files[$file]->getPathname());
             $new = file($files[$later]->getPathname());
             self::assertNotEquals(
@@ -302,7 +303,7 @@ class ParserTest extends ParserTestCase
             $old = array_slice($old, 1);
             $new = array_slice($new, 1);
             // compare first field (this $data has no more anywhere!)
-            foreach($old as $key => $row) {
+            foreach ($old as $key => $row) {
                 $oldRow = str_getcsv($row);
                 $newRow = str_getcsv($new[$key]);
                 self::assertEquals($oldRow[0], $newRow[0]);
@@ -376,9 +377,13 @@ class ParserTest extends ParserTestCase
             {"field": true}
         ]');
 
-        $parser->process($data, 'test', [
-            'first_parent' => 1,
-            'second_parent' => "two"]
+        $parser->process(
+            $data,
+            'test',
+            [
+                'first_parent' => 1,
+                'second_parent' => "two"
+            ]
         );
         self::assertEquals(
             file_get_contents($this->getDataDir() . 'ParentIdsTest.csv'),
@@ -814,35 +819,40 @@ class ParserTest extends ParserTestCase
             file_get_contents($parser->getCsvFiles()['s2null'])
         );
 
-        self::assertEquals('"data","JSON_parentId"' . PHP_EOL .
+        self::assertEquals(
+            '"data","JSON_parentId"' . PHP_EOL .
             '"stringArr","s2null_eb89917794221aeda822735efbab9069"' . PHP_EOL .
             '"","s2null_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
             '',
             file_get_contents($parser->getCsvFiles()['s2null_val'])
         );
 
-        self::assertEquals('"key","JSON_parentId"' . PHP_EOL .
+        self::assertEquals(
+            '"key","JSON_parentId"' . PHP_EOL .
             '"objValue","s2null_eb89917794221aeda822735efbab9069"' . PHP_EOL .
             '"","s2null_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
             '',
             file_get_contents($parser->getCsvFiles()['s2null_obj'])
         );
 
-        self::assertEquals('"val","obj"' . PHP_EOL .
+        self::assertEquals(
+            '"val","obj"' . PHP_EOL .
             '"null2s_eb89917794221aeda822735efbab9069","null2s_eb89917794221aeda822735efbab9069"' . PHP_EOL .
             '"null2s_77cca534224f13ec1fa45c6c0c98557d","null2s_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
             '',
             file_get_contents($parser->getCsvFiles()['null2s'])
         );
 
-        self::assertEquals('"data","JSON_parentId"' . PHP_EOL .
+        self::assertEquals(
+            '"data","JSON_parentId"' . PHP_EOL .
             '"stringArr","null2s_eb89917794221aeda822735efbab9069"' . PHP_EOL .
             '"","null2s_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
             '',
             file_get_contents($parser->getCsvFiles()['null2s_val'])
         );
 
-        self::assertEquals('"key","JSON_parentId"' . PHP_EOL .
+        self::assertEquals(
+            '"key","JSON_parentId"' . PHP_EOL .
             '"objValue","null2s_eb89917794221aeda822735efbab9069"' . PHP_EOL .
             '"","null2s_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
             '',

@@ -1,10 +1,7 @@
 <?php
+namespace Keboola\Json;
 
-use Keboola\Json\Analyzer,
-    Keboola\Json\Struct;
-
-require_once 'tests/ParserTestCase.php';
-
+use Keboola\Json\Test\ParserTestCase;
 
 class AnalyzerTest extends ParserTestCase
 {

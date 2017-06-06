@@ -16,11 +16,11 @@ class Cache
 
     protected $memoryLimit = null;
 
-    public function store($data) {
+    public function store($data)
+    {
         // TODO ensure at least X MB is left free (X should be possible to change -> Parser::getCache()->setMemLimit(X))
         // either to stop using memory once X mem is used or once X is left from PHP limit
-        if(
-            ini_get('memory_limit') != "-1"
+        if (ini_get('memory_limit') != "-1"
             && memory_get_usage() > (\Keboola\Utils\returnBytes(ini_get('memory_limit')) * 0.25)
             || ($this->memoryLimit !== null && memory_get_usage() > $this->memoryLimit)
         ) {
@@ -37,7 +37,8 @@ class Cache
         }
     }
 
-    public function getNext() {
+    public function getNext()
+    {
         if (!empty($this->temp) && !feof($this->temp)) {
             // keep the file position in case the file's been written to
             fseek($this->temp, $this->readPosition);
