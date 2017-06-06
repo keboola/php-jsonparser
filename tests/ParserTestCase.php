@@ -1,9 +1,5 @@
 <?php
-// namespace Keboola\Json;
-
 use Keboola\Json\Parser;
-use Keboola\CsvTable\Table;
-use Keboola\Utils\Utils;
 
 class ParserTestCase extends \PHPUnit_Framework_TestCase
 {
@@ -23,13 +19,6 @@ class ParserTestCase extends \PHPUnit_Framework_TestCase
         return $method->invokeArgs($obj, $args);
     }
 
-//     protected static function getProperty($obj, $name)
-//     {
-//         $class = new \ReflectionClass($obj);
-//         $property = $class->getProperty($name);
-//         $property->setAccessible(true);
-//         return $property->getValue($obj);
-//     }
     protected function getLogger($name = 'test', $null = false)
     {
         return new \Monolog\Logger(
@@ -42,7 +31,7 @@ class ParserTestCase extends \PHPUnit_Framework_TestCase
     {
         $testFilesPath = $this->getDataDir() . $fileName . ".json";
         $file = file_get_contents($testFilesPath);
-        return Utils::json_decode($file);
+        return \Keboola\Utils\jsonDecode($file);
     }
 
     protected function getParser()

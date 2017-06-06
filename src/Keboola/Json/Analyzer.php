@@ -2,7 +2,6 @@
 namespace Keboola\Json;
 
 use Keboola\Json\Exception\JsonParserException;
-use Keboola\Utils\Utils;
 use Monolog\Logger;
 
 class Analyzer
@@ -57,7 +56,8 @@ class Analyzer
      *
      * @param array $data
      * @param string $type
-     * @return void
+     * @return bool|null|string
+     * @throws JsonParserException
      */
     public function analyze(array $data, $type)
     {
@@ -70,10 +70,9 @@ class Analyzer
             : ($this->rowsAnalyzed[$type] + count($data));
 
         $rowType = $this->getStruct()->getArrayType($type);
-        foreach($data as $row) {
+        foreach ($data as $row) {
             $newType = $this->analyzeRow($row, $type);
-            if (
-                !is_null($rowType)
+            if (!is_null($rowType)
                 && $newType != $rowType
                 && $newType != 'NULL'
                 && $rowType != 'NULL'
@@ -92,7 +91,8 @@ class Analyzer
      *
      * @param mixed $row
      * @param string $type
-     * @return void
+     * @return string
+     * @throws JsonParserException
      */
     protected function analyzeRow($row, $type)
     {
@@ -106,12 +106,12 @@ class Analyzer
             $struct[Parser::DATA_COLUMN] = $this->getType($row);
         } elseif (is_object($row)) {
             // process each property of the object
-            foreach($row as $key => $field) {
+            foreach ($row as $key => $field) {
                 $fieldType = $this->getType($field);
 
                 if ($fieldType == "object") {
                     // Only assign the type if the object isn't empty
-                    if (Utils::isEmptyObject($field)) {
+                    if (\Keboola\Utils\isEmptyObject($field)) {
                         continue;
                     }
 
@@ -128,7 +128,8 @@ class Analyzer
             }
         } elseif ($this->nestedArrayAsJson && is_array($row)) {
             $this->log->log(
-                "WARNING", "Unsupported array nesting in '{$type}'! Converting to JSON string.",
+                "WARNING",
+                "Unsupported array nesting in '{$type}'! Converting to JSON string.",
                 ['row' => $row]
             );
             $rowType = $struct[Parser::DATA_COLUMN] = $this->strict ? 'string' : 'scalar';

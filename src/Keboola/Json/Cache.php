@@ -2,15 +2,13 @@
 
 namespace Keboola\Json;
 
-use Keboola\Utils\Utils;
-
 class Cache
 {
     protected $data = [];
 
     /**
      * PHP temp://temp/
-     * @var stream
+     * @var resource
      */
     protected $temp;
 
@@ -23,7 +21,7 @@ class Cache
         // either to stop using memory once X mem is used or once X is left from PHP limit
         if(
             ini_get('memory_limit') != "-1"
-            && memory_get_usage() > (Utils::return_bytes(ini_get('memory_limit')) * 0.25)
+            && memory_get_usage() > (\Keboola\Utils\returnBytes(ini_get('memory_limit')) * 0.25)
             || ($this->memoryLimit !== null && memory_get_usage() > $this->memoryLimit)
         ) {
             // cache
@@ -60,6 +58,6 @@ class Cache
      */
     public function setMemoryLimit($limit)
     {
-        $this->memoryLimit = Utils::return_bytes($limit);
+        $this->memoryLimit = \Keboola\Utils\returnBytes($limit);
     }
 }

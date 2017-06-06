@@ -1,8 +1,6 @@
 <?php
 
 use Keboola\Json\Parser;
-use Keboola\CsvTable\Table;
-use Keboola\Utils\Utils;
 
 class ParserTest extends ParserTestCase
 {
@@ -317,7 +315,7 @@ class ParserTest extends ParserTestCase
     {
         $parser = $this->getParser();
 
-        $data = Utils::json_decode('[
+        $data = \Keboola\Utils\jsonDecode('[
             {"field": 128},
             {"field": "string"},
             {"field": true}

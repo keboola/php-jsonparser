@@ -1,21 +1,23 @@
 language: php
+
 php:
-- 5.6
-- 7.0
-- hhvm
-matrix:
-  allow_failures:
-  - php: hhvm
+  - 7.0
+
 before_install:
-- composer install
+  - composer install
+
 install:
-- composer install --dev --no-scripts
+  - composer install --dev --no-scripts
+
 script:
-- php vendor/bin/phpunit --coverage-clover build/logs/clover.xml --whitelist=src/
+  - ./vendor/bin/phpcs --standard=psr2 --ignore=vendor -n .
+  - ./vendor/bin/phpunit --coverage-clover build/logs/clover.xml --whitelist=src/
+
 after_success:
-- "./vendor/bin/test-reporter --stdout > codeclimate.json"
-- 'curl -X POST -d @codeclimate.json -H ''Content-Type: application/json'' -H ''User-Agent:
-  Code Climate (PHP Test Reporter v0.1.1)'' https://codeclimate.com/test_reports'
+  - "./vendor/bin/test-reporter --stdout > codeclimate.json"
+  - 'curl -X POST -d @codeclimate.json -H ''Content-Type: application/json'' -H ''User-Agent:
+    Code Climate (PHP Test Reporter v0.1.1)'' https://codeclimate.com/test_reports'
+
 notifications:
   slack:
     secure: wIYBwUiQKD7AkOqAMNYfCr2ISfNtXkv45Slt8sYNnNMkKbsFSBdVQbVHZvtnQSIJo6a1ttmFF+Q5eFvv97xmllfg+WKJ9eewW0+n3MtvZs+za4RdNrnDIPS9pzj+42UYaNE9FZ6pWXb0Kf/ik6hyE1LAbOkVng5wpJ8DNleiPU0=
