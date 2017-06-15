@@ -4,9 +4,9 @@ namespace Keboola\Json;
 
 use Keboola\CsvTable\Table;
 use Keboola\Temp\Temp;
-use Monolog\Logger;
 use Keboola\Json\Exception\JsonParserException;
 use Keboola\Json\Exception\NoDataException;
+use Psr\Log\LoggerInterface;
 
 /**
  * JSON to CSV data analyzer and parser/converter
@@ -70,7 +70,7 @@ class Parser
     protected $cache;
 
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     protected $log;
 
@@ -94,7 +94,7 @@ class Parser
      */
     protected $struct;
 
-    public function __construct(Logger $logger, Analyzer $analyzer, Struct $struct)
+    public function __construct(LoggerInterface $logger, Analyzer $analyzer, Struct $struct)
     {
         $this->log = $logger;
         $this->analyzer = $analyzer;
@@ -102,14 +102,15 @@ class Parser
     }
 
     /**
-     * @param Logger $logger
-     * @param array $struct should contain an array with previously
+     * @param LoggerInterface $logger
+     * @param array $definitions should contain an array with previously
      *         cached results from analyze() calls (called automatically by process())
      * @param int $analyzeRows determines how many rows of data
      *         (counting only the "root" level of each Json)
      *         will be analyzed [default -1 for infinite/all]
+     * @return Parser
      */
-    public static function create(Logger $logger, array $definitions = [], $analyzeRows = -1)
+    public static function create(LoggerInterface $logger, array $definitions = [], $analyzeRows = -1)
     {
         $struct = new Struct($logger);
         $struct->load($definitions);
@@ -130,9 +131,8 @@ class Parser
      *         which will be saved in a JSON_parentId column,
      *         or an array with "column_name" => "value",
      *         which will name the column(s) by array key provided
-     *
      * @return void
-     *
+     * @throws NoDataException
      * @api
      */
     public function process(array $data, $type = "root", $parentId = null)
@@ -146,9 +146,9 @@ class Parser
             ]);
         }
 
-        // Log it here since we shouln't log children analysis
+        // Log it here since we shouldn't log children analysis
         if (empty($this->analyzer->getRowsAnalyzed()[$type])) {
-            $this->log->log("debug", "Analyzing {$type}", [
+            $this->log->debug("Analyzing {$type}", [
                 "rowsAnalyzed" => $this->analyzer->getRowsAnalyzed(),
                 "rowsToAnalyze" => count($data)
             ]);
@@ -179,8 +179,7 @@ class Parser
             || $this->analyzer->getRowsAnalyzed()[$type] < count($data))
         ) {
             // analyse instead of failing if the data is unknown!
-            $this->log->log(
-                "debug",
+            $this->log->debug(
                 "Trying to parse an unknown data type '{$type}'. Trying on-the-fly analysis",
                 [
                     "data" => $data,
@@ -253,7 +252,7 @@ class Parser
 
     /**
      * Handle the actual write to CsvRow
-     * @param object $dataRow
+     * @param \stdClass $dataRow
      * @param CsvRow $csvRow
      * @param string $arrayParentId
      * @param string $column
@@ -299,8 +298,7 @@ class Parser
 
         if ($dataType == "NULL") {
             // Throw exception instead? Any usecase? TODO get rid of it maybe?
-            $this->log->log(
-                "WARNING",
+            $this->log->warning(
                 "Encountered data where 'NULL' was expected from previous analysis",
                 [
                     'type' => $type,
@@ -339,8 +337,7 @@ class Parser
                 } else {
                     $jsonColumn = json_encode($dataRow->{$column});
 
-                    $this->log->log(
-                        "ERROR",
+                    $this->log->error(
                         "Data parse error in '{$column}' - unexpected '"
                             . $this->analyzer->getType($dataRow->{$column})
                             . "' where '{$dataType}' was expected!",
@@ -356,7 +353,7 @@ class Parser
     /**
      * Get header for a data type
      * @param string $type Data type
-     * @param string|array $parent String with a $parentId or an array with $colName => $parentId
+     * @param string|array|bool $parent String with a $parentId or an array with $colName => $parentId
      * @return array
      */
     protected function getHeader($type, $parent = false)
@@ -489,8 +486,7 @@ class Parser
             foreach ($pKeyCols as $pKeyCol) {
                 if (empty($dataRow->{$pKeyCol})) {
                     $values[] = md5(serialize($dataRow) . $outerObjectHash);
-                    $this->log->log(
-                        "WARNING",
+                    $this->log->warning(
                         "Primary key for type '{$type}' was set to '{$pk}', but its column '{$pKeyCol}' does not exist! Using hash to link child objects instead.",
                         ['row' => $dataRow]
                     );
@@ -511,6 +507,7 @@ class Parser
      *
      * @param string|array $parentId
      * @return array
+     * @throws JsonParserException
      */
     protected function validateParentId($parentId)
     {
@@ -629,6 +626,7 @@ class Parser
 
     /**
      * @param array $pks
+     * @throws JsonParserException
      */
     public function addPrimaryKeys(array $pks)
     {

@@ -2,6 +2,7 @@
 namespace Keboola\Json\Test;
 
 use Keboola\Json\Parser;
+use Psr\Log\NullLogger;
 
 class ParserTestCase extends \PHPUnit_Framework_TestCase
 {
@@ -38,7 +39,7 @@ class ParserTestCase extends \PHPUnit_Framework_TestCase
 
     protected function getParser()
     {
-        return Parser::create(new \Monolog\Logger('test', [new \Monolog\Handler\TestHandler()]));
+        return Parser::create(new NullLogger());
     }
 
     protected function getDataDir()

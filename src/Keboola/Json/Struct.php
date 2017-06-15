@@ -1,8 +1,9 @@
 <?php
+
 namespace Keboola\Json;
 
-use Monolog\Logger;
 use Keboola\Json\Exception\JsonParserException;
+use Psr\Log\LoggerInterface;
 
 class Struct
 {
@@ -36,11 +37,11 @@ class Struct
     const STRUCT_VERSION = 2.0;
 
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     protected $log;
 
-    public function __construct(Logger $logger)
+    public function __construct(LoggerInterface $logger)
     {
         $this->log = $logger;
     }
@@ -219,7 +220,7 @@ class Struct
      */
     public function setAutoUpgradeToArray($enable)
     {
-        $this->log->log('debug', "Using automatic conversion of single values to arrays where required.");
+        $this->log->debug("Using automatic conversion of single values to arrays where required.");
 
         $this->autoUpgradeToArray = (bool) $enable;
     }

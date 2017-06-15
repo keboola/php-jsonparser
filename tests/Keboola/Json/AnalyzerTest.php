@@ -2,6 +2,7 @@
 namespace Keboola\Json;
 
 use Keboola\Json\Test\ParserTestCase;
+use Psr\Log\NullLogger;
 
 class AnalyzerTest extends ParserTestCase
 {
@@ -559,8 +560,7 @@ class AnalyzerTest extends ParserTestCase
      */
     public function testUnsupportedNesting($strict, $expectedType)
     {
-        $logHandler = new \Monolog\Handler\TestHandler();
-        $analyzer = new Analyzer(new \Monolog\Logger('test', [$logHandler]));
+        $analyzer = new Analyzer(new NullLogger());
         $analyzer->setNestedArrayAsJson(true);
         $analyzer->setStrict($strict);
 

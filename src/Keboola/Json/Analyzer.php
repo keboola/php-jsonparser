@@ -2,7 +2,7 @@
 namespace Keboola\Json;
 
 use Keboola\Json\Exception\JsonParserException;
-use Monolog\Logger;
+use Psr\Log\LoggerInterface;
 
 class Analyzer
 {
@@ -40,11 +40,11 @@ class Analyzer
     protected $nestedArrayAsJson = false;
 
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     protected $log;
 
-    public function __construct(Logger $logger, Struct $struct = null, $analyzeRows = -1)
+    public function __construct(LoggerInterface $logger, Struct $struct = null, $analyzeRows = -1)
     {
         $this->log = $logger;
         $this->struct = $struct;
@@ -127,8 +127,7 @@ class Analyzer
                 $struct[$key] = $fieldType;
             }
         } elseif ($this->nestedArrayAsJson && is_array($row)) {
-            $this->log->log(
-                "WARNING",
+            $this->log->warning(
                 "Unsupported array nesting in '{$type}'! Converting to JSON string.",
                 ['row' => $row]
             );

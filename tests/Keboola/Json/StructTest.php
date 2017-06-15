@@ -1,7 +1,9 @@
 <?php
+
 namespace Keboola\Json;
 
 use Keboola\Json\Test\ParserTestCase;
+use Psr\Log\NullLogger;
 
 class StructTest extends ParserTestCase
 {
@@ -107,6 +109,6 @@ class StructTest extends ParserTestCase
 
     protected function getStruct()
     {
-        return new Struct(new \Monolog\Logger('test', [new \Monolog\Handler\TestHandler()]));
+        return new Struct(new NullLogger());
     }
 }
