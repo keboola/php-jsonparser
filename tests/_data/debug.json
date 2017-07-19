@@ -1,8 +1,6 @@
 [{
 	"statuses": [{
-		"lang": "en"
-	}],
-	"search_metadata": {
-		"since_id_str": "0"
-	}	
+		"lang": "en",
+		"completed_in": 0.03
+	}]
 }]
