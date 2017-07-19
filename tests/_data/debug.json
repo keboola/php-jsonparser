@@ -9,41 +9,6 @@
 		"id_str": "495339161528713216",
 		"text": "#mtb Pinkbike Poll: Do You Ride Illegal Trails?: Confession time: do you ride on illegal trails?... http:\/\/t.co\/MhLR94vxUi via @pinkbike",
 		"source": " <a href=\"http:\/\/twitterfeed.com\" rel=\"nofollow\">twitterfeed<\/a>",
-		"truncated": false,
-		"in_reply_to_status_id": null,
-		"in_reply_to_status_id_str": null,
-		"in_reply_to_user_id": null,
-		"in_reply_to_user_id_str": null,
-		"in_reply_to_screen_name": null,
-		"geo": null,
-		"coordinates": null,
-		"place": null,
-		"contributors": null,
-		"retweet_count": 0,
-		"favorite_count": 0,
-		"entities": {
-			"hashtags": [{
-				"text": "mtb",
-				"indices": [0, 4]
-			}],
-			"symbols": [],
-			"urls": [{
-				"url": "http:\/\/t.co\/MhLR94vxUi",
-				"expanded_url": "http:\/\/bit.ly\/1ofJEA0",
-				"display_url": "bit.ly\/1ofJEA0",
-				"indices": [100, 122]
-			}],
-			"user_mentions": [{
-				"screen_name": "pinkbike",
-				"name": "\/\/pinkbike",
-				"id": 88068553,
-				"id_str": "88068553",
-				"indices": [127, 136]
-			}]
-		},
-		"favorited": false,
-		"retweeted": false,
-		"possibly_sensitive": false,
 		"lang": "en"
 	}],
 	"search_metadata": {
