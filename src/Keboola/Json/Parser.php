@@ -498,7 +498,7 @@ class Parser
             return $type . "_" . join(";", $values);
         } else {
             // Of no pkey is specified to get the real ID, use a hash of the row
-            return $type . "_" . md5(serialize($dataRow) . $outerObjectHash) . serialize($dataRow);
+            return ini_get('serialize_precision') . $type . "_" . md5(serialize($dataRow) . $outerObjectHash) . serialize($dataRow);
         }
     }
 
