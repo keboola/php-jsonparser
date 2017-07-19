@@ -1,12 +1,5 @@
 [{
 	"statuses": [{
-		"metadata": {
-			"result_type": "recent",
-			"iso_language_code": "en"
-		},
-		"created_at": "Fri Aug 01 22:43:53 +0000 2014",
-		"id": 495339161528713216,
-		"id_str": "495339161528713216",
 		"lang": "en"
 	}],
 	"search_metadata": {
