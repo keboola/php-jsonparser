@@ -28,7 +28,7 @@ class AnalyzerTest extends ParserTestCase
                 ]
             ]
         ];
-        $analyzer = new Analyzer($this->getLogger('analyzer', true));
+        $analyzer = new Analyzer(new NullLogger());
         $analyzer->analyze($data, 'root');
 
         self::assertEquals(
@@ -69,7 +69,7 @@ class AnalyzerTest extends ParserTestCase
                 ]
             ]
         ];
-        $analyzer = new Analyzer($this->getLogger('analyzer', true));
+        $analyzer = new Analyzer(new NullLogger());
         $analyzer->setStrict(true);
         $analyzer->analyze($data, 'root');
 
@@ -104,7 +104,7 @@ class AnalyzerTest extends ParserTestCase
                 "id" => 2.2
             ]
         ];
-        $analyzer = new Analyzer($this->getLogger('analyzer', true));
+        $analyzer = new Analyzer(new NullLogger());
         $analyzer->setStrict(true);
         $analyzer->analyze($data, 'root');
 
@@ -144,7 +144,7 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
 
-        $analyzer = new Analyzer($this->getLogger('analyzer', true));
+        $analyzer = new Analyzer(new NullLogger());
         $analyzer->getStruct()->setAutoUpgradeToArray(true);
         $analyzer->analyze($data, 'root');
 
@@ -190,7 +190,7 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
 
-        $analyzer = new Analyzer($this->getLogger('analyzer', true));
+        $analyzer = new Analyzer(new NullLogger());
         $analyzer->getStruct()->setAutoUpgradeToArray(true);
         $analyzer->analyze($data, 'root');
     }
@@ -211,14 +211,14 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
 
-        $analyzer = new Analyzer($this->getLogger('analyzer', true));
+        $analyzer = new Analyzer(new NullLogger());
         $analyzer->getStruct()->setAutoUpgradeToArray(true);
         $analyzer->analyze($data, 'root');
     }
 
     public function testIsAnalyzed()
     {
-        $analyzer = new Analyzer($this->getLogger('analyzer', true));
+        $analyzer = new Analyzer(new NullLogger());
 
         $data = [
             (object) [
@@ -230,7 +230,7 @@ class AnalyzerTest extends ParserTestCase
         $analyzer->analyze($data, 'test');
         self::assertFalse($analyzer->isAnalyzed('test'));
 
-        $analyzer = new Analyzer($this->getLogger('analyzer', true), null, 1);
+        $analyzer = new Analyzer(new NullLogger(), null, 1);
         self::assertFalse($analyzer->isAnalyzed('test'));
         $analyzer->analyze($data, 'test');
         self::assertTrue($analyzer->isAnalyzed('test'));
@@ -238,7 +238,7 @@ class AnalyzerTest extends ParserTestCase
 
     public function testAnalyzeRow()
     {
-        $analyzer = new Analyzer($this->getLogger('analyzer', true));
+        $analyzer = new Analyzer(new NullLogger());
 
         $this->callMethod($analyzer, 'analyzeRow', [new \stdClass, 'empty']);
         self::assertEquals(['empty' => []], $analyzer->getStruct()->getStruct());
@@ -267,7 +267,7 @@ class AnalyzerTest extends ParserTestCase
 
     public function testAnalyzeKnownArray()
     {
-        $analyzer = new Analyzer($this->getLogger('analyzer', true)/*, $struct*/);
+        $analyzer = new Analyzer(new NullLogger());
         $analyzer->getStruct()->setAutoUpgradeToArray(true);
 
         $data1 = [
@@ -305,7 +305,7 @@ class AnalyzerTest extends ParserTestCase
      */
     public function testAnalyzeKnownArrayMismatch()
     {
-        $analyzer = new Analyzer($this->getLogger('analyzer', true)/*, $struct*/);
+        $analyzer = new Analyzer(new NullLogger());
         $analyzer->getStruct()->setAutoUpgradeToArray(true);
 
         $data1 = [
@@ -345,7 +345,7 @@ class AnalyzerTest extends ParserTestCase
      */
     public function testAnalyzeKnownArrayMismatch2()
     {
-        $analyzer = new Analyzer($this->getLogger('analyzer', true)/*, $struct*/);
+        $analyzer = new Analyzer(new NullLogger());
         $analyzer->getStruct()->setAutoUpgradeToArray(true);
 
         $data1 = [
@@ -387,7 +387,7 @@ class AnalyzerTest extends ParserTestCase
      */
     public function testAnalyzeKnownArrayMismatchStrict()
     {
-        $analyzer = new Analyzer($this->getLogger('analyzer', true));
+        $analyzer = new Analyzer(new NullLogger());
         $analyzer->setStrict(true);
 
         $data1 = [
@@ -434,7 +434,7 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
 
-        $analyzer = new Analyzer($this->getLogger('analyzer', true));
+        $analyzer = new Analyzer(new NullLogger());
 
         $analyzer->analyze($data, 'test');
 
@@ -476,7 +476,7 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
 
-        $analyzer = new Analyzer($this->getLogger('analyzer', true));
+        $analyzer = new Analyzer(new NullLogger());
         $analyzer->getStruct()->setAutoUpgradeToArray(true);
 
         $analyzer->analyze($data, 'test');
@@ -497,7 +497,7 @@ class AnalyzerTest extends ParserTestCase
 
     public function testArrayOfNull()
     {
-        $analyzer = new Analyzer($this->getLogger('analyzer', true));
+        $analyzer = new Analyzer(new NullLogger());
         $analyzer->getStruct()->setAutoUpgradeToArray(true);
 
         $analyzer->analyze(

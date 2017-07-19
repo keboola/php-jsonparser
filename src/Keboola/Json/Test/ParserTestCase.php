@@ -22,14 +22,6 @@ class ParserTestCase extends \PHPUnit_Framework_TestCase
         return $method->invokeArgs($obj, $args);
     }
 
-    protected function getLogger($name = 'test', $null = false)
-    {
-        return new \Monolog\Logger(
-            $name,
-            $null ? [new \Monolog\Handler\NullHandler()] : []
-        );
-    }
-
     protected function loadJson($fileName)
     {
         $testFilesPath = $this->getDataDir() . $fileName . ".json";
