@@ -367,11 +367,11 @@ class Parser
                     // (here and in validateHeader again)
                     // Is used to trim multiple "_" in column name before appending
                     $header[] = $this->createSafeName($column) . "_" . $val;
-                    }
+                }
             } else {
                 $header[] = $column;
-                }
             }
+        }
 
         if ($parent) {
             if (is_array($parent)) {
@@ -499,7 +499,7 @@ class Parser
         } else {
             // Of no pkey is specified to get the real ID, use a hash of the row
             ini_set('serialize_precision', 17);
-            return 'c' . var_export(ini_get('serialize_precision'), true) . $type . "_" . md5(serialize($dataRow) . $outerObjectHash) . serialize($dataRow);
+            return $type . "_" . md5(serialize($dataRow) . $outerObjectHash);
         }
     }
 
