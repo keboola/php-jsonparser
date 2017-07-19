@@ -880,7 +880,6 @@ class ParserTest extends ParserTestCase
 
     public function testParseNumericKeys()
     {
-        // TODO: the above test tests for a hack which does not seem to be replicable with this real-world case
         $parser = $this->getParser();
         $testFile = \Keboola\Utils\jsonDecode(
             '{"data": [{"1": "one", "2": "two"}]}'
