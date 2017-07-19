@@ -54,7 +54,7 @@ class ParserTest extends ParserTestCase
 
         self::assertEquals('id,date', $parser->getCsvFiles()['root']->getPrimaryKey());
         self::assertEquals(
-            '"stuff","root_1;2015-10-21"' . PHP_EOL,
+            '"stuff","root_1;2015-10-21"' . "\n",
             file($parser->getCsvFiles()['root_data'])[1]
         );
     }
@@ -325,10 +325,10 @@ class ParserTest extends ParserTestCase
         $parser->process($data, 'threepack');
         self::assertEquals(
             [
-                '"field"' . PHP_EOL,
-                '"128"' . PHP_EOL,
-                '"string"' . PHP_EOL,
-                '"1"' . PHP_EOL // true gets converted to "1"! should be documented!
+                '"field"' . "\n",
+                '"128"' . "\n",
+                '"string"' . "\n",
+                '"1"' . "\n" // true gets converted to "1"! should be documented!
             ],
             file($parser->getCsvFiles()['threepack']->getPathname())
         );
@@ -397,9 +397,9 @@ class ParserTest extends ParserTestCase
         $parser->process(json_decode('["a","b"]'));
         self::assertEquals(
             [
-                '"data"' . PHP_EOL,
-                '"a"' . PHP_EOL,
-                '"b"' . PHP_EOL,
+                '"data"' . "\n",
+                '"a"' . "\n",
+                '"b"' . "\n",
             ],
             file($parser->getCsvFiles()['root']->getPathname())
         );
@@ -482,8 +482,8 @@ class ParserTest extends ParserTestCase
         $parser->process($data);
 
         self::assertEquals(
-            '"id","KeywordRanking_attributes_date","KeywordRanking_stuff_I_ARE_POTAT","KeywordRanking_stuff_kek_ser_ou_ly"' . PHP_EOL .
-            '"123456","2015-03-20","aaa$@!","now"' . PHP_EOL,
+            '"id","KeywordRanking_attributes_date","KeywordRanking_stuff_I_ARE_POTAT","KeywordRanking_stuff_kek_ser_ou_ly"' . "\n" .
+            '"123456","2015-03-20","aaa$@!","now"' . "\n",
             file_get_contents($parser->getCsvFiles()['root'])
         );
     }
@@ -568,19 +568,19 @@ class ParserTest extends ParserTestCase
 
         // TODO guess this could be in files..
         self::assertEquals(
-            '"key"' . PHP_EOL .
-            '"root_eae48f50d1159c41f633f876d6c66411"' . PHP_EOL .
-            '"root_83cb9491934903381f6808ac79842022"' . PHP_EOL .
-            '"root_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
+            '"key"' . "\n" .
+            '"root_eae48f50d1159c41f633f876d6c66411"' . "\n" .
+            '"root_83cb9491934903381f6808ac79842022"' . "\n" .
+            '"root_6d231f9592a4e259452229e2be31f42e"' . "\n",
             file_get_contents($parser->getCsvFiles()['root'])
         );
 
         self::assertEquals(
-            '"subKey1","subKey2","JSON_parentId"' . PHP_EOL .
-            '"val1.1","val1.2","root_eae48f50d1159c41f633f876d6c66411"' . PHP_EOL .
-            '"val2.1.1","val2.1.2","root_83cb9491934903381f6808ac79842022"' . PHP_EOL .
-            '"val2.2.1","","root_83cb9491934903381f6808ac79842022"' . PHP_EOL .
-            '"val3.1","val3.2","root_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
+            '"subKey1","subKey2","JSON_parentId"' . "\n" .
+            '"val1.1","val1.2","root_eae48f50d1159c41f633f876d6c66411"' . "\n" .
+            '"val2.1.1","val2.1.2","root_83cb9491934903381f6808ac79842022"' . "\n" .
+            '"val2.2.1","","root_83cb9491934903381f6808ac79842022"' . "\n" .
+            '"val3.1","val3.2","root_6d231f9592a4e259452229e2be31f42e"' . "\n",
             file_get_contents($parser->getCsvFiles()['root_key'])
         );
 
@@ -609,17 +609,17 @@ class ParserTest extends ParserTestCase
         $parser->process($data2, 'arr');
 
         self::assertEquals(
-            '"key"' . PHP_EOL .
-            '"arr_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
-            '"arr_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
+            '"key"' . "\n" .
+            '"arr_d03523e758a12366bd7062ee727c4939"' . "\n" .
+            '"arr_6d231f9592a4e259452229e2be31f42e"' . "\n",
             file_get_contents($parser->getCsvFiles()['arr'])
         );
 
         self::assertEquals(
-            '"subKey1","subKey2","JSON_parentId"' . PHP_EOL .
-            '"val2.1.1","val2.1.2","arr_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
-            '"val2.2.1","val2.2.2","arr_d03523e758a12366bd7062ee727c4939"' . PHP_EOL .
-            '"val3.1","val3.2","arr_6d231f9592a4e259452229e2be31f42e"' . PHP_EOL,
+            '"subKey1","subKey2","JSON_parentId"' . "\n" .
+            '"val2.1.1","val2.1.2","arr_d03523e758a12366bd7062ee727c4939"' . "\n" .
+            '"val2.2.1","val2.2.2","arr_d03523e758a12366bd7062ee727c4939"' . "\n" .
+            '"val3.1","val3.2","arr_6d231f9592a4e259452229e2be31f42e"' . "\n",
             file_get_contents($parser->getCsvFiles()['arr_key'])
         );
     }
@@ -719,19 +719,19 @@ class ParserTest extends ParserTestCase
         $parser->process($data);
 
         self::assertEquals(
-            '"key"' . PHP_EOL .
-            '"root_0c616a2609bd2e8d88574f3f856170c5"' . PHP_EOL .
-            '"root_3cc17a87c69e64707ac357e84e5a9eb8"' . PHP_EOL .
-            '"root_af523454cc66582ad5dcec3f171b35ed"' . PHP_EOL,
+            '"key"' . "\n" .
+            '"root_0c616a2609bd2e8d88574f3f856170c5"' . "\n" .
+            '"root_3cc17a87c69e64707ac357e84e5a9eb8"' . "\n" .
+            '"root_af523454cc66582ad5dcec3f171b35ed"' . "\n",
             file_get_contents($parser->getCsvFiles()['root'])
         );
 
         self::assertEquals(
-            '"data","JSON_parentId"' . PHP_EOL .
-            '"str1","root_0c616a2609bd2e8d88574f3f856170c5"' . PHP_EOL .
-            '"str2.1","root_3cc17a87c69e64707ac357e84e5a9eb8"' . PHP_EOL .
-            '"str2.2","root_3cc17a87c69e64707ac357e84e5a9eb8"' . PHP_EOL .
-            '"str3","root_af523454cc66582ad5dcec3f171b35ed"' . PHP_EOL,
+            '"data","JSON_parentId"' . "\n" .
+            '"str1","root_0c616a2609bd2e8d88574f3f856170c5"' . "\n" .
+            '"str2.1","root_3cc17a87c69e64707ac357e84e5a9eb8"' . "\n" .
+            '"str2.2","root_3cc17a87c69e64707ac357e84e5a9eb8"' . "\n" .
+            '"str3","root_af523454cc66582ad5dcec3f171b35ed"' . "\n",
             file_get_contents($parser->getCsvFiles()['root_key'])
         );
     }
@@ -750,8 +750,7 @@ class ParserTest extends ParserTestCase
         $parser->process([(object) ['id' => 1]]);
 
         self::assertEquals(
-            '"id","value"' . PHP_EOL .
-            '"1",""' . PHP_EOL,
+            '"id","value"' . "\n" . '"1",""' . "\n",
             file_get_contents($parser->getCsvFiles()['root'])
         );
     }
@@ -812,49 +811,49 @@ class ParserTest extends ParserTestCase
         );
 
         self::assertEquals(
-            '"val","obj"' . PHP_EOL .
-            '"s2null_eb89917794221aeda822735efbab9069","s2null_eb89917794221aeda822735efbab9069"' . PHP_EOL .
-            '"s2null_77cca534224f13ec1fa45c6c0c98557d","s2null_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
+            '"val","obj"' . "\n" .
+            '"s2null_eb89917794221aeda822735efbab9069","s2null_eb89917794221aeda822735efbab9069"' . "\n" .
+            '"s2null_77cca534224f13ec1fa45c6c0c98557d","s2null_77cca534224f13ec1fa45c6c0c98557d"' . "\n" .
             '',
             file_get_contents($parser->getCsvFiles()['s2null'])
         );
 
         self::assertEquals(
-            '"data","JSON_parentId"' . PHP_EOL .
-            '"stringArr","s2null_eb89917794221aeda822735efbab9069"' . PHP_EOL .
-            '"","s2null_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
+            '"data","JSON_parentId"' . "\n" .
+            '"stringArr","s2null_eb89917794221aeda822735efbab9069"' . "\n" .
+            '"","s2null_77cca534224f13ec1fa45c6c0c98557d"' . "\n" .
             '',
             file_get_contents($parser->getCsvFiles()['s2null_val'])
         );
 
         self::assertEquals(
-            '"key","JSON_parentId"' . PHP_EOL .
-            '"objValue","s2null_eb89917794221aeda822735efbab9069"' . PHP_EOL .
-            '"","s2null_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
+            '"key","JSON_parentId"' . "\n" .
+            '"objValue","s2null_eb89917794221aeda822735efbab9069"' . "\n" .
+            '"","s2null_77cca534224f13ec1fa45c6c0c98557d"' . "\n" .
             '',
             file_get_contents($parser->getCsvFiles()['s2null_obj'])
         );
 
         self::assertEquals(
-            '"val","obj"' . PHP_EOL .
-            '"null2s_eb89917794221aeda822735efbab9069","null2s_eb89917794221aeda822735efbab9069"' . PHP_EOL .
-            '"null2s_77cca534224f13ec1fa45c6c0c98557d","null2s_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
+            '"val","obj"' . "\n" .
+            '"null2s_eb89917794221aeda822735efbab9069","null2s_eb89917794221aeda822735efbab9069"' . "\n" .
+            '"null2s_77cca534224f13ec1fa45c6c0c98557d","null2s_77cca534224f13ec1fa45c6c0c98557d"' . "\n".
             '',
             file_get_contents($parser->getCsvFiles()['null2s'])
         );
 
         self::assertEquals(
-            '"data","JSON_parentId"' . PHP_EOL .
-            '"stringArr","null2s_eb89917794221aeda822735efbab9069"' . PHP_EOL .
-            '"","null2s_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
+            '"data","JSON_parentId"' . "\n" .
+            '"stringArr","null2s_eb89917794221aeda822735efbab9069"' . "\n" .
+            '"","null2s_77cca534224f13ec1fa45c6c0c98557d"' . "\n" .
             '',
             file_get_contents($parser->getCsvFiles()['null2s_val'])
         );
 
         self::assertEquals(
-            '"key","JSON_parentId"' . PHP_EOL .
-            '"objValue","null2s_eb89917794221aeda822735efbab9069"' . PHP_EOL .
-            '"","null2s_77cca534224f13ec1fa45c6c0c98557d"' . PHP_EOL .
+            '"key","JSON_parentId"' . "\n" .
+            '"objValue","null2s_eb89917794221aeda822735efbab9069"' . "\n" .
+            '"","null2s_77cca534224f13ec1fa45c6c0c98557d"' . "\n" .
             '',
             file_get_contents($parser->getCsvFiles()['null2s_obj'])
         );
@@ -877,5 +876,104 @@ class ParserTest extends ParserTestCase
 
         $expected = (array) $object;
         self::assertEquals($expected, $row->getRow());
+    }
+
+    public function testParseNumericKeys()
+    {
+        // TODO: the above test tests for a hack which does not seem to be replicable with this real-world case
+        $parser = $this->getParser();
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{"data": [{"1": "one", "2": "two"}]}'
+        );
+
+        $parser->getAnalyzer()->setNestedArrayAsJson(true);
+        $parser->process($testFile->data, 'someType');
+        self::assertEquals(['someType'], array_keys($parser->getCsvFiles()));
+        self::assertEquals(
+            "\"1\",\"2\"\n\"one\",\"two\"\n",
+            file_get_contents($parser->getCsvFiles()['someType'])
+        );
+    }
+
+    public function testParseNoAnalyze()
+    {
+        $parser = $this->getParser();
+        $parser->parse(["a" => "b"], 'someType');
+        self::assertEquals("\"data\"\n\"b\"\n", file_get_contents($parser->getCsvFiles()['someType']));
+    }
+
+    public function testParseNestedArrayEnabled()
+    {
+        $parser = $this->getParser();
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{"a": [["c", "d"], ["e", "f"]]}'
+        );
+
+        $parser->getAnalyzer()->setNestedArrayAsJson(true);
+        $parser->process([$testFile], 'someType');
+        self::assertEquals(['someType', 'someType_a'], array_keys($parser->getCsvFiles()));
+        self::assertEquals(
+            "\"a\"\n\"someType_0a3f2bc488aa446db98866f181f43dbb\"\n",
+            file_get_contents($parser->getCsvFiles()['someType'])
+        );
+        self::assertEquals(
+            "\"data\",\"JSON_parentId\"\n" .
+            "\"[\"\"c\"\",\"\"d\"\"]\",\"someType_0a3f2bc488aa446db98866f181f43dbb\"\n" .
+            "\"[\"\"e\"\",\"\"f\"\"]\",\"someType_0a3f2bc488aa446db98866f181f43dbb\"\n",
+            file_get_contents($parser->getCsvFiles()['someType_a'])
+        );
+    }
+
+    public function testParseNullInconsistency()
+    {
+        $parser = $this->getParser();
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{"data": [null, "a"]}'
+        );
+
+        $parser->getAnalyzer()->setNestedArrayAsJson(true);
+        $parser->process($testFile->data, 'someType');
+        self::assertEquals(['someType'], array_keys($parser->getCsvFiles()));
+        self::assertEquals(
+            "\"data\"\n\"\"\n\"a\"\n",
+            file_get_contents($parser->getCsvFiles()['someType'])
+        );
+    }
+
+    /**
+     * @expectedException \Keboola\Json\Exception\JsonParserException
+     * @expectedExceptionMessage Error assigning parentId to a CSV file! $parentId array cannot be multidimensional
+     */
+    public function testParseInvalidParentId()
+    {
+        $parser = $this->getParser();
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{"data": ["a", "b"]}'
+        );
+
+        $parser->process($testFile->data, 'someType', ['someColumn' => ['this' => 'is wrong']]);
+        self::assertEquals(['someType'], array_keys($parser->getCsvFiles()));
+    }
+
+    public function testParseInvalidPrimaryKey()
+    {
+        $parser = $this->getParser();
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{"data": [{"id": "a", "val": ["a"]}, {"id": "b", "val": ["b"]}]}'
+        );
+        $parser->getAnalyzer()->setNestedArrayAsJson(true);
+        $parser->addPrimaryKeys(["someType_val" => "id"]);
+        $parser->process($testFile->data, 'someType');
+        self::assertEquals(['someType', 'someType_val'], array_keys($parser->getCsvFiles()));
+        self::assertEquals(
+            "\"id\",\"val\"\n\"a\",\"someType_ee9689ff88c83c395a3ffd9a0e747920\"\n".
+            "\"b\",\"someType_37fb9eda31010642e996aa72bc998558\"\n",
+            file_get_contents($parser->getCsvFiles()['someType'])
+        );
+        self::assertEquals(
+            "\"data\",\"JSON_parentId\"\n\"a\",\"someType_ee9689ff88c83c395a3ffd9a0e747920\"\n" .
+            "\"b\",\"someType_37fb9eda31010642e996aa72bc998558\"\n",
+            file_get_contents($parser->getCsvFiles()['someType_val'])
+        );
     }
 }

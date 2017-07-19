@@ -48,6 +48,19 @@ class HeadersDataTest extends ParserTestCase
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
     }
 
+    public function testLongHeader()
+    {
+        $parser = $this->getParser();
+        $parser->getStruct()->setAutoUpgradeToArray(true);
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{"components": [{"AReallyTrulyIncrediblyHellishlyLongFromOuterSpaceAndAgePropertyName": null}]}'
+        );
+        $parser->process($testFile->components);
+
+        $result = "\"f95907f4eca1c54a08b97cd3a5561ebf\"\n\"\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+    }
+
     public function testObject()
     {
         $parser = $this->getParser();

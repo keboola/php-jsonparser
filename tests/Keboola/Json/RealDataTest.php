@@ -241,9 +241,9 @@ class RealDataTest extends ParserTestCase
         $parser->process($testFile->components);
 
         $result = '"id","d__DistributionGroups_outputs_histogramEstimates_persistent",' .
-            '"d__m__DistributionGroups_outputs_groupCharacteristics_persistent"' . PHP_EOL .
-            '"ag-forecastio","",""' . PHP_EOL .
-            '"rcp-distribution-groups","1","1"' . PHP_EOL;
+            '"d__m__DistributionGroups_outputs_groupCharacteristics_persistent"' . "\n" .
+            '"ag-forecastio","",""' . "\n" .
+            '"rcp-distribution-groups","1","1"' . "\n";
 
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
     }
