@@ -11,7 +11,7 @@ class RealDataTest extends ParserTestCase
 
         $testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
 
-        $data = $this->loadJson('debug');
+        $data = $this->loadJson('Json_tweets_pinkbike');
 
         $parser->process($data);
 
