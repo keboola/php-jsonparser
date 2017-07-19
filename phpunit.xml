@@ -10,8 +10,16 @@
          syntaxCheck="false"
          bootstrap="vendor/autoload.php">
 
-	<testsuite name="API Test Suite">
-		<directory>tests</directory>
-	</testsuite>
+    <testsuite name="API Test Suite">
+        <directory>tests</directory>
+    </testsuite>
 
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="false">
+            <directory suffix=".php">.</directory>
+            <exclude>
+                <directory suffix=".php">vendor/</directory>
+            </exclude>
+        </whitelist>
+    </filter>
 </phpunit>
