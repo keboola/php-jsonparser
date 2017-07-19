@@ -11,13 +11,6 @@
 	}],
 	"search_metadata": {
 		"completed_in": 0.03,
-		"max_id": 495339161528713216,
-		"max_id_str": "495339161528713216",
-		"next_results": "?max_id=495280065471459327&q=%40pinkbike&count=10&include_entities=1",
-		"query": "%40pinkbike",
-		"refresh_url": "?since_id=495339161528713216&q=%40pinkbike&include_entities=1",
-		"count": 10,
-		"since_id": 0,
 		"since_id_str": "0"
 	}	
 }]
