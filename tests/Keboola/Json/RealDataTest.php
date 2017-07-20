@@ -247,4 +247,38 @@ class RealDataTest extends ParserTestCase
 
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
     }
+
+    public function testFloatHash()
+    {
+        $parser = $this->getParser();
+        $parser->getStruct()->setAutoUpgradeToArray(true);
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{
+                "components": [
+                    {
+                        "id": "a1",
+                        "data": [
+                            0.03
+                        ]
+                    },
+                    {
+                        "id": "b1",
+                        "data": [
+                            0.01
+                        ]
+                    }
+                ]
+            }'
+        );
+        $parser->process($testFile->components);
+        self::assertEquals(['root', 'root_data'], array_keys($parser->getCsvFiles()));
+        $result = "\"id\",\"data\"\n" .
+            "\"a1\",\"root_b986422c776b4dc62f413f7454753d94\"\n" .
+            "\"b1\",\"root_692c6f543db16772f6a86c8baa0e62be\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+        $result = "\"data\",\"JSON_parentId\"\n" .
+            "\"0.03\",\"root_b986422c776b4dc62f413f7454753d94\"\n" .
+            "\"0.01\",\"root_692c6f543db16772f6a86c8baa0e62be\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_data']));
+    }
 }

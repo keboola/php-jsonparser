@@ -96,6 +96,7 @@ class Parser
 
     public function __construct(LoggerInterface $logger, Analyzer $analyzer, Struct $struct)
     {
+        ini_set('serialize_precision', 17);
         $this->log = $logger;
         $this->analyzer = $analyzer;
         $this->struct = $struct;
@@ -498,7 +499,6 @@ class Parser
             return $type . "_" . join(";", $values);
         } else {
             // Of no pkey is specified to get the real ID, use a hash of the row
-            ini_set('serialize_precision', 17);
             return $type . "_" . md5(serialize($dataRow) . $outerObjectHash);
         }
     }
