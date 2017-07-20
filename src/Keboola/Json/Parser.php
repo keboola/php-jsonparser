@@ -93,6 +93,7 @@ class Parser
      * @var Struct
      */
     protected $struct;
+    private $header;
 
     public function __construct(LoggerInterface $logger, Analyzer $analyzer, Struct $struct)
     {
@@ -194,6 +195,8 @@ class Parser
 
         $parentId = $this->validateParentId($parentId);
 
+        $this->header = new Header($this->struct->getColumns(), $parentId, $this->struct);
+        $this->header->processHeaders();
         $csvFile = $this->createCsvFile($type, $parentId);
 
         $parentCols = array_fill_keys(array_keys($parentId), "string");
@@ -274,7 +277,8 @@ class Parser
         // Actually, the csvRow should REALLY have a pointer to the real name (not validated),
         // perhaps sorting the child columns on its own?
         // (because keys in struct don't contain child objects)
-        $safeColumn = $this->createSafeName($column);
+        //$safeColumn = $this->createSafeName($column);
+        $safeColumn = $this->header->getColumn($type . '.' . $column);
 
         // A hack allowing access to numeric keys in object
         if (!isset($dataRow->{$column})

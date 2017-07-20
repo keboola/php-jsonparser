@@ -41,6 +41,11 @@ class Struct
      */
     protected $log;
 
+    /**
+     * @var string[]
+     */
+    private $columns;
+
     public function __construct(LoggerInterface $logger)
     {
         $this->log = $logger;
@@ -198,6 +203,21 @@ class Struct
     }
 
     /**
+     * Set name for a column.
+     * @param string $originalName
+     * @param string $safeName
+     */
+    public function setColumnName(string $originalName, string $safeName)
+    {
+        $this->columns[$originalName] = $safeName;
+    }
+
+    public function getColumns()
+    {
+        return $this->columns;
+    }
+
+    /**
      * @param string $type
      * @return bool
      */
@@ -235,6 +255,10 @@ class Struct
         return $this->getData();
     }
 
+    /**
+     * Return all structure definitions as an array
+     * @return array
+     */
     public function getData()
     {
         return $this->struct;
@@ -253,6 +277,7 @@ class Struct
      * Get all child data types
      * @param string $type Key for which to retrieve data types
      * @return array Array of data types within the $type ($type should really be a key!)
+     * @throws JsonParserException
      */
     public function getDefinitions($type)
     {

@@ -139,7 +139,9 @@ class Analyzer
         }
 
         $this->getStruct()->add($type, $struct);
-
+        foreach ($struct as $colName => $colType) {
+            $this->getStruct()->setColumnName($type . '.' . $colName, '');
+        }
         return $rowType;
     }
 
