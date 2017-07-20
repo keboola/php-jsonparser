@@ -94,6 +94,10 @@ class Parser
      */
     protected $struct;
     private $header;
+    /**
+     * @var Header2
+     */
+    private $header2;
 
     public function __construct(LoggerInterface $logger, Analyzer $analyzer, Struct $struct)
     {
@@ -197,6 +201,10 @@ class Parser
 
         $this->header = new Header($this->struct->getColumns(), $parentId, $this->struct);
         $this->header->processHeaders();
+        if (empty($this->header2)) {
+            $this->header2 = new Header2($parentId, $this->struct);
+            $this->header2->processHeaders($type);
+        }
         $csvFile = $this->createCsvFile($type, $parentId);
 
         $parentCols = array_fill_keys(array_keys($parentId), "string");
@@ -238,7 +246,8 @@ class Parser
         $outerObjectHash = null
     ) {
         // move back out to parse/switch if it causes issues
-        $csvRow = new CsvRow($this->getHeader($type, $parentCols));
+        //$csvRow = new CsvRow($this->getHeader($type, $parentCols));
+        $csvRow = new CsvRow($this->header2->getHeaders($type, [], $parentCols));
 
         // Generate parent ID for arrays
         $arrayParentId = $this->getPrimaryKeyValue(
@@ -247,6 +256,7 @@ class Parser
             $outerObjectHash
         );
 
+        //$parentCols = [];
         foreach (array_replace($this->getStruct()->getDefinitions($type), $parentCols) as $column => $dataType) {
             $this->parseField($dataRow, $csvRow, $arrayParentId, $column, $dataType, $type);
         }
@@ -277,8 +287,9 @@ class Parser
         // Actually, the csvRow should REALLY have a pointer to the real name (not validated),
         // perhaps sorting the child columns on its own?
         // (because keys in struct don't contain child objects)
-        //$safeColumn = $this->createSafeName($column);
-        $safeColumn = $this->header->getColumn($type . '.' . $column);
+        $safeColumn1 = $this->createSafeName($column);
+    //    $safeColumn2 = $this->header->getColumn($type . '.' . $column)
+        $safeColumn = $this->header2->findColumn($type, $column);
 
         // A hack allowing access to numeric keys in object
         if (!isset($dataRow->{$column})
@@ -324,6 +335,7 @@ class Parser
 
         switch ($dataType) {
             case "array":
+                $safeColumn = $this->header2->findColumn($type . '.' . $column, 'data');
                 $csvRow->setValue($safeColumn, $arrayParentId);
                 $this->parse($dataRow->{$column}, $type . "." . $column, $arrayParentId);
                 break;
@@ -331,8 +343,10 @@ class Parser
                 $childRow = $this->parseRow($dataRow->{$column}, $type . "." . $column, [], $arrayParentId);
 
                 foreach ($childRow->getRow() as $key => $value) {
+                    $sfOld = $this->createSafeName($safeColumn . '_' . $key);
+                    $sfNew = $this->header2->findColumn($type . '.' . $column, $key);
                     // FIXME createSafeName is duplicated here
-                    $csvRow->setValue($this->createSafeName($safeColumn . '_' . $key), $value);
+                    $csvRow->setValue($sfNew, $value);
                 }
                 break;
             default:
@@ -462,7 +476,8 @@ class Parser
         if (empty($this->csvFiles[$safeType])) {
             $this->csvFiles[$safeType] = Table::create(
                 $safeType,
-                $this->headers[$type],
+                $this->header2->getHeaders($type),
+                //$this->headers[$type],
                 $this->getTemp()
             );
             $this->csvFiles[$safeType]->addAttributes(["fullDisplayName" => $type]);
