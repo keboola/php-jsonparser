@@ -117,4 +117,31 @@ class HeadersConflictsTest extends ParserTestCase
             "\"b\",\"boo.first_b624c0b4706f52c917cab371be23de78\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo_first_second']));
     }
+
+    public function testObjectArrayCombinedMultiConflict()
+    {
+        $parser = $this->getParser();
+        $parser->getStruct()->setAutoUpgradeToArray(true);
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{
+                "components": [{
+                    "first_second": "origin",
+                    "first": {
+                        "second": ["a", "b"]
+                    },
+                    "first.second": "origin2"
+                }]
+            }'
+        );
+        $parser->process($testFile->components);
+
+        $result = "\"first_second\",\"e0a2f892b0567b007e275a6da91b477c\",\"9670abbaf0234922937b3eda671425f2\"\n" .
+            "\"origin2\",\"\",\"\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+        $result = "\"data\",\"JSON_parentId\"\n" .
+            "\"a\",\"root.first_06f40a9e874ef5271aaf5fb696c5d428\"\n" .
+            "\"b\",\"root.first_06f40a9e874ef5271aaf5fb696c5d428\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_first_second']));
+    }
+
 }

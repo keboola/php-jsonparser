@@ -6,6 +6,65 @@ use Psr\Log\NullLogger;
 
 class AnalyzerTest extends ParserTestCase
 {
+    public function testAnalyzeExperimental()
+    {
+        $data = [
+            (object) [
+                "id" => 1,
+                "arr" => [1,2],
+                "obj" => (object) [
+                    "str" => "string",
+                    "double" => 1.1,
+                    "scalar" => "str"
+                ]
+            ],
+            (object) [
+                "id" => 2,
+                "arr" => [2,3],
+                "obj" => (object) [
+                    "str" => "another string",
+                    "double" => 2.1,
+                    "scalar" => 1
+                ]
+            ]
+        ];
+        $analyzer = new Analyzer(new NullLogger());
+        $analyzer->analyzeData($data, 'root');
+
+        self::assertEquals(
+            [
+                'root' => [
+                    '[]' => [
+                        'id' => [
+                            'nodeType' => 'scalar'
+                        ],
+                        'arr' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'scalar'
+                            ]
+                        ],
+                        'obj' => [
+                            'nodeType' => 'object',
+                            'str' => [
+                                'nodeType' => 'scalar'
+                            ],
+                            'double' => [
+                                'nodeType' => 'scalar'
+                            ],
+                            'scalar' => [
+                                'nodeType' => 'scalar'
+                            ]
+                        ],
+                        'nodeType' => 'object'
+                    ]
+                ]
+            ],
+            $analyzer->getStructure()->getData()
+        );
+    }
+
+
     public function testAnalyze()
     {
         $data = [
@@ -44,6 +103,102 @@ class AnalyzerTest extends ParserTestCase
                     'arr' => 'arrayOfscalar',
                     'obj' => 'object',
                 ],
+            ],
+            $analyzer->getStruct()->getStruct()
+        );
+    }
+
+    public function testAnalyzeComplex()
+    {
+        $data = [
+            (object) [
+                "id" => 1,
+                "arr" => [1,2],
+                "obj" => (object) [
+                    "str" => "string",
+                    "double" => 1.1,
+                    "arr2" => [
+                        (object) ["id" => 1],
+                        (object) ["id" => 2]
+                    ]
+                ]
+            ],
+            (object) [
+                "id" => 2,
+                "arr" => [2,3],
+                "obj" => (object) [
+                    "str" => "another string",
+                    "double" => 2.1,
+                    "arr2" => [
+                        (object) ["id" => 3],
+                        (object) ["id" => 4]
+                    ]
+                ]
+            ]
+        ];
+        $analyzer = new Analyzer(new NullLogger());
+        $analyzer->analyze($data, 'root');
+
+        self::assertEquals(
+            [
+                'root.arr' => ['data' => 'scalar'],
+                'root.obj.arr2' => [
+                    'id' => 'scalar'
+                ],
+                'root.obj' => [
+                    'str' => 'scalar',
+                    'double' => 'scalar',
+                    'arr2' => 'arrayOfobject',
+                ],
+                'root' => [
+                    'id' => 'scalar',
+                    'arr' => 'arrayOfscalar',
+                    'obj' => 'object',
+                ],
+            ],
+            $analyzer->getStruct()->getStruct()
+        );
+    }
+
+    public function testAnalyzeConflict()
+    {
+        $data = [
+            (object) [
+                "arr" => [1,2],
+                "obj" => (object) [
+                    "str" => "string",
+                    "obj2" => (object) [
+                        "id" => 1
+                    ]
+                ]
+            ],
+            (object) [
+                "arr" => [2,3],
+                "obj" => (object) [
+                    "str" => "another string",
+                    "obj2" => (object) [
+                        "id" => 1
+                    ]
+                ]
+            ]
+        ];
+        $analyzer = new Analyzer(new NullLogger());
+        $analyzer->analyze($data, 'root');
+
+        self::assertEquals(
+            [
+                'root.arr' => ['data' => 'scalar'],
+                'root.obj' => [
+                    'str' => 'scalar',
+                    'obj2' => 'object'
+                ],
+                'root' => [
+                    'arr' => 'arrayOfscalar',
+                    'obj' => 'object',
+                ],
+                'root.obj.obj2' => [
+                    'id' => 'scalar'
+                ]
             ],
             $analyzer->getStruct()->getStruct()
         );

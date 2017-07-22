@@ -44,11 +44,99 @@ class Analyzer
      */
     protected $log;
 
+    /**
+     * @var Structure
+     */
+    private $structure;
+
     public function __construct(LoggerInterface $logger, Struct $struct = null, $analyzeRows = -1)
     {
         $this->log = $logger;
         $this->struct = $struct;
         $this->analyzeRows = $analyzeRows;
+    }
+
+    public function getStructure()
+    {
+        return $this->structure;
+    }
+
+    public function analyzeData(array $data, string $rootType)
+    {
+        $this->structure = new Structure($rootType);
+        if (empty($data)) {
+            return;
+        }
+        $path = new NodePath([]);
+        $this->analyzeArray($data, $path);
+    }
+
+    private function analyzeItem($item, NodePath $nodePath)
+    {
+        if (is_scalar($item)) {
+            if ($this->strict) {
+                $nodeType = gettype($item);
+            } else {
+                $nodeType = 'scalar';
+            }
+        } elseif (is_object($item)) {
+            $nodeType = 'object';
+            $this->analyzeObject($item, $nodePath);
+        } elseif (is_null($item)) {
+            $nodeType = 'null';
+        } elseif (is_array($item)) {
+            if ($nodePath->isArray()) {
+                if ($this->nestedArrayAsJson) {
+                    $this->log->warning("Converting nested array '$nodePath' to JSON string.", ['item' => $item]);
+                    $nodeType = $this->strict ? 'string' : 'scalar';
+                } else {
+                    throw new JsonParserException("Unsupported data in '$nodePath'.", ['item' => $item]);
+                }
+            } else {
+                $nodeType = 'array';
+                $this->analyzeArray($item, $nodePath);
+            }
+        } else {
+            // TODO: this is probably only resource, which should not be here anyway
+            throw new JsonParserException("Unsupported data in '$nodePath'.", ['item' => $item]);
+        }
+        $this->structure->addNode($nodePath, 'nodeType', $nodeType);
+        return $nodeType;
+    }
+
+    private function analyzeArray(array $array, NodePath $nodePath)
+    {
+        $oldType = null;
+        $nodePath = $nodePath->addArrayChild();
+        if (empty($this->rowsAnalyzed[(string)$nodePath])) {
+            $this->rowsAnalyzed[(string)$nodePath] = 0;
+        }
+        foreach ($array as $row) {
+            if (($this->analyzeRows > 0) && ($this->rowsAnalyzed[(string)$nodePath] > $this->analyzeRows)) {
+                // enough rows was analyzed
+                return;
+            }
+            $newType = $this->analyzeItem($row, $nodePath);
+            $oldType = $this->checkType($oldType, $newType, $nodePath);
+            $this->rowsAnalyzed[(string)$nodePath]++;
+        }
+    }
+
+    private function analyzeObject($object, NodePath $nodePath)
+    {
+        foreach ($object as $key => $field) {
+            $this->analyzeItem($field, $nodePath->addChild($key));
+        }
+    }
+
+    private function checkType($oldType, $newType, NodePath $nodePath) : string
+    {
+        if (!is_null($oldType) && ($newType !== $oldType) && ($newType !== 'null') && ($oldType !== 'null')) {
+            throw new JsonParserException(
+                "Data in '$nodePath' contains incompatible data types '$oldType' and '$newType'."
+            );
+        }
+        return $newType;
     }
 
     /**
