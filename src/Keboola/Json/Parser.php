@@ -94,11 +94,17 @@ class Parser
      */
     protected $struct;
 
-    public function __construct(LoggerInterface $logger, Analyzer $analyzer, Struct $struct)
+    /**
+     * @var Structure
+     */
+    private $structure;
+
+    public function __construct(LoggerInterface $logger, Analyzer $analyzer, Struct $struct, Structure $structure)
     {
         $this->log = $logger;
         $this->analyzer = $analyzer;
         $this->struct = $struct;
+        $this->structure = $structure;
     }
 
     /**
@@ -114,9 +120,10 @@ class Parser
     {
         $struct = new Struct($logger);
         $struct->load($definitions);
-        $analyzer = new Analyzer($logger, $struct, $analyzeRows);
+        $structure = new Structure();
+        $analyzer = new Analyzer($logger, $struct, $structure, $analyzeRows);
 
-        return new static($logger, $analyzer, $struct);
+        return new static($logger, $analyzer, $struct, $structure);
     }
 
     /**
@@ -147,14 +154,18 @@ class Parser
         }
 
         // Log it here since we shouldn't log children analysis
+        /*
         if (empty($this->analyzer->getRowsAnalyzed()[$type])) {
             $this->log->debug("Analyzing {$type}", [
                 "rowsAnalyzed" => $this->analyzer->getRowsAnalyzed(),
                 "rowsToAnalyze" => count($data)
             ]);
         }
+        */
 
         $this->analyzer->analyze($data, $type);
+        $this->analyzer->analyzeData($data, $type);
+        //$this->structure = $this->analyzer->getStructure();
 
         $this->getCache()->store([
             "data" => $data,
@@ -174,6 +185,7 @@ class Parser
      */
     public function parse(array $data, $type, $parentId = null)
     {
+
         if (!$this->analyzer->isAnalyzed($type)
             && (empty($this->analyzer->getRowsAnalyzed()[$type])
             || $this->analyzer->getRowsAnalyzed()[$type] < count($data))
@@ -189,6 +201,7 @@ class Parser
             );
 
             $this->analyzer->analyze($data, $type);
+            $this->analyzer->analyzeData($data, $type);
         }
 
         $parentId = $this->validateParentId($parentId);
@@ -243,7 +256,9 @@ class Parser
             $outerObjectHash
         );
 
-        foreach (array_replace($this->getStruct()->getDefinitions($type), $parentCols) as $column => $dataType) {
+        $arr = $this->structure->getDefinitions($type);
+        $arr2 = $this->struct->getDefinitions($type);
+        foreach (array_replace($arr, $parentCols) as $column => $dataType) {
             $this->parseField($dataRow, $csvRow, $arrayParentId, $column, $dataType, $type);
         }
 
@@ -310,7 +325,7 @@ class Parser
             return;
         }
 
-        if ($this->getStruct()->isArrayOf($dataType)) {
+        if ($this->struct->isArrayOf($dataType)) {
             if (!is_array($dataRow->{$column})) {
                 $dataRow->{$column} = [$dataRow->{$column}];
             }
@@ -319,6 +334,9 @@ class Parser
 
         switch ($dataType) {
             case "array":
+                if (!is_array($dataRow->{$column})) {
+                    $dataRow->{$column} = [$dataRow->{$column}];
+                }
                 $csvRow->setValue($safeColumn, $arrayParentId);
                 $this->parse($dataRow->{$column}, $type . "." . $column, $arrayParentId);
                 break;
@@ -337,13 +355,16 @@ class Parser
                 } else {
                     $jsonColumn = json_encode($dataRow->{$column});
 
+                    /*
+                     * todo
+
                     $this->log->error(
                         "Data parse error in '{$column}' - unexpected '"
                             . $this->analyzer->getType($dataRow->{$column})
                             . "' where '{$dataType}' was expected!",
                         [ "data" => $jsonColumn, "row" => json_encode($dataRow) ]
                     );
-
+                    */
                     $csvRow->setValue($safeColumn, $jsonColumn);
                 }
                 break;
@@ -360,7 +381,9 @@ class Parser
     {
         $header = [];
 
-        foreach ($this->struct->getDefinitions($type) as $column => $dataType) {
+        $arr = $this->structure->getDefinitions($type);
+        $arr2 = $this->struct->getDefinitions($type);
+        foreach ($arr as $column => $dataType) {
             if ($dataType == "object") {
                 foreach ($this->getHeader($type . "." . $column) as $val) {
                     // FIXME this is awkward, the createSafeName shouldn't need to be used twice
@@ -582,7 +605,7 @@ class Parser
      */
     public function getStructVersion()
     {
-        return $this->getStruct()->getStructVersion();
+        return $this->struct->getStructVersion();
     }
 
     /**

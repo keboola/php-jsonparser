@@ -49,11 +49,15 @@ class Analyzer
      */
     private $structure;
 
-    public function __construct(LoggerInterface $logger, Struct $struct = null, $analyzeRows = -1)
+    public function __construct(LoggerInterface $logger, Struct $struct = null, Structure $structure = null, $analyzeRows = -1)
     {
         $this->log = $logger;
         $this->struct = $struct;
+        $this->structure = $structure;
         $this->analyzeRows = $analyzeRows;
+        if (empty($this->structure)) {
+            $this->structure = new Structure();
+        }
     }
 
     public function getStructure()
@@ -63,12 +67,13 @@ class Analyzer
 
     public function analyzeData(array $data, string $rootType)
     {
-        $this->structure = new Structure($rootType);
+ //       $this->structure = new Structure(/*$rootType*/);
         if (empty($data)) {
             return;
         }
-        $path = new NodePath([]);
+        $path = new NodePath([$rootType]);
         $this->analyzeArray($data, $path);
+        //var_export($this->structure->getData());
     }
 
     private function analyzeItem($item, NodePath $nodePath)
@@ -81,7 +86,12 @@ class Analyzer
             }
         } elseif (is_object($item)) {
             $nodeType = 'object';
-            $this->analyzeObject($item, $nodePath);
+            if (\Keboola\Utils\isEmptyObject($item)) {
+                // todo: is this condiion necessary?
+                $nodeType = 'null';
+            } else {
+                $this->analyzeObject($item, $nodePath);
+            }
         } elseif (is_null($item)) {
             $nodeType = 'null';
         } elseif (is_array($item)) {

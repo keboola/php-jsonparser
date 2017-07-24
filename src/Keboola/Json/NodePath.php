@@ -15,11 +15,6 @@ class NodePath
         $this->path = $path;
     }
 
-    public function fromString($pathStr) {
-        $path = explode('.', $pathStr);
-
-    }
-
     public function __toString()
     {
         return implode('.', $this->path);
@@ -54,5 +49,10 @@ class NodePath
     public function isEmpty()
     {
         return count($this->path) === 0;
+    }
+
+    public function getLast()
+    {
+        return end($this->path);
     }
 }

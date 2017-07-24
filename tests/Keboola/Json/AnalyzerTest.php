@@ -385,7 +385,7 @@ class AnalyzerTest extends ParserTestCase
         $analyzer->analyze($data, 'test');
         self::assertFalse($analyzer->isAnalyzed('test'));
 
-        $analyzer = new Analyzer(new NullLogger(), null, 1);
+        $analyzer = new Analyzer(new NullLogger(), null, null,1);
         self::assertFalse($analyzer->isAnalyzed('test'));
         $analyzer->analyze($data, 'test');
         self::assertTrue($analyzer->isAnalyzed('test'));

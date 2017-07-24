@@ -862,16 +862,12 @@ class ParserTest extends ParserTestCase
     public function testParseRowNumeric()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->add('root', [
-            '1' => 'scalar',
-            '2' => 'scalar'
-        ]);
-
         $object = (object) [
             '1' => 'one',
             '2' => 'two'
         ];
 
+        $parser->getAnalyzer()->analyzeData([$object], 'root');
         $row = self::callMethod($parser, 'parseRow', [$object, 'root']);
 
         $expected = (array) $object;
