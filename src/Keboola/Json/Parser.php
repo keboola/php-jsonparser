@@ -7,6 +7,7 @@ use Keboola\Temp\Temp;
 use Keboola\Json\Exception\JsonParserException;
 use Keboola\Json\Exception\NoDataException;
 use Psr\Log\LoggerInterface;
+use SebastianBergmann\CodeCoverage\Report\Xml\Node;
 
 /**
  * JSON to CSV data analyzer and parser/converter
@@ -186,7 +187,7 @@ class Parser
      * @return void
      * @see Parser::process()
      */
-    public function parse(array $data, $type, $parentId = null)
+    public function parse(array $data, $type, NodePath $nodePath, $parentId = null)
     {
 
         if (!$this->analyzer->isAnalyzed($type)
@@ -209,7 +210,7 @@ class Parser
 
         $parentId = $this->validateParentId($parentId);
 
-        $csvFile = $this->createCsvFile($type, $parentId);
+        $csvFile = $this->createCsvFile($type, $nodePath, $parentId);
 
         $parentCols = array_fill_keys(array_keys($parentId), "string");
 
@@ -227,7 +228,7 @@ class Parser
                 $row = (object) array_replace((array) $row, $parentId);
             }
 
-            $csvRow = $this->parseRow($row, $type, $parentCols);
+            $csvRow = $this->parseRow($row, $type, $nodePath, $parentCols);
 
             $csvFile->writeRow($csvRow->getRow());
         }
@@ -246,11 +247,12 @@ class Parser
     protected function parseRow(
         \stdClass $dataRow,
         $type,
+        NodePath $nodePath,
         array $parentCols = [],
         $outerObjectHash = null
     ) {
         // move back out to parse/switch if it causes issues
-        $csvRow = new CsvRow($this->getHeader($type, $parentCols));
+        $csvRow = new CsvRow($this->getHeader($type, $nodePath, $parentCols));
 
         // Generate parent ID for arrays
         $arrayParentId = $this->getPrimaryKeyValue(
@@ -262,7 +264,7 @@ class Parser
         $arr = $this->structure->getDefinitions($type);
         $arr2 = $this->struct->getDefinitions($type);
         foreach (array_replace($arr, $parentCols) as $column => $dataType) {
-            $this->parseField($dataRow, $csvRow, $arrayParentId, $column, $dataType, $type);
+            $this->parseField($dataRow, $csvRow, $arrayParentId, $column, $dataType, $type, $nodePath);
         }
 
         return $csvRow;
@@ -284,7 +286,8 @@ class Parser
         $arrayParentId,
         $column,
         $dataType,
-        $type
+        $type,
+        NodePath $nodePath
     ) {
         // TODO safeColumn should be associated with $this->struct[$type]
         // (and parentCols -> create in parse() where the arr is created)
@@ -341,10 +344,10 @@ class Parser
                     $dataRow->{$column} = [$dataRow->{$column}];
                 }
                 $csvRow->setValue($safeColumn, $arrayParentId);
-                $this->parse($dataRow->{$column}, $type . "." . $column, $arrayParentId);
+                $this->parse($dataRow->{$column}, $type . "." . $column, $nodePath, $arrayParentId);
                 break;
             case "object":
-                $childRow = $this->parseRow($dataRow->{$column}, $type . "." . $column, [], $arrayParentId);
+                $childRow = $this->parseRow($dataRow->{$column}, $type . "." . $column, $nodePath, [], $arrayParentId);
 
                 foreach ($childRow->getRow() as $key => $value) {
                     // FIXME createSafeName is duplicated here
@@ -380,7 +383,7 @@ class Parser
      * @param string|array|bool $parent String with a $parentId or an array with $colName => $parentId
      * @return array
      */
-    protected function getHeader($type, $parent = false)
+    protected function getHeader($type, NodePath $nodePath, $parent = false)
     {
         $header = [];
 
@@ -388,7 +391,7 @@ class Parser
         $arr2 = $this->struct->getDefinitions($type);
         foreach ($arr as $column => $dataType) {
             if ($dataType == "object") {
-                foreach ($this->getHeader($type . "." . $column) as $val) {
+                foreach ($this->getHeader($type . "." . $column, $nodePath) as $val) {
                     // FIXME this is awkward, the createSafeName shouldn't need to be used twice
                     // (here and in validateHeader again)
                     // Is used to trim multiple "_" in column name before appending
@@ -473,10 +476,10 @@ class Parser
      * @param string $type
      * @return Table
      */
-    protected function createCsvFile($type, $parentId)
+    protected function createCsvFile($type, NodePath $nodePath, $parentId)
     {
         if (empty($this->headers[$type])) {
-            $this->headers[$type] = $this->getHeader($type, $parentId);
+            $this->headers[$type] = $this->getHeader($type, $nodePath, $parentId);
         }
 
         $safeType = $this->createSafeName($type);
@@ -588,7 +591,7 @@ class Parser
     {
         if (!empty($this->cache)) {
             while ($batch = $this->cache->getNext()) {
-                $this->parse($batch["data"], $batch["type"], $batch["parentId"]);
+                $this->parse($batch["data"], $batch["type"], new NodePath([$batch['type']]), $batch["parentId"]);
             }
         }
     }

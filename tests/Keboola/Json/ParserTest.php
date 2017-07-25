@@ -746,7 +746,7 @@ class ParserTest extends ParserTestCase
                 'value' => 'scalar'
             ]
         ]);
-		// TODO: fix when load works
+        // TODO: fix when load works
         $parser->getAnalyzer()->getStructure()->addNode(new NodePath(['root', '[]', 'id']), 'nodeType', 'scalar');
         $parser->getAnalyzer()->getStructure()->addNode(new NodePath(['root', '[]', 'value']), 'nodeType', 'scalar');
 
@@ -872,7 +872,7 @@ class ParserTest extends ParserTestCase
 
         $parser->getAnalyzer()->analyzeData([$object], 'root');
         $parser->getAnalyzer()->analyze([$object], 'root');
-        $row = self::callMethod($parser, 'parseRow', [$object, 'root']);
+        $row = self::callMethod($parser, 'parseRow', [$object, 'root', new NodePath(['root'])]);
 
         $expected = (array) $object;
         self::assertEquals($expected, $row->getRow());
@@ -897,7 +897,7 @@ class ParserTest extends ParserTestCase
     public function testParseNoAnalyze()
     {
         $parser = $this->getParser();
-        $parser->parse(["a" => "b"], 'someType');
+        $parser->parse(["a" => "b"], 'someType', new NodePath(['someType']));
         self::assertEquals("\"data\"\n\"b\"\n", file_get_contents($parser->getCsvFiles()['someType']));
     }
 
