@@ -101,6 +101,7 @@ class Parser
 
     public function __construct(LoggerInterface $logger, Analyzer $analyzer, Struct $struct, Structure $structure)
     {
+        ini_set('serialize_precision', 17);
         $this->log = $logger;
         $this->analyzer = $analyzer;
         $this->struct = $struct;
@@ -163,8 +164,10 @@ class Parser
         }
         */
 
-        $this->analyzer->analyze($data, $type);
-        $this->analyzer->analyzeData($data, $type);
+     //   if (empty($this->analyzer->getRowsAnalyzed()[$type])) {
+            $this->analyzer->analyze($data, $type);
+            $this->analyzer->analyzeData($data, $type);
+    //    }
         //$this->structure = $this->analyzer->getStructure();
 
         $this->getCache()->store([
