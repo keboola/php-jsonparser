@@ -73,6 +73,7 @@ class Analyzer
         }
         $path = new NodePath([$rootType]);
         $this->analyzeArray($data, $path);
+        $this->structure->addNode($path, 'nodeType', 'array');
         //var_export($this->structure->getData());
     }
 

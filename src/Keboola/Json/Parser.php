@@ -263,6 +263,7 @@ class Parser
 
         $arr = $this->structure->getDefinitions($type);
         $arr2 = $this->struct->getDefinitions($type);
+        $arr3 = $this->structure->getDefinitionsNodePath($nodePath);
         foreach (array_replace($arr, $parentCols) as $column => $dataType) {
             $this->parseField($dataRow, $csvRow, $arrayParentId, $column, $dataType, $type, $nodePath);
         }
@@ -344,10 +345,10 @@ class Parser
                     $dataRow->{$column} = [$dataRow->{$column}];
                 }
                 $csvRow->setValue($safeColumn, $arrayParentId);
-                $this->parse($dataRow->{$column}, $type . "." . $column, $nodePath, $arrayParentId);
+                $this->parse($dataRow->{$column}, $type . "." . $column, $nodePath->addArrayChild()->addChild($column), $arrayParentId);
                 break;
             case "object":
-                $childRow = $this->parseRow($dataRow->{$column}, $type . "." . $column, $nodePath, [], $arrayParentId);
+                $childRow = $this->parseRow($dataRow->{$column}, $type . "." . $column, $nodePath->addChild($column), [], $arrayParentId);
 
                 foreach ($childRow->getRow() as $key => $value) {
                     // FIXME createSafeName is duplicated here
@@ -389,9 +390,10 @@ class Parser
 
         $arr = $this->structure->getDefinitions($type);
         $arr2 = $this->struct->getDefinitions($type);
+        $arr3 = $this->structure->getDefinitionsNodePath($nodePath);
         foreach ($arr as $column => $dataType) {
             if ($dataType == "object") {
-                foreach ($this->getHeader($type . "." . $column, $nodePath) as $val) {
+                foreach ($this->getHeader($type . "." . $column, $nodePath->addChild($column)) as $val) {
                     // FIXME this is awkward, the createSafeName shouldn't need to be used twice
                     // (here and in validateHeader again)
                     // Is used to trim multiple "_" in column name before appending
@@ -591,7 +593,7 @@ class Parser
     {
         if (!empty($this->cache)) {
             while ($batch = $this->cache->getNext()) {
-                $this->parse($batch["data"], $batch["type"], new NodePath([$batch['type']]), $batch["parentId"]);
+                $this->parse($batch["data"], $batch["type"], new NodePath([$batch['type'], '[]']), $batch["parentId"]);
             }
         }
     }

@@ -57,7 +57,8 @@ class AnalyzerTest extends ParserTestCase
                             ]
                         ],
                         'nodeType' => 'object'
-                    ]
+                    ],
+                    'nodeType' => 'array'
                 ]
             ],
             $analyzer->getStructure()->getData()

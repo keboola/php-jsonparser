@@ -222,6 +222,29 @@ class Structure
         return $result;
     }
 
+    public function getDefinitionsNodePath(NodePath $nodePath)
+    {
+        $values = $this->getValues($nodePath, 'nodeType');
+//        var_export($path);
+        // todo - this is compatibility fix
+        $result = [];
+        if (empty($values)) {
+            return [];
+        }
+//        if ($values['nodeType'] == 'object') {
+        foreach ($values as $key => $value) {
+            if ($key === '[]') {
+                $result['data'] = $value;
+            } else {
+                $result[$key] = $value;
+            }
+        }
+        //      } elseif ($values['nodeType'] == 'scalar') {
+        //        $result['data'] = 'scalar';
+        //  }
+        return $result;
+    }
+
     private function buildNodePathFromString($path) {
         ////if (substr($path, 0, strlen($this->baseType)) != $this->baseType) {
             //throw new LogicException("Basetype mysmac");
