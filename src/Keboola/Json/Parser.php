@@ -264,7 +264,7 @@ class Parser
         $arr = $this->structure->getDefinitions($type);
         $arr2 = $this->struct->getDefinitions($type);
         $arr3 = $this->structure->getDefinitionsNodePath($nodePath);
-        foreach (array_replace($arr, $parentCols) as $column => $dataType) {
+        foreach (array_replace($arr3, $parentCols) as $column => $dataType) {
             $this->parseField($dataRow, $csvRow, $arrayParentId, $column, $dataType, $type, $nodePath);
         }
 
@@ -345,7 +345,7 @@ class Parser
                     $dataRow->{$column} = [$dataRow->{$column}];
                 }
                 $csvRow->setValue($safeColumn, $arrayParentId);
-                $this->parse($dataRow->{$column}, $type . "." . $column, $nodePath->addArrayChild()->addChild($column), $arrayParentId);
+                $this->parse($dataRow->{$column}, $type . "." . $column, $nodePath->addChild($column)->addArrayChild(), $arrayParentId);
                 break;
             case "object":
                 $childRow = $this->parseRow($dataRow->{$column}, $type . "." . $column, $nodePath->addChild($column), [], $arrayParentId);
@@ -391,7 +391,7 @@ class Parser
         $arr = $this->structure->getDefinitions($type);
         $arr2 = $this->struct->getDefinitions($type);
         $arr3 = $this->structure->getDefinitionsNodePath($nodePath);
-        foreach ($arr as $column => $dataType) {
+        foreach ($arr3 as $column => $dataType) {
             if ($dataType == "object") {
                 foreach ($this->getHeader($type . "." . $column, $nodePath->addChild($column)) as $val) {
                     // FIXME this is awkward, the createSafeName shouldn't need to be used twice
