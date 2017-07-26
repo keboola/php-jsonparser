@@ -17,6 +17,7 @@ class Structure
      * @var string
      */
     private $baseType;
+    private $headerIndex = [];
 
     public function __construct(/*string $baseType*/)
     {
@@ -69,7 +70,12 @@ class Structure
         //var_export($this->data, true);
     }
 
-    private function storeNode(NodePath $nodePath, $data, $newNode)
+    public function saveNode(NodePath $nodePath, $newNode)
+    {
+        $this->data = $this->storeNode($nodePath, $this->data, $newNode);
+    }
+
+    public function storeNode(NodePath $nodePath, $data, $newNode)
     {
         if (!is_array($data)) {
             throw new LogicException("wtf");
@@ -126,6 +132,12 @@ class Structure
         } else {
             return $this->getValue($nodePath, $data[$node]);
         }
+    }
+
+    public function getSingleValue(NodePath $nodePath, $key)
+    {
+        $data = $this->getValue($nodePath);
+        return $data[$key];
     }
 
     public function getValues(NodePath $nodePath, $key)
@@ -325,5 +337,74 @@ class Structure
             }
         }
         throw new LogicException("Should not happen");
+    }
+
+    public function getHeaderNames()
+    {
+      //  $this->headerIndex = [];
+        foreach ($this->data as $baseType => &$baseArray) {
+            foreach ($baseArray as $nodeName => &$nodeData) {
+                $this->getHeaders($nodeData, new NodePath([$baseType, $nodeName]), '');
+            }
+        }
+        //var_export($this->data);
+    }
+
+    protected function createSafeName($name)
+    {
+        if (strlen($name) > 64) {
+            if (str_word_count($name) > 1 && preg_match_all('/\b(\w)/', $name, $m)) {
+                // Create an "acronym" from first letters
+                $short = implode('', $m[1]);
+            } else {
+                $short = md5($name);
+            }
+            $short .= "_";
+            $remaining = 64 - strlen($short);
+            $nextSpace = strpos($name, " ", (strlen($name)-$remaining))
+                ? : strpos($name, "_", (strlen($name)-$remaining));
+
+            $newName = $nextSpace === false
+                ? $short
+                : $short . substr($name, $nextSpace);
+        } else {
+            $newName = $name;
+        }
+
+        $newName = preg_replace('/[^A-Za-z0-9-]/', '_', $newName);
+        return trim($newName, "_");
+    }
+
+    private function getHeaders(&$data, NodePath $nodePath, $parentName)
+    {
+        if (is_array($data)) {
+            if (empty($data['headerNames'])) {
+                $headerName = $this->createSafeName($parentName);
+                if (isset($this->headerIndex[$headerName])) {
+                    $headerName = md5($headerName);
+                }
+                $this->headerIndex[$headerName] = 1;
+                $data['headerNames'] = $headerName;
+            }
+            foreach ($data as $key => &$value) {
+                if (is_array($value)) {
+                    if ($parentName == '[]') {
+                        $this->getHeaders($value, $nodePath->addArrayChild(), $parentName);
+                    } else {
+                        if ($key == 'JSON_parentId') {
+                            // BWD compat hack
+                            $childName = $key;
+                        } else {
+                            if ($parentName) {
+                                $childName = $parentName . '.' . $key;
+                            } else {
+                                $childName = $key;
+                            }
+                        }
+                        $this->getHeaders($value, $nodePath->addChild($key), $childName);
+                    }
+                }
+            }
+        }
     }
 }

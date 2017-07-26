@@ -99,6 +99,7 @@ class Parser
      * @var Structure
      */
     private $structure;
+    private $headers2;
 
     public function __construct(LoggerInterface $logger, Analyzer $analyzer, Struct $struct, Structure $structure)
     {
@@ -164,11 +165,11 @@ class Parser
             ]);
         }
         */
-
      //   if (empty($this->analyzer->getRowsAnalyzed()[$type])) {
             $this->analyzer->analyze($data, $type);
             $this->analyzer->analyzeData($data, $type);
     //    }
+        $this->structure->getHeaderNames();
         //$this->structure = $this->analyzer->getStructure();
 
         $this->getCache()->store([
@@ -378,6 +379,48 @@ class Parser
         }
     }
 
+    protected function getHeaderPath(NodePath $nodePath, $parent = false)
+    {
+        $headers = [];
+        $addSelf = true;
+        $thisNodeName = $nodePath->getLast();
+        if ($thisNodeName == '[]' && ($nodePath->getLength() > 2)) {
+            $nodePath = $nodePath->popLast($thisNodeName);
+            $nodeData = $this->structure->getValue($nodePath);
+            if ($nodeData['[]']['nodeType'] == 'scalar') {
+                $headers[] = 'data';
+            }
+            $addSelf = false;
+        } else {
+            $nodeData = $this->structure->getValue($nodePath);
+        }
+        if (is_array($parent) && !empty($parent)) {
+            foreach ($parent as $key => $value) {
+                $nodeData[$key] = ['nodeType' => 'scalar'];
+            }
+            $this->structure->saveNode($nodePath, $nodeData);
+            $this->structure->getHeaderNames();
+            $nodeData = $this->structure->getValue($nodePath);
+        }
+        if (($nodeData['nodeType'] != 'object') && $addSelf) {
+            if (empty($nodeData['headerNames'])) {
+                // a special case when there is nothing but unnamed array in whole struct
+                $headers[] = 'data';
+            } else {
+                $headers[] = $nodeData['headerNames'];
+            }
+        }
+        foreach ($nodeData as $nodeName => $data) {
+            if (is_array($data)) {
+                if ($nodeName != '[]') {
+                    $ch = $this->getHeaderPath($nodePath->addChild($nodeName));
+                    $headers = array_merge($headers, $ch);
+                }
+            }
+        }
+        return $headers;
+    }
+
     /**
      * Get header for a data type
      * @param string $type Data type
@@ -387,6 +430,7 @@ class Parser
     protected function getHeader($type, NodePath $nodePath, $parent = false)
     {
         $header = [];
+        $header2 = [];
 
         $arr = $this->structure->getDefinitions($type);
         $arr2 = $this->struct->getDefinitions($type);
@@ -398,9 +442,11 @@ class Parser
                     // (here and in validateHeader again)
                     // Is used to trim multiple "_" in column name before appending
                     $header[] = $this->createSafeName($column) . "_" . $val;
+                    $header2[] = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
                 }
             } else {
                 $header[] = $column;
+                $header2[] = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
             }
         }
 
@@ -482,13 +528,14 @@ class Parser
     {
         if (empty($this->headers[$type])) {
             $this->headers[$type] = $this->getHeader($type, $nodePath, $parentId);
+            $this->headers2[$type] = $this->getHeaderPath($nodePath, $parentId);
         }
 
         $safeType = $this->createSafeName($type);
         if (empty($this->csvFiles[$safeType])) {
             $this->csvFiles[$safeType] = Table::create(
                 $safeType,
-                $this->headers[$type],
+                $this->headers2[$type],
                 $this->getTemp()
             );
             $this->csvFiles[$safeType]->addAttributes(["fullDisplayName" => $type]);
