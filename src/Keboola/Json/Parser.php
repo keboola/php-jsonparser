@@ -384,15 +384,20 @@ class Parser
         $headers = [];
         $addSelf = true;
         $thisNodeName = $nodePath->getLast();
-        if ($thisNodeName == '[]' && ($nodePath->getLength() > 2)) {
+        $nodeData = $this->structure->getValue($nodePath);
+        if ($thisNodeName == '[]' && ($nodeData['nodeType'] == 'scalar')) {
             $nodePath = $nodePath->popLast($thisNodeName);
             $nodeData = $this->structure->getValue($nodePath);
-            if ($nodeData['[]']['nodeType'] == 'scalar') {
-                $headers[] = 'data';
-            }
-            $addSelf = false;
+            $headers[] = 'data';
         } else {
-            $nodeData = $this->structure->getValue($nodePath);
+            if (($nodeData['nodeType'] != 'object')) {
+                if (empty($nodeData['headerNames'])) {
+                    // a special case when there is nothing but unnamed array in whole struct
+                    $headers[] = 'data';
+                } else {
+                    $headers[] = $nodeData['headerNames'];
+                }
+            }//            $nodeData = $this->structure->getValue($nodePath);
         }
         if (is_array($parent) && !empty($parent)) {
             foreach ($parent as $key => $value) {
@@ -401,14 +406,6 @@ class Parser
             $this->structure->saveNode($nodePath, $nodeData);
             $this->structure->getHeaderNames();
             $nodeData = $this->structure->getValue($nodePath);
-        }
-        if (($nodeData['nodeType'] != 'object') && $addSelf) {
-            if (empty($nodeData['headerNames'])) {
-                // a special case when there is nothing but unnamed array in whole struct
-                $headers[] = 'data';
-            } else {
-                $headers[] = $nodeData['headerNames'];
-            }
         }
         foreach ($nodeData as $nodeName => $data) {
             if (is_array($data)) {
@@ -535,7 +532,7 @@ class Parser
         if (empty($this->csvFiles[$safeType])) {
             $this->csvFiles[$safeType] = Table::create(
                 $safeType,
-                $this->headers2[$type],
+                $this->headers[$type],
                 $this->getTemp()
             );
             $this->csvFiles[$safeType]->addAttributes(["fullDisplayName" => $type]);
