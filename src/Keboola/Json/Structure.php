@@ -34,6 +34,23 @@ class Structure
         $this->autoUpgradeToArray = (bool) $enable;
     }
 
+    public function mergearray($array1, $array2)
+    {
+        foreach ($array2 as $key => $value) {
+            if (is_array($value)) {
+                if (!isset($array1[$key])) {
+                    $array1[$key] = [];
+                }
+                $value = $this->mergearray($array1[$key], $array2[$key]);
+                $array1[$key] = $value;
+            } else {
+                $array1[$key] = $value;
+            }
+        }
+        return $array1;
+    }
+
+
     public function addNode(NodePath $nodePath, $key, $value)
     {
         try {
@@ -49,10 +66,18 @@ class Structure
                     $nodeRoot = $node;
                     unset($nodeRoot['[]']);
                     // todo tohle zmergovat rucne a overit, ze hodnoty jsou stejne
-                    $newNode = [
-                        '[]' => array_merge($nodeRoot, $arr),
-                        'nodeType' => 'array'
-                    ];
+                    $newNode['[]'] = $this->mergearray($node['[]'], $nodeRoot);
+                    //unset($newNode['[]']);
+                    if ($newNode['[]']['nodeType'] == 'array') {
+                        $newNode['[]']['nodeType'] = $node['[]']['nodeType'];
+                    }
+                    $newNode['nodeType'] = 'array';
+                    if (isset($newNode['[]']['headerNames'])) {
+                        $newNode['headerNames'] = $newNode['[]']['headerNames'];
+                        $newNode['[]']['headerNames'] = 'data';
+                    }
+                    //$newNode['invalidateHeaderNames'] = 1;
+                    //$this->getHeaderNames();
                     $this->data = $this->storeNode($nodePath, $this->data, $newNode);
                 } elseif ($e->getPreviousValue() != 'null' && ($e->getNew() == 'null')) {
                     // do nothing
@@ -137,7 +162,11 @@ class Structure
     public function getSingleValue(NodePath $nodePath, $key)
     {
         $data = $this->getValue($nodePath);
-        return $data[$key];
+        if (isset($data[$key])) {
+            return $data[$key];
+        } else {
+            return null;
+        }
     }
 
     public function getValues(NodePath $nodePath, $key)
@@ -194,7 +223,7 @@ class Structure
                     if ($itemName == $key) {
                         $result[$nodePath->getLast()] = $value;
                     } else {
-                        $result[$nodePath->getLast()] = null;
+                     //   $result[$nodePath->getLast()] = null;
                     }
                 }
             }
@@ -344,14 +373,15 @@ class Structure
       //  $this->headerIndex = [];
         foreach ($this->data as $baseType => &$baseArray) {
             foreach ($baseArray as $nodeName => &$nodeData) {
-                $this->getHeaders($nodeData, new NodePath([$baseType, $nodeName]), '');
+                $this->getHeaders($nodeData, new NodePath([$baseType, $nodeName]), '[]', $baseType);
             }
         }
-        //var_export($this->data);
+     //   var_export($this->data);
     }
 
     protected function createSafeName($name)
     {
+        $name = preg_replace('/[^A-Za-z0-9-]/', '_', $name);
         if (strlen($name) > 64) {
             if (str_word_count($name) > 1 && preg_match_all('/\b(\w)/', $name, $m)) {
                 // Create an "acronym" from first letters
@@ -371,26 +401,33 @@ class Structure
             $newName = $name;
         }
 
-        $newName = preg_replace('/[^A-Za-z0-9-]/', '_', $newName);
-        return trim($newName, "_");
+        $newName = preg_replace('/[^A-Za-z0-9-]+/', '_', $newName);
+        $newName = trim($newName, "_");
+        return $newName;
     }
 
-    private function getHeaders(&$data, NodePath $nodePath, $parentName)
+    private function getHeaders(&$data, NodePath $nodePath, $parentName, $baseType)
     {
         if (is_array($data)) {
-            if (empty($data['headerNames'])) {
+            if ((empty($data['headerNames']) || !empty($data['invalidateHeaderNames'])) && ($parentName != '[]')) { // write only once and arrays are unnamed
                 $headerName = $this->createSafeName($parentName);
-                if (isset($this->headerIndex[$headerName])) {
+                if (isset($this->headerIndex[$baseType][$headerName]) && empty($data['invalidateHeaderNames'])) {
                     $headerName = md5($headerName);
                 }
-                $this->headerIndex[$headerName] = 1;
+                $this->headerIndex[$baseType][$headerName] = 1;
                 $data['headerNames'] = $headerName;
+            } elseif ($parentName == '[]') {
+                $data['headerNames'] = 'data';
+            } // else already set
+            if ($data['nodeType'] == 'array') {
+                $baseType = $baseType . '.' . $parentName;
+                $parentName = '';
             }
             foreach ($data as $key => &$value) {
                 if (is_array($value)) {
-                    if ($parentName == '[]') {
-                        $this->getHeaders($value, $nodePath->addArrayChild(), $parentName);
-                    } else {
+                   // if ($parentName == '[]') {
+                 //       $this->getHeaders($value, $nodePath->addArrayChild(), $parentName, $baseType);
+                    //} else {
                         if ($key == 'JSON_parentId') {
                             // BWD compat hack
                             $childName = $key;
@@ -401,8 +438,8 @@ class Structure
                                 $childName = $key;
                             }
                         }
-                        $this->getHeaders($value, $nodePath->addChild($key), $childName);
-                    }
+                        $this->getHeaders($value, $nodePath->addChild($key), $childName, $baseType);
+                    //}
                 }
             }
         }

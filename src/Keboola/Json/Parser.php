@@ -253,7 +253,9 @@ class Parser
         $outerObjectHash = null
     ) {
         // move back out to parse/switch if it causes issues
-        $csvRow = new CsvRow($this->getHeader($type, $nodePath, $parentCols));
+        $headers = $this->getHeader($type, $nodePath, $parentCols);
+        $headers2 = $this->getHeaderPath($nodePath, $parentCols);
+        $csvRow = new CsvRow($headers2);
 
         // Generate parent ID for arrays
         $arrayParentId = $this->getPrimaryKeyValue(
@@ -313,6 +315,12 @@ class Parser
         ) {
             // do not save empty objects to prevent creation of ["obj_name" => null]
             if ($dataType != 'object') {
+                if ($column == 'data') {
+                    // todo change to is last node array
+                    $safeColumn = $this->structure->getSingleValue($nodePath, 'headerNames');
+                } else {
+                    $safeColumn = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
+                }
                 $csvRow->setValue($safeColumn, null);
             }
 
@@ -345,7 +353,9 @@ class Parser
                 if (!is_array($dataRow->{$column})) {
                     $dataRow->{$column} = [$dataRow->{$column}];
                 }
-                $csvRow->setValue($safeColumn, $arrayParentId);
+                $sf = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
+                //$csvRow->setValue($safeColumn, $arrayParentId);
+                $csvRow->setValue($sf, $arrayParentId);
                 $this->parse($dataRow->{$column}, $type . "." . $column, $nodePath->addChild($column)->addArrayChild(), $arrayParentId);
                 break;
             case "object":
@@ -353,13 +363,21 @@ class Parser
 
                 foreach ($childRow->getRow() as $key => $value) {
                     // FIXME createSafeName is duplicated here
-                    $csvRow->setValue($this->createSafeName($safeColumn . '_' . $key), $value);
+                    //$csvRow->setValue($this->createSafeName($safeColumn . '_' . $key), $value);
+                    $csvRow->setValue($key, $value);
                 }
                 break;
             default:
                 // If a column is an object/array while $struct expects a single column, log an error
                 if (is_scalar($dataRow->{$column})) {
-                    $csvRow->setValue($safeColumn, $dataRow->{$column});
+                    if ($column == 'data') {
+                        // prepsat na if nodeLastItem is array
+                        $sf = $this->structure->getSingleValue($nodePath, 'headerNames');
+                    } else {
+                        $sf = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
+                    }
+                    //$csvRow->setValue($safeColumn, $dataRow->{$column});
+                    $csvRow->setValue($sf, $dataRow->{$column});
                 } else {
                     $jsonColumn = json_encode($dataRow->{$column});
 
@@ -373,46 +391,65 @@ class Parser
                         [ "data" => $jsonColumn, "row" => json_encode($dataRow) ]
                     );
                     */
-                    $csvRow->setValue($safeColumn, $jsonColumn);
+                    $sf = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
+                    //$csvRow->setValue($safeColumn, $jsonColumn);
+                    $csvRow->setValue($sf, $jsonColumn);
                 }
                 break;
         }
     }
 
-    protected function getHeaderPath(NodePath $nodePath, $parent = false)
+    protected function getHeaderPath(NodePath $nodePath, $parent = false, $parentCheck = false)
     {
         $headers = [];
         $addSelf = true;
         $thisNodeName = $nodePath->getLast();
         $nodeData = $this->structure->getValue($nodePath);
         if ($thisNodeName == '[]' && ($nodeData['nodeType'] == 'scalar')) {
-            $nodePath = $nodePath->popLast($thisNodeName);
-            $nodeData = $this->structure->getValue($nodePath);
+
             $headers[] = 'data';
         } else {
             if (($nodeData['nodeType'] != 'object')) {
-                if (empty($nodeData['headerNames'])) {
+                if (!empty($nodeData['type']) && (!is_array($parentCheck) || !in_array($thisNodeName, $parentCheck))) {
+                    // skup this
+                } elseif (empty($nodeData['headerNames'])) {
                     // a special case when there is nothing but unnamed array in whole struct
-                    $headers[] = 'data';
+                   // $headers[] = 'data';
                 } else {
                     $headers[] = $nodeData['headerNames'];
                 }
             }//            $nodeData = $this->structure->getValue($nodePath);
         }
         if (is_array($parent) && !empty($parent)) {
+            $nnodePath = $nodePath->popLast($thisNodeName);
+            $nnodeData = $this->structure->getValue($nnodePath);
+            $parentCheck = array_keys($parent);
+            $trigChange = false;
             foreach ($parent as $key => $value) {
-                $nodeData[$key] = ['nodeType' => 'scalar'];
+                if (!isset($nnodeData[$key]) && !isset($nodeData['[]'][$key])) {
+                    // this is a WTF, but getHeaders is called for every row, so a header must be called only once
+                    if ($nnodeData['nodeType'] == 'array') {
+                        $nnodeData['[]'][$key] = ['nodeType' => 'scalar', 'type' => 'parent'];
+                    } else {
+                        $nnodeData[$key] = ['nodeType' => 'scalar', 'type' => 'parent'];
+                    }
+                    $trigChange = true;
+                }
             }
-            $this->structure->saveNode($nodePath, $nodeData);
-            $this->structure->getHeaderNames();
-            $nodeData = $this->structure->getValue($nodePath);
+            if ($trigChange) {
+                $this->structure->saveNode($nnodePath, $nnodeData);
+                $this->structure->getHeaderNames();
+                $nodeData = $this->structure->getValue($nodePath);
+            }
         }
         foreach ($nodeData as $nodeName => $data) {
-            if (is_array($data)) {
-                if ($nodeName != '[]') {
-                    $ch = $this->getHeaderPath($nodePath->addChild($nodeName));
+            if (is_array($data) && ($data['nodeType'] == 'object')) {
+              //  if ($nodeName != '[]') {
+                    $ch = $this->getHeaderPath($nodePath->addChild($nodeName), false, $parentCheck);
                     $headers = array_merge($headers, $ch);
-                }
+              //  }
+            } else if (is_array($data)) {
+                $headers[] = $data['headerNames'];
             }
         }
         return $headers;
@@ -439,11 +476,16 @@ class Parser
                     // (here and in validateHeader again)
                     // Is used to trim multiple "_" in column name before appending
                     $header[] = $this->createSafeName($column) . "_" . $val;
-                    $header2[] = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
+               //     $header2[] = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
                 }
             } else {
+                if ($column == 'data') {
+                    $rtp = $nodePath;
+                } else {
+                    $rtp = $nodePath->addChild($column);
+                }
                 $header[] = $column;
-                $header2[] = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
+               // $header2[] = $this->structure->getSingleValue($rtp, 'headerNames');
             }
         }
 
@@ -532,7 +574,7 @@ class Parser
         if (empty($this->csvFiles[$safeType])) {
             $this->csvFiles[$safeType] = Table::create(
                 $safeType,
-                $this->headers[$type],
+                $this->headers2[$type],
                 $this->getTemp()
             );
             $this->csvFiles[$safeType]->addAttributes(["fullDisplayName" => $type]);

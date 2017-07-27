@@ -36,6 +36,7 @@ class ParserTest extends ParserTestCase
                 )[1] // 2nd row
             )[0] // 1st column
         );
+       // self:self::assertEquals('fff', file_get_contents($parser->getCsvFiles()['entities_hashtags_indices']->getPathname()));
     }
 
     public function testPrimaryKey()
@@ -872,7 +873,8 @@ class ParserTest extends ParserTestCase
 
         $parser->getAnalyzer()->analyzeData([$object], 'root');
         $parser->getAnalyzer()->analyze([$object], 'root');
-        $row = self::callMethod($parser, 'parseRow', [$object, 'root', new NodePath(['root'])]);
+        $parser->getAnalyzer()->getStructure()->getHeaderNames();
+        $row = self::callMethod($parser, 'parseRow', [$object, 'root', new NodePath(['root', '[]'])]);
 
         $expected = (array) $object;
         self::assertEquals($expected, $row->getRow());
