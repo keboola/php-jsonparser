@@ -399,7 +399,7 @@ class Parser
         }
     }
 
-    protected function getHeaderPath(NodePath $nodePath, $parent = false, $parentCheck = false)
+    protected function getHeaderPath(NodePath $nodePath, &$parent = false, $parentCheck = false)
     {
         $headers = [];
         $addSelf = true;
@@ -426,11 +426,38 @@ class Parser
             $parentCheck = array_keys($parent);
             $trigChange = false;
             foreach ($parent as $key => $value) {
-                if (!isset($nnodeData[$key]) && !isset($nodeData['[]'][$key])) {
+                if (!isset($nnodeData[$key]) && !isset($nodeData['[]'][$key]) && empty($nodeData[$key]['type'])
+                    && empty($nodeData['[]'][$key]['type'])) {
                     // this is a WTF, but getHeaders is called for every row, so a header must be called only once
                     if ($nnodeData['nodeType'] == 'array') {
+                        if (isset($nnodeData['[]'][$key])) {
+                            // this means that there is a column with a same name as a column with parent name
+                            $newColName = $key;
+                            $i = 0;
+                            while (isset($nnodeData['[]'][$newColName])) {
+                                $newColName = $key . '_u' . $i;
+                                $i++;
+                            }
+                            // rename the column in parent
+                            $parent[$newColName] = $value;
+                            unset($parent[$key]);
+                            $key = $newColName;
+                        }
                         $nnodeData['[]'][$key] = ['nodeType' => 'scalar', 'type' => 'parent'];
                     } else {
+                        if (isset($nnodeData[$key])) {
+                            // this means that there is a column with a same name as a column with parent name
+                            $newColName = $key;
+                            $i = 0;
+                            while (isset($nnodeData[$newColName])) {
+                                $newColName = $key . '_u' . $i;
+                                $i++;
+                            }
+                            // rename the column in parent
+                            $parent[$newColName] = $value;
+                            unset($parent[$key]);
+                            $key = $newColName;
+                        }
                         $nnodeData[$key] = ['nodeType' => 'scalar', 'type' => 'parent'];
                     }
                     $trigChange = true;
@@ -445,7 +472,8 @@ class Parser
         foreach ($nodeData as $nodeName => $data) {
             if (is_array($data) && ($data['nodeType'] == 'object')) {
               //  if ($nodeName != '[]') {
-                    $ch = $this->getHeaderPath($nodePath->addChild($nodeName), false, $parentCheck);
+                    $pparent = false;
+                    $ch = $this->getHeaderPath($nodePath->addChild($nodeName), $pparent, $parentCheck);
                     $headers = array_merge($headers, $ch);
               //  }
             } else if (is_array($data)) {
@@ -563,7 +591,7 @@ class Parser
      * @param string $type
      * @return Table
      */
-    protected function createCsvFile($type, NodePath $nodePath, $parentId)
+    protected function createCsvFile($type, NodePath $nodePath, &$parentId)
     {
         if (empty($this->headers[$type])) {
             $this->headers[$type] = $this->getHeader($type, $nodePath, $parentId);

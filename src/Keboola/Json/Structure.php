@@ -406,17 +406,36 @@ class Structure
         return $newName;
     }
 
+
+    private function getUniqueName($baseName, $headerName)
+    {
+        if (isset($this->headerIndex[$baseName][$headerName])) {
+            $newName = $headerName;
+            $i = 0;
+            while (isset($this->headerIndex[$baseName][$newName])) {
+                $newName = $headerName . '_u' . $i;
+                $i++;
+            }
+            $headerName = $newName;
+        }
+        $this->headerIndex[$baseName][$headerName] = 1;
+        return $headerName;
+    }
+
+
     private function getHeaders(&$data, NodePath $nodePath, $parentName, $baseType)
     {
         if (is_array($data)) {
             if ((empty($data['headerNames']) || !empty($data['invalidateHeaderNames'])) && ($parentName != '[]')) { // write only once and arrays are unnamed
                 $headerName = $this->createSafeName($parentName);
-                if (isset($this->headerIndex[$baseType][$headerName]) && empty($data['invalidateHeaderNames'])) {
-                    $this->headerIndex[$baseType][$headerName]++;
-                    $headerName .= md5($headerName) .'_' . $this->headerIndex[$baseType][$headerName];
-                }
-                $this->headerIndex[$baseType][$headerName] = 1;
+                $headerName = $this->getUniqueName($baseType, $headerName);
                 $data['headerNames'] = $headerName;
+                //if (isset($this->headerIndex[$baseType][$headerName]) && empty($data['invalidateHeaderNames'])) {
+                 //   $this->headerIndex[$baseType][$headerName]++;
+                  //  $headerName .= md5($headerName) .'_' . $this->headerIndex[$baseType][$headerName];
+                //}
+                //$/this->headerIndex[$baseType][$headerName] = 1;
+                ///$data['headerNames'] = $headerName;
             } elseif ($parentName == '[]') {
                 $data['headerNames'] = 'data';
             } // else already set
