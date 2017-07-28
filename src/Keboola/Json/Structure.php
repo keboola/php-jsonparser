@@ -376,7 +376,7 @@ class Structure
                 $this->getHeaders($nodeData, new NodePath([$baseType, $nodeName]), '[]', $baseType);
             }
         }
-     //   var_export($this->data);
+        //var_export($this->data);
     }
 
     protected function createSafeName($name)
@@ -412,7 +412,8 @@ class Structure
             if ((empty($data['headerNames']) || !empty($data['invalidateHeaderNames'])) && ($parentName != '[]')) { // write only once and arrays are unnamed
                 $headerName = $this->createSafeName($parentName);
                 if (isset($this->headerIndex[$baseType][$headerName]) && empty($data['invalidateHeaderNames'])) {
-                    $headerName = md5($headerName);
+                    $this->headerIndex[$baseType][$headerName]++;
+                    $headerName .= md5($headerName) .'_' . $this->headerIndex[$baseType][$headerName];
                 }
                 $this->headerIndex[$baseType][$headerName] = 1;
                 $data['headerNames'] = $headerName;
