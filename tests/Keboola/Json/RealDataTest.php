@@ -38,7 +38,7 @@ class RealDataTest extends ParserTestCase
         array_walk($dir, function (&$val) {
             $val = str_replace(".csv", "", $val);
         });
-        self::assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
+        self::assertEquals([".",".."], array_diff($dir, array_keys($parser->getCsvFiles())));
         self::assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
     }
 
@@ -227,7 +227,7 @@ class RealDataTest extends ParserTestCase
         array_walk($dir, function (&$val) {
             $val = str_replace(".csv", "", $val);
         });
-        self::assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
+        self::assertEquals([".",".."], array_diff($dir, array_keys($parser->getCsvFiles())));
         self::assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
     }
 
