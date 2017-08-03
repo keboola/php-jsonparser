@@ -170,36 +170,13 @@ class Parser
      * Parse data of known type
      *
      * @param array $data
-     * @param string $type
+     * @param NodePath $nodePath
      * @param string|array $parentId
-     * @return void
-     * @see Parser::process()
      */
     private function parse(array $data, NodePath $nodePath, $parentId = null)
     {
-        $type = $nodePath->toCleanString();
-        if (!$this->analyzer->isAnalyzed($type)
-            && (empty($this->analyzer->getRowsAnalyzed()[$type])
-            || $this->analyzer->getRowsAnalyzed()[$type] < count($data))
-        ) {
-            // analyse instead of failing if the data is unknown!
-            $this->log->debug(
-                "Trying to parse an unknown data type '{$type}'. Trying on-the-fly analysis",
-                [
-                    "data" => $data,
-                    "nodePath" => $nodePath->__toString(),
-                    "parentId" => $parentId
-                ]
-            );
-
-            $this->analyzer->analyze($data, $type);
-            $this->analyzer->analyzeData($data, $type);
-        }
-
         $parentId = $this->validateParentId($parentId);
-
         $csvFile = $this->createCsvFile($this->structure->getTypeFromNodePath($nodePath), $nodePath, $parentId);
-
         $parentCols = array_fill_keys(array_keys($parentId), "string");
 
         foreach ($data as $row) {
@@ -217,7 +194,6 @@ class Parser
             }
 
             $csvRow = $this->parseRow($row, $nodePath, $parentCols);
-
             $csvFile->writeRow($csvRow->getRow());
         }
     }
