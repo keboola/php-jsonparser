@@ -180,6 +180,7 @@ class Parser
         // todo change to private
     {
 
+        $type = $nodePath->toCleanString();
         if (!$this->analyzer->isAnalyzed($type)
             && (empty($this->analyzer->getRowsAnalyzed()[$type])
             || $this->analyzer->getRowsAnalyzed()[$type] < count($data))
@@ -189,7 +190,7 @@ class Parser
                 "Trying to parse an unknown data type '{$type}'. Trying on-the-fly analysis",
                 [
                     "data" => $data,
-                    "type" => $type,
+                    "nodePath" => $nodePath->__toString(),
                     "parentId" => $parentId
                 ]
             );
@@ -200,7 +201,7 @@ class Parser
 
         $parentId = $this->validateParentId($parentId);
 
-        $csvFile = $this->createCsvFile($type, $nodePath, $parentId);
+        $csvFile = $this->createCsvFile($this->structure->getTypeFromNodePath($nodePath), $nodePath, $parentId);
 
         $parentCols = array_fill_keys(array_keys($parentId), "string");
 
@@ -313,7 +314,7 @@ class Parser
             $this->log->warning(
                 "Encountered data where 'NULL' was expected from previous analysis",
                 [
-                    'type' => $type,
+                    'nodePath' => $nodePath->__toString(),
                     'data' => $dataRow
                 ]
             );
