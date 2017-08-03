@@ -20,10 +20,6 @@ class HeadersTest extends ParserTestCase
         $parser->process($testFile->components);
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Trying to retrieve unknown definitions for 'root'
-     */
     public function testEmptyObject()
     {
         $parser = $this->getParser();
@@ -32,7 +28,8 @@ class HeadersTest extends ParserTestCase
             '{"components": [{}]}'
         );
         $parser->process($testFile->components);
-        $parser->getCsvFiles()['root'];
+        self::assertEquals(['root'], array_keys($parser->getCsvFiles()));
+        self::assertEquals("\"data\"\n\"\"\n", file_get_contents($parser->getCsvFiles()['root']->getPathname()));
     }
 
     public function testAlmostEmptyObject()

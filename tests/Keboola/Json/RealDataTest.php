@@ -99,8 +99,7 @@ class RealDataTest extends ParserTestCase
     public function testValidateHeader()
     {
         $parser = $this->getParser();
-
-        $header = array(
+        $header = [
             "KIND_Baseline SEM_Conversions : KIND_Baseline SEM_Conversions: Click-through Conversions",
             "KIND_Baseline SEM_Conversions : KIND_Baseline SEM_Conversions: View-through Conversions",
             "KIND_Baseline SEM_Conversions : KIND_Baseline SEM_Conversions: Total Conversions",
@@ -130,44 +129,45 @@ class RealDataTest extends ParserTestCase
             "KIND_Conversions_Submissions : KIND_Projects_Conversions_Submissions: Total Conversions",
             "KIND_Conversions_Submissions : KIND_Projects_Conversions_Submissions: Click-through Revenue",
             "KIND_Conversions_Submissions : KIND_Projects_Conversions_Submissions: View-through Revenue",
-            "KIND_Conversions_Submissions : KIND_Projects_Conversions_Submissions: Total Revenue");
+            "KIND_Conversions_Submissions : KIND_Projects_Conversions_Submissions: Total Revenue"];
+        $data = array_combine($header, array_fill(0, count($header), 'boo'));
+        $parser->process(['items' => \Keboola\Utils\arrayToObject($data)], 'root');
+        $file = $parser->getCsvFiles()['root'];
 
-        $validHeader = self::callMethod($parser, 'validateHeader', array($header));
+        $expectedHeader = [
+            't_KIND_Baseline_SEM_Conversions_Click-through_Conversions',
+            't_KIND_Baseline_SEM_Conversions_View-through_Conversions',
+            'KIND_Baseline_SEM_Conversions_Total_Conversions',
+            't_KIND_Baseline_SEM_Conversions_Click-through_Revenue',
+            't_KIND_Baseline_SEM_Conversions_View-through_Revenue',
+            'Conversions_KIND_Baseline_SEM_Conversions_Total_Revenue',
+            't_KIND_Strong_Conversions_Pledges_Click-through_Conversions',
+            't_KIND_Strong_Conversions_Pledges_View-through_Conversions',
+            'Pledges_KIND_Strong_Conversions_Pledges_Total_Conversions',
+            't_KIND_Strong_Conversions_Pledges_Click-through_Revenue',
+            't_KIND_Strong_Conversions_Pledges_View-through_Revenue',
+            'Pledges_KIND_Strong_Conversions_Pledges_Total_Revenue',
+            't_KINDProjects_Retargeting_Click-through_Conversions',
+            't_KINDProjects_Retargeting_View-through_Conversions',
+            'Retargeting_KINDProjects_Retargeting_Total_Conversions',
+            't_KINDProjects_Retargeting_Click-through_Revenue',
+            't_Retargeting_KINDProjects_Retargeting_View-through_Revenue',
+            'Retargeting_KIND_Projects_Retargeting_Total_Revenue',
+            't_KIND_Projects_Conversions_Votes_Click-through_Conversions',
+            't_KIND_Projects_Conversions_Votes_View-through_Conversions',
+            'KIND_Projects_Conversions_Votes_Total_Conversions',
+            't_KIND_Projects_Conversions_Votes_Click-through_Revenue',
+            't_KIND_Projects_Conversions_Votes_View-through_Revenue',
+            'Conversions_KIND_Projects_Conversions_Votes_Total_Revenue',
+            't_Projects_Conversions_Submissions_Click-through_Conversions',
+            't_Projects_Conversions_Submissions_View-through_Conversions',
+            'KIND_Projects_Conversions_Submissions_Total_Conversions',
+            't_KIND_Projects_Conversions_Submissions_Click-through_Revenue',
+            't_KIND_Projects_Conversions_Submissions_View-through_Revenue',
+            'KIND_Projects_Conversions_Submissions_Total_Revenue'
+        ];
 
-        $expectedHeader = array(
-            "KSKSCtC__SEM_Conversions__Click-through_Conversions",
-            "KSKSVtC__KIND_Baseline_SEM_Conversions__View-through_Conversions",
-            "KSKSTC____KIND_Baseline_SEM_Conversions__Total_Conversions",
-            "KSKSCtR____KIND_Baseline_SEM_Conversions__Click-through_Revenue",
-            "KSKSVtR____KIND_Baseline_SEM_Conversions__View-through_Revenue",
-            "KSKSTR____KIND_Baseline_SEM_Conversions__Total_Revenue",
-            "KKCtC__Click-through_Conversions",
-            "KKVtC__KIND_Strong_Conversions_Pledges__View-through_Conversions",
-            "KKTC____KIND_Strong_Conversions_Pledges__Total_Conversions",
-            "KKCtR____KIND_Strong_Conversions_Pledges__Click-through_Revenue",
-            "KKVtR____KIND_Strong_Conversions_Pledges__View-through_Revenue",
-            "KKTR____KIND_Strong_Conversions_Pledges__Total_Revenue",
-            "KRKCtC____KINDProjects_Retargeting__Click-through_Conversions",
-            "KRKVtC____KINDProjects_Retargeting__View-through_Conversions",
-            "KRKTC__Retargeting___KINDProjects_Retargeting__Total_Conversions",
-            "KRKCtR____KINDProjects_Retargeting__Click-through_Revenue",
-            "KRKVtR____KINDProjects_Retargeting__View-through_Revenue",
-            "KRKTR__Retargeting___KIND_Projects_Retargeting__Total_Revenue",
-            "2282172e8d22d91520151a6df2413dd6",
-            "KKVtC__KIND_Projects_Conversions_Votes__View-through_Conversions",
-            "KKTC____KIND_Projects_Conversions_Votes__Total_Conversions",
-            "KKCtR____KIND_Projects_Conversions_Votes__Click-through_Revenue",
-            "KKVtR____KIND_Projects_Conversions_Votes__View-through_Revenue",
-            "KKTR____KIND_Projects_Conversions_Votes__Total_Revenue",
-            "08dcf2d087429e430b5b060f138472c6",
-            "KKVtC__View-through_Conversions",
-            "KKTC____KIND_Projects_Conversions_Submissions__Total_Conversions",
-            "KKCtR__Click-through_Revenue",
-            "KKVtR__View-through_Revenue",
-            "KKTR____KIND_Projects_Conversions_Submissions__Total_Revenue"
-        );
-
-        self::assertEquals($expectedHeader, $validHeader);
+        self::assertEquals($expectedHeader, $file->getHeader());
     }
 
     public function testPrimaryKeys()
