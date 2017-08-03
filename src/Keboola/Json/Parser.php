@@ -189,6 +189,8 @@ class Parser
      * @see Parser::process()
      */
     public function parse(array $data, $type, NodePath $nodePath, $parentId = null)
+
+        // todo change to private
     {
 
         if (!$this->analyzer->isAnalyzed($type)

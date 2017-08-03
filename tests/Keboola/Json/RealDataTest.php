@@ -240,8 +240,8 @@ class RealDataTest extends ParserTestCase
 
         $parser->process($testFile->components);
 
-        $result = '"id","d__DistributionGroups_outputs_histogramEstimates_persistent",' .
-            '"d__m__DistributionGroups_outputs_groupCharacteristics_persistent"' . "\n" .
+        $result = '"id","DistributionGroups_outputs_histogramEstimates_persistent",' .
+            '"DistributionGroups_outputs_groupCharacteristics_persistent"' . "\n" .
             '"ag-forecastio","",""' . "\n" .
             '"rcp-distribution-groups","1","1"' . "\n";
 

@@ -57,7 +57,7 @@ class HeadersTest extends ParserTestCase
         );
         $parser->process($testFile->components);
 
-        $result = "\"f95907f4eca1c54a08b97cd3a5561ebf\"\n\"\"\n";
+        $result = "\"9f656540f0cee93f2a26f4f9770bc70d\"\n\"\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
     }
 

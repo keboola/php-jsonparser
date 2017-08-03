@@ -896,12 +896,14 @@ class ParserTest extends ParserTestCase
         );
     }
 
+    /*
     public function testParseNoAnalyze()
     {
         $parser = $this->getParser();
         $parser->parse(["a" => "b"], 'someType', new NodePath(['someType']));
         self::assertEquals("\"data\"\n\"b\"\n", file_get_contents($parser->getCsvFiles()['someType']));
     }
+    */
 
     public function testParseNestedArrayEnabled()
     {

@@ -25,8 +25,8 @@ class HeadersConflictsTest extends ParserTestCase
         );
         $parser->process($testFile->components);
 
-        $result = "\"first_third_fourth\",\"first_second\",\"8d3f89981c1fbff97539f2425921e12c\"\n" .
-            "\"last\",\"root.first_44fdc1ad4311801c0a6f586c0c1d113d\",\"\"\n";
+        $result = "\"first_third_fourth\",\"first_second\",\"first_third_fourth_u0\"\n" .
+            "\"origin\",\"root.first_44fdc1ad4311801c0a6f586c0c1d113d\",\"last\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
         $result = "\"data\",\"JSON_parentId\"\n" .
             "\"a\",\"root.first_44fdc1ad4311801c0a6f586c0c1d113d\"\n" .
@@ -53,8 +53,8 @@ class HeadersConflictsTest extends ParserTestCase
         );
         $parser->process($testFile->components);
 
-        $result = "\"first_second\",\"first_third_fourth\",\"e0a2f892b0567b007e275a6da91b477c\"\n" .
-            "\"origin\",\"last\",\"\"\n";
+        $result = "\"first_second\",\"first_third_fourth\",\"first_second_u0\"\n" .
+            "\"root.first_77ad9e5b9cf69f800a67c071287a675e\",\"last\",\"origin\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
         $result = "\"data\",\"JSON_parentId\"\n" .
             "\"a\",\"root.first_77ad9e5b9cf69f800a67c071287a675e\"\n" .
@@ -81,12 +81,12 @@ class HeadersConflictsTest extends ParserTestCase
         );
         $parser->process($testFile->components, 'root', 'someValue');
 
-        $result = "\"JSON_parentId\",\"first_second\",\"first_third_fourth\",\"f961a5805cd1f5622f50f0cae62e9fb0\"\n" .
-            "\"someValue\",\"root.first_b6e134e60ec774a85a58431f6c25f5fb\",\"last\",\"\"\n";
+        $result = "\"JSON_parentId\",\"first_second\",\"first_third_fourth\",\"JSON_parentId_u0\"\n" .
+            "\"origin\",\"root.first_cebcde73e3d46faaa92d77a7499dc9cf\",\"last\",\"someValue\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
         $result = "\"data\",\"JSON_parentId\"\n" .
-            "\"a\",\"root.first_b6e134e60ec774a85a58431f6c25f5fb\"\n" .
-            "\"b\",\"root.first_b6e134e60ec774a85a58431f6c25f5fb\"\n";
+            "\"a\",\"root.first_cebcde73e3d46faaa92d77a7499dc9cf\"\n" .
+            "\"b\",\"root.first_cebcde73e3d46faaa92d77a7499dc9cf\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_first_second']));
     }
 
@@ -109,12 +109,12 @@ class HeadersConflictsTest extends ParserTestCase
         );
         $parser->process($testFile->components, 'boo', ['someKey' => 'someValue']);
 
-        $result = "\"someKey\",\"first_second\",\"first_third_fourth\",\"d8142cbd78c688ae7b47e150472c50c8\"\n" .
-            "\"someValue\",\"boo.first_b624c0b4706f52c917cab371be23de78\",\"last\",\"\"\n";
+        $result = "\"someKey\",\"first_second\",\"first_third_fourth\",\"someKey_u0\"\n" .
+            "\"origin\",\"boo.first_e9223139b42fd7d2c1ea16aac27af9c2\",\"last\",\"someValue\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo']));
         $result = "\"data\",\"JSON_parentId\"\n" .
-            "\"a\",\"boo.first_b624c0b4706f52c917cab371be23de78\"\n" .
-            "\"b\",\"boo.first_b624c0b4706f52c917cab371be23de78\"\n";
+            "\"a\",\"boo.first_e9223139b42fd7d2c1ea16aac27af9c2\"\n" .
+            "\"b\",\"boo.first_e9223139b42fd7d2c1ea16aac27af9c2\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo_first_second']));
     }
 
@@ -135,8 +135,8 @@ class HeadersConflictsTest extends ParserTestCase
         );
         $parser->process($testFile->components);
 
-        $result = "\"first_second\",\"e0a2f892b0567b007e275a6da91b477c\",\"9670abbaf0234922937b3eda671425f2\"\n" .
-            "\"origin2\",\"\",\"\"\n";
+        $result = "\"first_second\",\"first_second_u0\",\"first_second_u1\"\n" .
+            "\"origin\",\"root.first_06f40a9e874ef5271aaf5fb696c5d428\",\"origin2\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
         $result = "\"data\",\"JSON_parentId\"\n" .
             "\"a\",\"root.first_06f40a9e874ef5271aaf5fb696c5d428\"\n" .
