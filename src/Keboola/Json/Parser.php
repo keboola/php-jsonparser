@@ -175,11 +175,8 @@ class Parser
      * @return void
      * @see Parser::process()
      */
-    public function parse(array $data, $type, NodePath $nodePath, $parentId = null)
-
-        // todo change to private
+    private function parse(array $data, NodePath $nodePath, $parentId = null)
     {
-
         $type = $nodePath->toCleanString();
         if (!$this->analyzer->isAnalyzed($type)
             && (empty($this->analyzer->getRowsAnalyzed()[$type])
@@ -219,7 +216,7 @@ class Parser
                 $row = (object) array_replace((array) $row, $parentId);
             }
 
-            $csvRow = $this->parseRow($row, $type, $nodePath, $parentCols);
+            $csvRow = $this->parseRow($row, $nodePath, $parentCols);
 
             $csvFile->writeRow($csvRow->getRow());
         }
@@ -237,7 +234,6 @@ class Parser
      */
     protected function parseRow(
         \stdClass $dataRow,
-        $type,
         NodePath $nodePath,
         array $parentCols = [],
         $outerObjectHash = null
@@ -250,14 +246,13 @@ class Parser
         // Generate parent ID for arrays
         $arrayParentId = $this->getPrimaryKeyValue(
             $dataRow,
-            $type,
             $nodePath,
             $outerObjectHash
         );
 
         $arr3 = $this->structure->getDefinitionsNodePath($nodePath);
         foreach (array_replace($arr3, $parentCols) as $column => $dataType) {
-            $this->parseField($dataRow, $csvRow, $arrayParentId, $column, $dataType, $type, $nodePath);
+            $this->parseField($dataRow, $csvRow, $arrayParentId, $column, $dataType, $nodePath);
         }
 
         return $csvRow;
@@ -279,7 +274,6 @@ class Parser
         $arrayParentId,
         $column,
         $dataType,
-        $type,
         NodePath $nodePath
     ) {
         // A hack allowing access to numeric keys in object
@@ -338,10 +332,10 @@ class Parser
                 $sf = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
                 //$csvRow->setValue($safeColumn, $arrayParentId);
                 $csvRow->setValue($sf, $arrayParentId);
-                $this->parse($dataRow->{$column}, $type . "." . $column, $nodePath->addChild($column)->addArrayChild(), $arrayParentId);
+                $this->parse($dataRow->{$column}, $nodePath->addChild($column)->addArrayChild(), $arrayParentId);
                 break;
             case "object":
-                $childRow = $this->parseRow($dataRow->{$column}, $type . "." . $column, $nodePath->addChild($column), [], $arrayParentId);
+                $childRow = $this->parseRow($dataRow->{$column}, $nodePath->addChild($column), [], $arrayParentId);
 
                 foreach ($childRow->getRow() as $key => $value) {
                     $csvRow->setValue($key, $value);
@@ -522,7 +516,7 @@ class Parser
      * @param string $outerObjectHash
      * @return string
      */
-    protected function getPrimaryKeyValue(\stdClass $dataRow, $type, NodePath $nodePath, $outerObjectHash = null)
+    protected function getPrimaryKeyValue(\stdClass $dataRow, NodePath $nodePath, $outerObjectHash = null)
     {
         $safeColumn = $this->structure->getTypeFromNodePath($nodePath);
         if (!empty($this->primaryKeys[$safeColumn])) {
@@ -608,7 +602,7 @@ class Parser
     {
         if (!empty($this->cache)) {
             while ($batch = $this->cache->getNext()) {
-                $this->parse($batch["data"], $batch["type"], new NodePath([$batch['type'], '[]']), $batch["parentId"]);
+                $this->parse($batch["data"], new NodePath([$batch['type'], '[]']), $batch["parentId"]);
             }
         }
     }

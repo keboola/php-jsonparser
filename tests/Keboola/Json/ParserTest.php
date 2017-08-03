@@ -874,7 +874,7 @@ class ParserTest extends ParserTestCase
         $parser->getAnalyzer()->analyzeData([$object], 'root');
         $parser->getAnalyzer()->analyze([$object], 'root');
         $parser->getAnalyzer()->getStructure()->getHeaderNames();
-        $row = self::callMethod($parser, 'parseRow', [$object, 'root', new NodePath(['root', '[]'])]);
+        $row = self::callMethod($parser, 'parseRow', [$object, new NodePath(['root', '[]'])]);
 
         $expected = (array) $object;
         self::assertEquals($expected, $row->getRow());
