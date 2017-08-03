@@ -7,7 +7,6 @@ use Keboola\Temp\Temp;
 use Keboola\Json\Exception\JsonParserException;
 use Keboola\Json\Exception\NoDataException;
 use Psr\Log\LoggerInterface;
-use SebastianBergmann\CodeCoverage\Report\Xml\Node;
 
 /**
  * JSON to CSV data analyzer and parser/converter
@@ -34,18 +33,6 @@ use SebastianBergmann\CodeCoverage\Report\Xml\Node;
  *            will result into a "parent_child" column with a string type of "value1"
  * - if it's an array, it'll be passed to analyze() to create a new table,
  *      linked by JSON_parentId
- *
- *
- * @author        Ondrej Vana (kachna@keboola.com)
- * @package        keboola/json-parser
- * @copyright    Copyright (c) 2014 Keboola Data Services (www.keboola.com)
- * @license        GPL-3.0
- * @link        https://github.com/keboola/php-jsonparser
- *
- * @todo Use a $file parameter to allow writing the same
- *         data $type to multiple files
- *         (ie. type "person" to "customer" and "user")
- *
  */
 class Parser
 {
@@ -255,7 +242,7 @@ class Parser
         $outerObjectHash = null
     ) {
         // move back out to parse/switch if it causes issues
-        $headers = $this->getHeader($type, $nodePath, $parentCols);
+        //$headers = $this->getHeader($type, $nodePath, $parentCols);
         $headers2 = $this->getHeaderPath($nodePath, $parentCols);
         $csvRow = new CsvRow($headers2);
 
@@ -266,8 +253,6 @@ class Parser
             $outerObjectHash
         );
 
-        $arr = $this->structure->getDefinitions($type);
-        $arr2 = $this->struct->getDefinitions($type);
         $arr3 = $this->structure->getDefinitionsNodePath($nodePath);
         foreach (array_replace($arr3, $parentCols) as $column => $dataType) {
             $this->parseField($dataRow, $csvRow, $arrayParentId, $column, $dataType, $type, $nodePath);
@@ -295,13 +280,6 @@ class Parser
         $type,
         NodePath $nodePath
     ) {
-        // TODO safeColumn should be associated with $this->struct[$type]
-        // (and parentCols -> create in parse() where the arr is created)
-        // Actually, the csvRow should REALLY have a pointer to the real name (not validated),
-        // perhaps sorting the child columns on its own?
-        // (because keys in struct don't contain child objects)
-        $safeColumn = $this->createSafeName($column);
-
         // A hack allowing access to numeric keys in object
         if (!isset($dataRow->{$column})
             && isset(json_decode(json_encode($dataRow), true)[$column])
@@ -334,7 +312,6 @@ class Parser
             $this->log->warning(
                 "Encountered data where 'NULL' was expected from previous analysis",
                 [
-                    'type' => $type,
                     'data' => $dataRow
                 ]
             );
@@ -364,8 +341,6 @@ class Parser
                 $childRow = $this->parseRow($dataRow->{$column}, $type . "." . $column, $nodePath->addChild($column), [], $arrayParentId);
 
                 foreach ($childRow->getRow() as $key => $value) {
-                    // FIXME createSafeName is duplicated here
-                    //$csvRow->setValue($this->createSafeName($safeColumn . '_' . $key), $value);
                     $csvRow->setValue($key, $value);
                 }
                 break;
@@ -383,16 +358,12 @@ class Parser
                 } else {
                     $jsonColumn = json_encode($dataRow->{$column});
 
-                    /*
-                     * todo
-
                     $this->log->error(
                         "Data parse error in '{$column}' - unexpected '"
                             . $this->analyzer->getType($dataRow->{$column})
                             . "' where '{$dataType}' was expected!",
                         [ "data" => $jsonColumn, "row" => json_encode($dataRow) ]
                     );
-                    */
                     $sf = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
                     //$csvRow->setValue($safeColumn, $jsonColumn);
                     $csvRow->setValue($sf, $jsonColumn);
@@ -404,7 +375,6 @@ class Parser
     protected function getHeaderPath(NodePath $nodePath, &$parent = false, $parentCheck = false)
     {
         $headers = [];
-        $addSelf = true;
         $thisNodeName = $nodePath->getLast();
         $nodeData = $this->structure->getValue($nodePath);
         if ($thisNodeName == '[]' && ($nodeData['nodeType'] == 'scalar')) {
@@ -486,75 +456,6 @@ class Parser
     }
 
     /**
-     * Get header for a data type
-     * @param string $type Data type
-     * @param string|array|bool $parent String with a $parentId or an array with $colName => $parentId
-     * @return array
-     */
-    protected function getHeader($type, NodePath $nodePath, $parent = false)
-    {
-        $header = [];
-        $header2 = [];
-
-        $arr = $this->structure->getDefinitions($type);
-        $arr2 = $this->struct->getDefinitions($type);
-        $arr3 = $this->structure->getDefinitionsNodePath($nodePath);
-        foreach ($arr3 as $column => $dataType) {
-            if ($dataType == "object") {
-                foreach ($this->getHeader($type . "." . $column, $nodePath->addChild($column)) as $val) {
-                    // FIXME this is awkward, the createSafeName shouldn't need to be used twice
-                    // (here and in validateHeader again)
-                    // Is used to trim multiple "_" in column name before appending
-                    $header[] = $this->createSafeName($column) . "_" . $val;
-               //     $header2[] = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
-                }
-            } else {
-                if ($column == 'data') {
-                    $rtp = $nodePath;
-                } else {
-                    $rtp = $nodePath->addChild($column);
-                }
-                $header[] = $column;
-               // $header2[] = $this->structure->getSingleValue($rtp, 'headerNames');
-            }
-        }
-
-        if ($parent) {
-            if (is_array($parent)) {
-                $header = array_merge($header, array_keys($parent));
-            } else {
-                $header[] = "JSON_parentId";
-            }
-        }
-
-        // TODO set $this->headerNames[$type] = array_combine($validatedHeader, $header);
-        // & add a getHeaderNames fn()
-        return $this->validateHeader($header);
-    }
-
-    /**
-     * Validate header column names to comply with MySQL limitations
-     *
-     * @param array $header Input header
-     * @return array
-     */
-    protected function validateHeader(array $header)
-    {
-        $newHeader = [];
-        foreach ($header as $key => $colName) {
-            $newName = $this->createSafeName($colName);
-
-            // prevent duplicates
-            if (in_array($newName, $newHeader)) {
-                $newHeader[$key] = md5($colName);
-            } else {
-                $newHeader[$key] = $newName;
-            }
-        }
-        return $newHeader;
-    }
-
-    /**
      * Validates a string for use as MySQL column/table name
      *
      * @param string $name A string to be validated
@@ -595,11 +496,7 @@ class Parser
      */
     protected function createCsvFile($type, NodePath $nodePath, &$parentId)
     {
-        if (empty($this->headers[$type])) {
-            $this->headers[$type] = $this->getHeader($type, $nodePath, $parentId);
-            $this->headers2[$type] = $this->getHeaderPath($nodePath, $parentId);
-        }
-
+        $this->headers2[$type] = $this->getHeaderPath($nodePath, $parentId);
         $safeType = $this->createSafeName($type);
         if (empty($this->csvFiles[$safeType])) {
             $this->csvFiles[$safeType] = Table::create(
@@ -788,8 +685,8 @@ class Parser
      * Set maximum memory used before Cache starts using php://temp
      * @param string|int $limit
      */
-    public function setCacheMemoryLimit($limit)
+    public function setCacheMemoryLimit(int $limit)
     {
-        return $this->getCache()->setMemoryLimit($limit);
+        $this->getCache()->setMemoryLimit($limit);
     }
 }

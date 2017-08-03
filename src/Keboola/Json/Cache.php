@@ -55,10 +55,10 @@ class Cache
     }
 
     /**
-     * @param string|int $limit
+     * @param int $limit
      */
-    public function setMemoryLimit($limit)
+    public function setMemoryLimit(int $limit)
     {
-        $this->memoryLimit = \Keboola\Utils\returnBytes($limit);
+        $this->memoryLimit = $limit;
     }
 }
