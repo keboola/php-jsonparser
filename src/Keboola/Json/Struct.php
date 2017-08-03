@@ -273,6 +273,7 @@ class Struct
         return !empty($this->struct[$type]);
     }
 
+
     /**
      * Get all child data types
      * @param string $type Key for which to retrieve data types

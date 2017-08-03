@@ -526,9 +526,10 @@ class Parser
         // Try to find a "real" parent ID
         // TODO: na tom toCleanString je potreba zavolat createSafeName
         $safeColumn = $nodePath->toCleanString();
+        $safeColumn = $this->structure->getTypeFromNodePath($nodePath);
         $boo = !empty($this->primaryKeys[$safeColumn]);
-        if (!empty($this->primaryKeys[$this->createSafeName($type)])) {
-        //if ($boo) {
+        //if (!empty($this->primaryKeys[$this->createSafeName($type)])) {
+        if ($boo) {
             $pk = $this->primaryKeys[$this->createSafeName($type)];
             $pk = $this->primaryKeys[$safeColumn];
             $pKeyCols = explode(',', $pk);
@@ -546,11 +547,12 @@ class Parser
                 }
             }
 
-            return $safeColumn . "_" . join(";", $values);
+            return $nodePath->toCleanString() . "_" . join(";", $values);
         } else {
             // todo tady je taky potreba create safe name
             // todo anebo mozna neni, protoze je to stejne kokotina? a pk by se mel zadavat pro originalni nazev?
             // Of no pkey is specified to get the real ID, use a hash of the row
+          //  $otn = $type . "_" . md5(serialize($dataRow) . $outerObjectHash);
             $newType = $nodePath->toCleanString() . '_' . md5(serialize($dataRow) . $outerObjectHash);
             return $newType;
         }

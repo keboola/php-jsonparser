@@ -95,6 +95,11 @@ class Structure
         //var_export($this->data, true);
     }
 
+    public function getTypeFromNodePath(NodePath $nodePath)
+    {
+        return $this->createSafeName($nodePath->toCleanString());
+    }
+
     public function saveNode(NodePath $nodePath, $newNode)
     {
         $this->data = $this->storeNode($nodePath, $this->data, $newNode);
