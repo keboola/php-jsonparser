@@ -250,6 +250,7 @@ class Parser
         $arrayParentId = $this->getPrimaryKeyValue(
             $dataRow,
             $type,
+            $nodePath,
             $outerObjectHash
         );
 
@@ -312,6 +313,7 @@ class Parser
             $this->log->warning(
                 "Encountered data where 'NULL' was expected from previous analysis",
                 [
+                    'type' => $type,
                     'data' => $dataRow
                 ]
             );
@@ -519,11 +521,16 @@ class Parser
      * @param string $outerObjectHash
      * @return string
      */
-    protected function getPrimaryKeyValue(\stdClass $dataRow, $type, $outerObjectHash = null)
+    protected function getPrimaryKeyValue(\stdClass $dataRow, $type, NodePath $nodePath, $outerObjectHash = null)
     {
         // Try to find a "real" parent ID
+        // TODO: na tom toCleanString je potreba zavolat createSafeName
+        $safeColumn = $nodePath->toCleanString();
+        $boo = !empty($this->primaryKeys[$safeColumn]);
         if (!empty($this->primaryKeys[$this->createSafeName($type)])) {
+        //if ($boo) {
             $pk = $this->primaryKeys[$this->createSafeName($type)];
+            $pk = $this->primaryKeys[$safeColumn];
             $pKeyCols = explode(',', $pk);
             $pKeyCols = array_map('trim', $pKeyCols);
             $values = [];
@@ -531,7 +538,7 @@ class Parser
                 if (empty($dataRow->{$pKeyCol})) {
                     $values[] = md5(serialize($dataRow) . $outerObjectHash);
                     $this->log->warning(
-                        "Primary key for type '{$type}' was set to '{$pk}', but its column '{$pKeyCol}' does not exist! Using hash to link child objects instead.",
+                        "Primary key for type '{$safeColumn}' was set to '{$pk}', but its column '{$pKeyCol}' does not exist! Using hash to link child objects instead.",
                         ['row' => $dataRow]
                     );
                 } else {
@@ -539,10 +546,13 @@ class Parser
                 }
             }
 
-            return $type . "_" . join(";", $values);
+            return $safeColumn . "_" . join(";", $values);
         } else {
+            // todo tady je taky potreba create safe name
+            // todo anebo mozna neni, protoze je to stejne kokotina? a pk by se mel zadavat pro originalni nazev?
             // Of no pkey is specified to get the real ID, use a hash of the row
-            return $type . "_" . md5(serialize($dataRow) . $outerObjectHash);
+            $newType = $nodePath->toCleanString() . '_' . md5(serialize($dataRow) . $outerObjectHash);
+            return $newType;
         }
     }
 

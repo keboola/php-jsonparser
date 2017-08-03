@@ -20,6 +20,12 @@ class NodePath
         return implode('.', $this->path);
     }
 
+    public function toCleanString()
+    {
+        $path = array_filter($this->path, function ($val) { return $val != '[]';});
+        return implode('.', $path);
+    }
+
     public function addArrayChild()
     {
         $path = $this->path;
