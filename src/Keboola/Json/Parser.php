@@ -267,11 +267,9 @@ class Parser
         ) {
             // do not save empty objects to prevent creation of ["obj_name" => null]
             if ($dataType != 'object') {
-                if ($column == 'data') {
-                    // todo change to is last node array
+                $safeColumn = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
+                if ($safeColumn === null) {
                     $safeColumn = $this->structure->getSingleValue($nodePath, 'headerNames');
-                } else {
-                    $safeColumn = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
                 }
                 $csvRow->setValue($safeColumn, null);
             }
@@ -306,7 +304,6 @@ class Parser
                     $dataRow->{$column} = [$dataRow->{$column}];
                 }
                 $sf = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
-                //$csvRow->setValue($safeColumn, $arrayParentId);
                 $csvRow->setValue($sf, $arrayParentId);
                 $this->parse($dataRow->{$column}, $nodePath->addChild($column)->addArrayChild(), $arrayParentId);
                 break;
@@ -320,13 +317,10 @@ class Parser
             default:
                 // If a column is an object/array while $struct expects a single column, log an error
                 if (is_scalar($dataRow->{$column})) {
-                    if ($column == 'data') {
-                        // prepsat na if nodeLastItem is array
+                    $sf = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
+                    if ($sf === null) {
                         $sf = $this->structure->getSingleValue($nodePath, 'headerNames');
-                    } else {
-                        $sf = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
                     }
-                    //$csvRow->setValue($safeColumn, $dataRow->{$column});
                     $csvRow->setValue($sf, $dataRow->{$column});
                 } else {
                     $jsonColumn = json_encode($dataRow->{$column});
