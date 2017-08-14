@@ -344,20 +344,8 @@ class Parser
         $headers = [];
         $thisNodeName = $nodePath->getLast();
         $nodeData = $this->structure->getValue($nodePath);
-        if ($thisNodeName == '[]' && ($nodeData['nodeType'] == 'scalar')) {
-
-            $headers[] = 'data';
-        } else {
-            if (($nodeData['nodeType'] != 'object')) {
-                if (!empty($nodeData['type']) && (!is_array($parentCheck) || !in_array($thisNodeName, $parentCheck))) {
-                    // skup this
-                } elseif (empty($nodeData['headerNames'])) {
-                    // a special case when there is nothing but unnamed array in whole struct
-                   // $headers[] = 'data';
-                } else {
-                    $headers[] = $nodeData['headerNames'];
-                }
-            }//            $nodeData = $this->structure->getValue($nodePath);
+        if ($nodeData['nodeType'] == 'scalar') {
+            $headers[] = $nodeData['headerNames'];
         }
         if (is_array($parent) && !empty($parent)) {
             $nnodePath = $nodePath->popLast($thisNodeName);

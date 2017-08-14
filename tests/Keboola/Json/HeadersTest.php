@@ -29,7 +29,7 @@ class HeadersTest extends ParserTestCase
         );
         $parser->process($testFile->components);
         self::assertEquals(['root'], array_keys($parser->getCsvFiles()));
-        self::assertEquals("\"data\"\n\"\"\n", file_get_contents($parser->getCsvFiles()['root']->getPathname()));
+        self::assertEquals("\n", file_get_contents($parser->getCsvFiles()['root']->getPathname()));
     }
 
     public function testAlmostEmptyObject()
