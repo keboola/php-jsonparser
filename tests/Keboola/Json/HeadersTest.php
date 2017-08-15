@@ -13,7 +13,6 @@ class HeadersTest extends ParserTestCase
     public function testEmptyArray()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{"components": []}'
         );
@@ -23,7 +22,6 @@ class HeadersTest extends ParserTestCase
     public function testEmptyObject()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{"components": [{}]}'
         );
@@ -35,7 +33,6 @@ class HeadersTest extends ParserTestCase
     public function testAlmostEmptyObject()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{"components": [{"a": null}]}'
         );
@@ -48,7 +45,6 @@ class HeadersTest extends ParserTestCase
     public function testLongHeader()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{"components": [{"AReallyTrulyIncrediblyHellishlyLongFromOuterSpaceAndAgePropertyName": null}]}'
         );
@@ -61,7 +57,6 @@ class HeadersTest extends ParserTestCase
     public function testObject()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{"components": [{"a": "b"}]}'
         );
@@ -74,7 +69,6 @@ class HeadersTest extends ParserTestCase
     public function testArray()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{"components": ["a", "b"]}'
         );
@@ -87,7 +81,6 @@ class HeadersTest extends ParserTestCase
     public function testObjectNested()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{

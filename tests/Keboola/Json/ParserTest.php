@@ -134,7 +134,6 @@ class ParserTest extends ParserTestCase
     public function testParentIdHashSameValues()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(1);
 
         $data = [];
         $data[] = json_decode('{
@@ -337,13 +336,13 @@ class ParserTest extends ParserTestCase
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Unhandled type change from "integer" to "string" in 'root.field'
+     * @expectedExceptionMessage Unhandled nodeType change from "integer" to "string" in "root.[].field"
      */
     public function testStrictScalarChange()
     {
         $parser = $this->getParser();
         $parser->getAnalyzer()->setStrict(true);
-
+        $parser->setAutoUpgradeToArray(false);
         $data = json_decode('[
             {"field": 128},
             {"field": "string"},
@@ -491,12 +490,12 @@ class ParserTest extends ParserTestCase
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Unhandled type change from "scalar" to "arrayOfscalar" in 'root.strArr'
+     * @expectedExceptionMessage Unhandled nodeType change from "scalar" to "array" in "root.[].strArr"
      */
     public function testStringArrayMixFail()
     {
         $parser = $this->getParser();
-
+        $parser->setAutoUpgradeToArray(false);
         $data = [
             (object) [
                 "id" => 1,
@@ -513,12 +512,12 @@ class ParserTest extends ParserTestCase
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Unhandled type change from "arrayOfscalar" to "scalar" in 'root.strArr'
+     * @expectedExceptionMessage Unhandled nodeType change from "array" to "scalar" in "root.[].strArr"
      */
     public function testStringArrayMixFailOppo()
     {
         $parser = $this->getParser();
-
+        $parser->setAutoUpgradeToArray(false);
         $data = [
             (object) [
                 "id" => 1,
@@ -536,7 +535,6 @@ class ParserTest extends ParserTestCase
     public function testAutoUpgradeToArray()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
 
         // Test with object > array > object
         $data = [
@@ -627,12 +625,12 @@ class ParserTest extends ParserTestCase
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Unhandled type change from "integer" to "string" in 'root.scalars.data'
+     * @expectedExceptionMessage Data array in 'root.scalars' contains incompatible data types 'integer' and 'string'!
      */
     public function testAutoUpgradeToArrayStrict()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
+        $parser->setAutoUpgradeToArray(false);
         $parser->getAnalyzer()->setStrict(true);
 
         $data = [
@@ -666,13 +664,12 @@ class ParserTest extends ParserTestCase
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Unhandled type change from "arrayOfobject" to "scalar" in 'root.key'
+     * @expectedExceptionMessage Unhandled nodeType change from "array" to "object" in "root.[].key"
      */
     public function testAutoUpgradeToArrayMismatch()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
-
+        $parser->setAutoUpgradeToArray(false);
         $data = [
             (object) [
                 'key' => [
@@ -705,7 +702,6 @@ class ParserTest extends ParserTestCase
     public function testAutoUpgradeToArrayString()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
 
         // Test with object > array > object
         $data = [
@@ -740,13 +736,14 @@ class ParserTest extends ParserTestCase
     public function testIncompleteData()
     {
         $parser = $this->getParser();
-
+        /*
         $parser->getStruct()->load([
             'root' => [
                 'id' => 'scalar',
                 'value' => 'scalar'
             ]
         ]);
+        */
         // TODO: fix when load works
         $parser->getAnalyzer()->getStructure()->addNode(new NodePath(['root', '[]', 'id']), 'nodeType', 'scalar');
         $parser->getAnalyzer()->getStructure()->addNode(new NodePath(['root', '[]', 'value']), 'nodeType', 'scalar');
@@ -784,7 +781,6 @@ class ParserTest extends ParserTestCase
     public function testArrayOfNull()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
 
         $parser->process(
             [

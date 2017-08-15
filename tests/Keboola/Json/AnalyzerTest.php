@@ -89,23 +89,39 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
         $analyzer = new Analyzer(new NullLogger());
-        $analyzer->analyze($data, 'root');
+        $analyzer->analyzeData($data, 'root');
 
         self::assertEquals(
             [
-                'root.arr' => ['data' => 'scalar'],
-                'root.obj' => [
-                    'str' => 'scalar',
-                    'double' => 'scalar',
-                    'scalar' => 'scalar',
-                ],
                 'root' => [
-                    'id' => 'scalar',
-                    'arr' => 'arrayOfscalar',
-                    'obj' => 'object',
+                    '[]' => [
+                        'id' => [
+                            'nodeType' => 'scalar'
+                        ],
+                        'arr' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'scalar'
+                            ]
+                        ],
+                        'obj' => [
+                            'nodeType' => 'object',
+                            'str' => [
+                                'nodeType' => 'scalar'
+                            ],
+                            'double' => [
+                                'nodeType' => 'scalar'
+                            ],
+                            'scalar' => [
+                                'nodeType' => 'scalar'
+                            ]
+                        ],
+                        'nodeType' => 'object'
+                    ],
+                    'nodeType' => 'array',
                 ],
             ],
-            $analyzer->getStruct()->getStruct()
+            $analyzer->getStructure()->getData()
         );
     }
 
@@ -138,26 +154,45 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
         $analyzer = new Analyzer(new NullLogger());
-        $analyzer->analyze($data, 'root');
+        $analyzer->analyzeData($data, 'root');
 
         self::assertEquals(
             [
-                'root.arr' => ['data' => 'scalar'],
-                'root.obj.arr2' => [
-                    'id' => 'scalar'
-                ],
-                'root.obj' => [
-                    'str' => 'scalar',
-                    'double' => 'scalar',
-                    'arr2' => 'arrayOfobject',
-                ],
                 'root' => [
-                    'id' => 'scalar',
-                    'arr' => 'arrayOfscalar',
-                    'obj' => 'object',
+                    '[]' => [
+                        'id' => [
+                            'nodeType' => 'scalar'
+                        ],
+                        'arr' => [
+                            '[]' => [
+                                'nodeType' => 'scalar'
+                            ],
+                            'nodeType' => 'array'
+                        ],
+                        'obj' => [
+                            'nodeType' => 'object',
+                            'str' => [
+                                'nodeType' => 'scalar'
+                            ],
+                            'double' => [
+                                'nodeType' => 'scalar'
+                            ],
+                            'arr2' => [
+                                '[]' => [
+                                    'nodeType' => 'object',
+                                    'id' => [
+                                        'nodeType' => 'scalar'
+                                    ],
+                                ],
+                                'nodeType' => 'array'
+                            ]
+                        ],
+                        'nodeType' => 'object'
+                    ],
+                    'nodeType' => 'array',
                 ],
             ],
-            $analyzer->getStruct()->getStruct()
+            $analyzer->getStructure()->getData()
         );
     }
 
@@ -184,24 +219,36 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
         $analyzer = new Analyzer(new NullLogger());
-        $analyzer->analyze($data, 'root');
+        $analyzer->analyzeData($data, 'root');
 
         self::assertEquals(
             [
-                'root.arr' => ['data' => 'scalar'],
-                'root.obj' => [
-                    'str' => 'scalar',
-                    'obj2' => 'object'
-                ],
                 'root' => [
-                    'arr' => 'arrayOfscalar',
-                    'obj' => 'object',
+                    'nodeType' => 'array',
+                    '[]' => [
+                        'nodeType' => 'object',
+                        'arr' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'scalar'
+                            ]
+                        ],
+                        'obj' => [
+                            'nodeType' => 'object',
+                            'str' => [
+                                'nodeType' => 'scalar'
+                            ],
+                            'obj2' => [
+                                'nodeType' => 'object',
+                                'id' => [
+                                    'nodeType' => 'scalar'
+                                ]
+                            ]
+                        ],
+                    ],
                 ],
-                'root.obj.obj2' => [
-                    'id' => 'scalar'
-                ]
             ],
-            $analyzer->getStruct()->getStruct()
+            $analyzer->getStructure()->getData()
         );
     }
 
@@ -227,28 +274,42 @@ class AnalyzerTest extends ParserTestCase
         ];
         $analyzer = new Analyzer(new NullLogger());
         $analyzer->setStrict(true);
-        $analyzer->analyze($data, 'root');
+        $analyzer->analyzeData($data, 'root');
 
         self::assertEquals(
             [
-                'root.arr' => ['data' => 'integer'],
-                'root.obj' => [
-                    'str' => 'string',
-                    'double' => 'double'
-                ],
                 'root' => [
-                    'id' => 'integer',
-                    'arr' => 'arrayOfinteger',
-                    'obj' => 'object',
+                    'nodeType' => 'array',
+                    '[]' => [
+                        'nodeType' => 'object',
+                        'id' => [
+                            'nodeType' => 'integer',
+                        ],
+                        'arr' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'integer'
+                            ]
+                        ],
+                        'obj' => [
+                            'nodeType' => 'object',
+                            'str' => [
+                                'nodeType' => 'string'
+                            ],
+                            'double' => [
+                                'nodeType' => 'double'
+                            ],
+                        ],
+                    ],
                 ],
             ],
-            $analyzer->getStruct()->getStruct()
+            $analyzer->getStructure()->getData()
         );
     }
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Unhandled type change from "integer" to "double" in 'root.id'
+     * @expectedExceptionMessage Unhandled nodeType change from "integer" to "double" in "root.[].id"
      */
     public function testAnalyzeStrictError()
     {
@@ -262,23 +323,7 @@ class AnalyzerTest extends ParserTestCase
         ];
         $analyzer = new Analyzer(new NullLogger());
         $analyzer->setStrict(true);
-        $analyzer->analyze($data, 'root');
-
-        self::assertEquals(
-            [
-                'root.arr' => ['data' => 'integer'],
-                'root.obj' => [
-                    'str' => 'string',
-                    'double' => 'double'
-                ],
-                'root' => [
-                    'id' => 'integer',
-                    'arr' => 'array',
-                    'obj' => 'object',
-                ],
-            ],
-            $analyzer->getStruct()->getStruct()
-        );
+        $analyzer->analyzeData($data, 'root');
     }
 
     public function testAnalyzeAutoArrays()
@@ -302,27 +347,48 @@ class AnalyzerTest extends ParserTestCase
 
         $analyzer = new Analyzer(new NullLogger());
         $analyzer->getStruct()->setAutoUpgradeToArray(true);
-        $analyzer->analyze($data, 'root');
+        $analyzer->analyzeData($data, 'root');
 
         self::assertEquals(
             [
-                'root.arrOfObjects' => ['innerId' => 'scalar'],
-                'root.arr' => ['data' => 'scalar'],
                 'root' => [
-                    'id' => 'scalar',
-                    'arrOfScalars' => 'arrayOfscalar',
-                    'arrOfObjects' => 'arrayOfobject',
-                    'arr' => 'arrayOfscalar'
+                    'nodeType' => 'array',
+                    '[]' => [
+                        'nodeType' => 'object',
+                        'id' => [
+                            'nodeType' => 'scalar'
+                        ],
+                        'arr' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'scalar',
+                            ],
+                        ],
+                        'arrOfScalars' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'scalar'
+                            ],
+                        ],
+                        'arrOfObjects' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'object',
+                                'innerId' => [
+                                    'nodeType' => 'scalar',
+                                ],
+                            ],
+                        ],
+                    ],
                 ],
-                'root.arrOfScalars' => ['data' => 'scalar'],
             ],
-            $analyzer->getStruct()->getStruct()
+            $analyzer->getStructure()->getData()
         );
     }
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Data array in 'root.arrOfScalars' contains incompatible data types 'scalar' and 'object'!
+     * @expectedExceptionMessage Data array in 'root.[].arrOfScalars' contains incompatible types 'scalar' and 'object'
      */
     public function testAnalyzeAutoArraysError()
     {
@@ -347,13 +413,13 @@ class AnalyzerTest extends ParserTestCase
         ];
 
         $analyzer = new Analyzer(new NullLogger());
-        $analyzer->getStruct()->setAutoUpgradeToArray(true);
-        $analyzer->analyze($data, 'root');
+        $analyzer->getStructure()->setAutoUpgradeToArray(true);
+        $analyzer->analyzeData($data, 'root');
     }
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Data array in 'root.arr' contains incompatible data types 'scalar' and 'object'!
+     * @expectedExceptionMessage Unhandled nodeType change from "scalar" to "object" in "root.[].arr.[]"
      */
     public function testAnalyzeBadData()
     {
@@ -369,7 +435,7 @@ class AnalyzerTest extends ParserTestCase
 
         $analyzer = new Analyzer(new NullLogger());
         $analyzer->getStruct()->setAutoUpgradeToArray(true);
-        $analyzer->analyze($data, 'root');
+        $analyzer->analyzeData($data, 'root');
     }
 
     public function testIsAnalyzed()
@@ -392,40 +458,62 @@ class AnalyzerTest extends ParserTestCase
         self::assertTrue($analyzer->isAnalyzed('test'));
     }
 
-    public function testAnalyzeRow()
+    public function testAnalyzeEmpty()
     {
         $analyzer = new Analyzer(new NullLogger());
-
-        $this->callMethod($analyzer, 'analyzeRow', [new \stdClass, 'empty']);
-        self::assertEquals(['empty' => []], $analyzer->getStruct()->getStruct());
-
-        $this->callMethod($analyzer, 'analyzeRow', [(object) [
-            'k' => 'v',
-            'field' => [
-                1, 2
-            ]
-        ], 'test']);
+        $analyzer->analyzeData([new \stdClass], 'test');
 
         self::assertEquals(
             [
-                'empty' => [],
-                'test.field' => [
-                    'data' => 'scalar'
-                ],
                 'test' => [
-                    'k' => 'scalar',
-                    'field' => 'arrayOfscalar'
-                ]
+                    'nodeType' => 'array',
+                    '[]' => [
+                        'nodeType' => 'null',
+                    ],
+                ],
             ],
-            $analyzer->getStruct()->getStruct()
+            $analyzer->getStructure()->getData()
+        );
+    }
+
+    public function testAnalyzeRowEmpty()
+    {
+        $analyzer = new Analyzer(new NullLogger());
+        $analyzer->analyzeData([
+            new \stdClass,
+            (object) [
+                'k' => 'v',
+                'field' => [
+                    1, 2
+                ]
+            ]
+        ], 'test');
+
+        self::assertEquals(
+            [
+                'test' => [
+                    'nodeType' => 'array',
+                    '[]' => [
+                        'nodeType' => 'object',
+                        'k' => [
+                            'nodeType' => 'scalar'
+                        ],
+                        'field' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'scalar'
+                            ]
+                        ]
+                    ],
+                ],
+            ],
+            $analyzer->getStructure()->getData()
         );
     }
 
     public function testAnalyzeKnownArray()
     {
         $analyzer = new Analyzer(new NullLogger());
-        $analyzer->getStruct()->setAutoUpgradeToArray(true);
-
         $data1 = [
             (object) [
                 'id' => 1,
@@ -440,24 +528,34 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
 
-        $analyzer->analyze($data1, 'test');
-        $analyzer->analyze($data2, 'test');
+        $analyzer->analyzeData($data1, 'test');
+        $analyzer->analyzeData($data2, 'test');
 
         self::assertEquals(
             [
-                'test.arr' => ['data' => 'scalar'],
                 'test' => [
-                    'id' => 'scalar',
-                    'arr' => 'arrayOfscalar'
-                ]
+                    'nodeType' => 'array',
+                    '[]' => [
+                        'nodeType' => 'object',
+                        'id' => [
+                            'nodeType' => 'scalar',
+                        ],
+                        'arr' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'scalar',
+                            ],
+                        ],
+                    ],
+                ],
             ],
-            $analyzer->getStruct()->getStruct()
+            $analyzer->getStructure()->getData()
         );
     }
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Unhandled type change from "arrayOfscalar" to "object" in 'test.arr'
+     * @expectedExceptionMessage Data array in 'test.[].arr' contains incompatible types 'object' and 'scalar'
      */
     public function testAnalyzeKnownArrayMismatch()
     {
@@ -480,30 +578,17 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
 
-        $analyzer->analyze($data1, 'test');
-        $analyzer->analyze($data2, 'test');
-
-        self::assertEquals(
-            [
-                'test.arr' => ['data' => 'scalar'],
-                'test' => [
-                    'id' => 'scalar',
-                    'arr' => 'arrayOfscalar'
-                ]
-            ],
-            $analyzer->getStruct()->getStruct()
-        );
+        $analyzer->analyzeData($data1, 'test');
+        $analyzer->analyzeData($data2, 'test');
     }
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Data array in 'test.arr' contains incompatible data types 'scalar' and 'object'!
+     * @expectedExceptionMessage Unhandled nodeType change from "scalar" to "object" in "test.[].arr.[]"
      */
     public function testAnalyzeKnownArrayMismatch2()
     {
         $analyzer = new Analyzer(new NullLogger());
-        $analyzer->getStruct()->setAutoUpgradeToArray(true);
-
         $data1 = [
             (object) [
                 'id' => 1,
@@ -522,8 +607,8 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
 
-        $analyzer->analyze($data1, 'test');
-        $analyzer->analyze($data2, 'test');
+        $analyzer->analyzeData($data1, 'test');
+        $analyzer->analyzeData($data2, 'test');
 
         self::assertEquals(
             [
@@ -533,19 +618,19 @@ class AnalyzerTest extends ParserTestCase
                     'arr' => 'arrayOfscalar'
                 ]
             ],
-            $analyzer->getStruct()->getStruct()
+            $analyzer->getStructure()->getData()
         );
     }
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Unhandled type change from "integer" to "string" in 'test.arr.data'
+     * @expectedExceptionMessage Unhandled nodeType change from "integer" to "string" in "test.[].arr.[]"
      */
     public function testAnalyzeKnownArrayMismatchStrict()
     {
         $analyzer = new Analyzer(new NullLogger());
         $analyzer->setStrict(true);
-
+        $analyzer->getStructure()->setAutoUpgradeToArray(false);
         $data1 = [
             (object) [
                 'id' => 1,
@@ -560,8 +645,8 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
 
-        $analyzer->analyze($data1, 'test');
-        $analyzer->analyze($data2, 'test');
+        $analyzer->analyzeData($data1, 'test');
+        $analyzer->analyzeData($data2, 'test');
 
         self::assertEquals(
             [
@@ -571,7 +656,7 @@ class AnalyzerTest extends ParserTestCase
                     'arr' => 'arrayOfscalar'
                 ]
             ],
-            $analyzer->getStruct()->getStruct()
+            $analyzer->getStructure()->getData()
         );
     }
 
@@ -591,20 +676,30 @@ class AnalyzerTest extends ParserTestCase
         ];
 
         $analyzer = new Analyzer(new NullLogger());
-
-        $analyzer->analyze($data, 'test');
+        $analyzer->analyzeData($data, 'test');
 
         self::assertEquals(
             [
                 'test' => [
-                    'id' => 'scalar',
-                    'arr' => 'arrayOfobject'
+                    'nodeType' => 'array',
+                    '[]' => [
+                        'nodeType' => 'object',
+                        'id' => [
+                            'nodeType' => 'scalar'
+                        ],
+                        'arr' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'object',
+                                'val' => [
+                                    'nodeType' => 'scalar',
+                                ],
+                            ],
+                        ],
+                    ],
                 ],
-                'test.arr' => [
-                    'val' => 'scalar'
-                ]
             ],
-            $analyzer->getStruct()->getStruct()
+            $analyzer->getStructure()->getData()
         );
     }
 
@@ -633,30 +728,37 @@ class AnalyzerTest extends ParserTestCase
         ];
 
         $analyzer = new Analyzer(new NullLogger());
-        $analyzer->getStruct()->setAutoUpgradeToArray(true);
-
-        $analyzer->analyze($data, 'test');
+        $analyzer->analyzeData($data, 'test');
 
         self::assertEquals(
             [
                 'test' => [
-                    'id' => 'scalar',
-                    'arr' => 'arrayOfobject'
+                    'nodeType' => 'array',
+                    '[]' => [
+                        'nodeType' => 'object',
+                        'id' => [
+                            'nodeType' => 'scalar',
+                        ],
+                        'arr' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'object',
+                                'val' => [
+                                    'nodeType' => 'scalar',
+                                ],
+                            ],
+                        ],
+                    ],
                 ],
-                'test.arr' => [
-                    'val' => 'scalar'
-                ]
             ],
-            $analyzer->getStruct()->getStruct()
+            $analyzer->getStructure()->getData()
         );
     }
 
     public function testArrayOfNull()
     {
         $analyzer = new Analyzer(new NullLogger());
-        $analyzer->getStruct()->setAutoUpgradeToArray(true);
-
-        $analyzer->analyze(
+        $analyzer->analyzeData(
             [
                 (object) [
                     'val' => ['stringArr'],
@@ -670,7 +772,7 @@ class AnalyzerTest extends ParserTestCase
             's2null'
         );
 
-        $analyzer->analyze(
+        $analyzer->analyzeData(
             [
                 (object) [
                     'val' => ['stringArr'],
@@ -687,53 +789,100 @@ class AnalyzerTest extends ParserTestCase
         self::assertEquals(
             [
                 's2null' => [
-                    'val' => 'arrayOfscalar',
-                    'obj' => 'arrayOfobject'
-                ],
-                's2null.val' => [
-                    'data' => 'scalar'
+                    'nodeType' => 'array',
+                    '[]' => [
+                        'nodeType' => 'object',
+                        'val' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'scalar'
+                            ],
+                        ],
+                        'obj' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'object',
+                                'key' => [
+                                    'nodeType' => 'scalar'
+                                ],
+                            ],
+                        ],
+                    ],
                 ],
                 'null2s' => [
-                    'val' => 'arrayOfscalar',
-                    'obj' => 'arrayOfobject'
+                    'nodeType' => 'array',
+                    '[]' => [
+                        'nodeType' => 'object',
+                        'val' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'scalar',
+                            ],
+                        ],
+                        'obj' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'object',
+                                'key' => [
+                                    'nodeType' => 'scalar'
+                                ]
+                            ],
+                        ],
+                    ],
                 ],
-                'null2s.val' => [
-                    'data' => 'scalar'
-                ],
-                's2null.obj' => [
-                    'key' => 'scalar'
-                ],
-                'null2s.obj' => [
-                    'key' => 'scalar'
-                ]
             ],
-            $analyzer->getStruct()->getStruct()
+            $analyzer->getStructure()->getData()
         );
     }
 
-    /**
-     * @dataProvider unsupportedNestingProvider
-     */
-    public function testUnsupportedNesting($strict, $expectedType)
+    public function testUnsupportedNestingStrict()
     {
         $analyzer = new Analyzer(new NullLogger());
+        $analyzer->setStrict(true);
         $analyzer->setNestedArrayAsJson(true);
-        $analyzer->setStrict($strict);
 
-        $data = [
-            [1,2,3,[7,8]],
-            [4,5,6]
-        ];
-
-        $type = $this->callMethod($analyzer, 'analyzeRow', [$data, 'nest']);
-        $this->assertEquals($expectedType, $type);
+        $analyzer->analyzeData(
+            [
+                [1,2,3,[7,8]],
+                [4,5,6]
+            ],
+            'test'
+        );
+        $this->assertEquals(
+            [
+                'test' => [
+                    'nodeType' => 'array',
+                    '[]' => [
+                        'nodeType' => 'string'
+                    ]
+                ]
+            ],
+            $analyzer->getStructure()->getData()
+        );
     }
 
-    public function unsupportedNestingProvider()
+    public function testUnsupportedNestingNoStrict()
     {
-        return [
-            [true, 'string'],
-            [false, 'scalar']
-        ];
+        $analyzer = new Analyzer(new NullLogger());
+        $analyzer->setStrict(false);
+        $analyzer->setNestedArrayAsJson(true);
+        $analyzer->analyzeData(
+            [
+                [1,2,3,[7,8]],
+                [4,5,6]
+            ],
+            'test'
+        );
+        $this->assertEquals(
+            [
+                'test' => [
+                    'nodeType' => 'array',
+                    '[]' => [
+                        'nodeType' => 'scalar'
+                    ]
+                ]
+            ],
+            $analyzer->getStructure()->getData()
+        );
     }
 }

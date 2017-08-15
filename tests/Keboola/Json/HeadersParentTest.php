@@ -9,7 +9,6 @@ class HeadersParentDataTest extends ParserTestCase
     public function testObjectNestedArray()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -30,7 +29,6 @@ class HeadersParentDataTest extends ParserTestCase
     public function testObjectArrayCombinedParentId()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -57,7 +55,6 @@ class HeadersParentDataTest extends ParserTestCase
     public function testObjectArrayCombinedParentIdArray()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -84,7 +81,6 @@ class HeadersParentDataTest extends ParserTestCase
     public function testObjectArrayCombinedTypeParentIdArray()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -111,7 +107,6 @@ class HeadersParentDataTest extends ParserTestCase
     public function testObjectArrayCombinedTypeInner()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{

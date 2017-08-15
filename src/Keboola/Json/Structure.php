@@ -4,6 +4,7 @@ namespace Keboola\Json;
 
 use Guzzle\Service\Exception\InconsistentClientTransferException;
 use Keboola\Json\Exception\InconsistentValueException;
+use Keboola\Json\Exception\JsonParserException;
 use Symfony\Component\Console\Exception\LogicException;
 
 class Structure
@@ -62,7 +63,21 @@ class Structure
                         (($e->getPreviousValue() == 'array') && ($e->getNew() != 'array'))) &&
                         $this->autoUpgradeToArray) {
                     $node = $this->getValue($nodePath);
-                    $arr = $node['[]'];
+                    if (($node['nodeType'] != 'array') && ($node['nodeType'] != $node['[]']['nodeType']) && ($node['[]']['nodeType'] != 'array')) {
+                        throw new JsonParserException("Data array in '" . $nodePath->__toString() .
+                            "' contains incompatible types '" . $node['nodeType'] . "' and '" .
+                            $node['[]']['nodeType'] . "'");
+                    }
+                    if (($node['nodeType'] != 'null') && ($node['nodeType'] != 'array') && ($node['nodeType'] != $value) && ($value != 'array') && ($value != 'null')) {
+                        throw new JsonParserException("Data array in '" . $nodePath->__toString() .
+                            "' contains incompatible types '" . $node['nodeType'] . "' and '" .
+                            $value . "'");
+                    }
+                    if (($node['[]']['nodeType'] != 'null') && ($node['[]']['nodeType'] != 'array') && ($node['[]']['nodeType'] != $value) && ($value != 'array') && ($value != 'null')) {
+                        throw new JsonParserException("Data array in '" . $nodePath->__toString() .
+                            "' contains incompatible types '" . $value . "' and '" .
+                            $node['[]']['nodeType'] . "'");
+                    }
                     $nodeRoot = $node;
                     unset($nodeRoot['[]']);
                     // todo tohle zmergovat rucne a overit, ze hodnoty jsou stejne
@@ -86,7 +101,10 @@ class Structure
                     $newNode[$key] = $value;
                     $this->data = $this->storeNode($nodePath, $this->data, $newNode);
                 } else {
-                    throw new LogicException($e->getMessage());
+                    throw new JsonParserException(
+                        'Unhandled ' . $key . ' change from "' . $e->getPreviousValue() .
+                        '" to "' . $e->getNew() . '" in "' . $nodePath->__toString() . '"'
+                    );
                 }
             } else {
                 throw new LogicException($e->getMessage());

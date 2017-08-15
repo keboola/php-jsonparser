@@ -122,6 +122,9 @@ class Analyzer
         if (empty($this->rowsAnalyzed[(string)$nodePath])) {
             $this->rowsAnalyzed[(string)$nodePath] = 0;
         }
+        if (empty($array)) {
+            $this->structure->addNode($nodePath, 'nodeType', 'null');
+        }
         foreach ($array as $row) {
             if (($this->analyzeRows > 0) && ($this->rowsAnalyzed[(string)$nodePath] > $this->analyzeRows)) {
                 // enough rows was analyzed
@@ -237,9 +240,9 @@ class Analyzer
             throw new JsonParserException("Unsupported data row in '{$type}'!", ['row' => $row]);
         }
 
-        $this->getStruct()->add($type, $struct);
+//        $this->getStruct()->add($type, $struct);
         foreach ($struct as $colName => $colType) {
-            $this->getStruct()->setColumnName($type . '.' . $colName, '');
+  //          $this->getStruct()->setColumnName($type . '.' . $colName, '');
         }
         return $rowType;
     }

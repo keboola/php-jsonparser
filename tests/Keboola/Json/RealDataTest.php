@@ -196,12 +196,8 @@ class RealDataTest extends ParserTestCase
     public function testProcessWithAutoUpgradeToArray()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
-
         $testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
-
         $data = $this->loadJson('Json_tweets_pinkbike');
-
         $parser->process($data);
 
         foreach ($parser->getCsvFiles() as $name => $table) {
@@ -234,12 +230,8 @@ class RealDataTest extends ParserTestCase
     public function testAssignLongColName()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
-
         $testFile = $this->loadJson('kbc_components');
-
         $parser->process($testFile->components);
-
         $result = '"id","DistributionGroups_outputs_histogramEstimates_persistent",' .
             '"DistributionGroups_outputs_groupCharacteristics_persistent"' . "\n" .
             '"ag-forecastio","",""' . "\n" .
@@ -251,7 +243,6 @@ class RealDataTest extends ParserTestCase
     public function testFloatHash()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [

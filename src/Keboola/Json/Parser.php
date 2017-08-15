@@ -42,12 +42,6 @@ class Parser
     const DATA_COLUMN = 'data';
 
     /**
-     * Headers for each type
-     * @var array
-     */
-    protected $headers = [];
-
-    /**
      * @var Table[]
      */
     protected $csvFiles = [];
@@ -86,17 +80,19 @@ class Parser
      * @var Structure
      */
     private $structure;
-    private $headers2;
 
     public function __construct(LoggerInterface $logger, Analyzer $analyzer, Struct $struct, Structure $structure)
     {
         ini_set('serialize_precision', 17);
         $this->log = $logger;
         $this->analyzer = $analyzer;
-        $this->struct = $struct;
         $this->structure = $structure;
+        $this->structure->setAutoUpgradeToArray(true);
     }
 
+    public function setAutoUpgradeToArray($enable) {
+        $this->structure->setAutoUpgradeToArray($enable);
+    }
     /**
      * @param LoggerInterface $logger
      * @param array $definitions should contain an array with previously
@@ -135,7 +131,7 @@ class Parser
     public function process(array $data, $type = "root", $parentId = null)
     {
         // The analyzer wouldn't set the $struct and parse fails!
-        if ((empty($data) || $data == [null]) && !$this->struct->hasDefinitions($type)) {
+        if (empty($data) || $data == [null]) {
             throw new NoDataException("Empty data set received for '{$type}'", [
                 "data" => $data,
                 "type" => $type,
@@ -214,8 +210,6 @@ class Parser
         array $parentCols = [],
         $outerObjectHash = null
     ) {
-        // move back out to parse/switch if it causes issues
-        //$headers = $this->getHeader($type, $nodePath, $parentCols);
         $headers2 = $this->getHeaderPath($nodePath, $parentCols);
         $csvRow = new CsvRow($headers2);
 
@@ -291,12 +285,14 @@ class Parser
             return;
         }
 
+        /*
         if ($this->struct->isArrayOf($dataType)) {
             if (!is_array($dataRow->{$column})) {
                 $dataRow->{$column} = [$dataRow->{$column}];
             }
             $dataType = 'array';
         }
+        */
 
         switch ($dataType) {
             case "array":
@@ -338,6 +334,7 @@ class Parser
                 break;
         }
     }
+
 
     protected function getHeaderPath(NodePath $nodePath, &$parent = false, $parentCheck = false)
     {
@@ -398,11 +395,9 @@ class Parser
         }
         foreach ($nodeData as $nodeName => $data) {
             if (is_array($data) && ($data['nodeType'] == 'object')) {
-              //  if ($nodeName != '[]') {
-                    $pparent = false;
-                    $ch = $this->getHeaderPath($nodePath->addChild($nodeName), $pparent, $parentCheck);
-                    $headers = array_merge($headers, $ch);
-              //  }
+                $pparent = false;
+                $ch = $this->getHeaderPath($nodePath->addChild($nodeName), $pparent, $parentCheck);
+                $headers = array_merge($headers, $ch);
             } else if (is_array($data)) {
                 $headers[] = $data['headerNames'];
             }
@@ -411,39 +406,6 @@ class Parser
     }
 
     /**
-     * Validates a string for use as MySQL column/table name
-     *
-     * @param string $name A string to be validated
-     * @return string
-     * @todo Could use just a part of the md5 hash
-     */
-    protected function createSafeName($name)
-    {
-        if (strlen($name) > 64) {
-            if (str_word_count($name) > 1 && preg_match_all('/\b(\w)/', $name, $m)) {
-                // Create an "acronym" from first letters
-                $short = implode('', $m[1]);
-            } else {
-                $short = md5($name);
-            }
-            $short .= "_";
-            $remaining = 64 - strlen($short);
-            $nextSpace = strpos($name, " ", (strlen($name)-$remaining))
-                ? : strpos($name, "_", (strlen($name)-$remaining));
-
-            $newName = $nextSpace === false
-                ? $short
-                : $short . substr($name, $nextSpace);
-        } else {
-            $newName = $name;
-        }
-
-        $newName = preg_replace('/[^A-Za-z0-9-]/', '_', $newName);
-        return trim($newName, "_");
-    }
-
-    /**
-     * @todo Add a $file parameter to use instead of $type
      * to allow saving a single type to different files
      *
      * @param string $type
@@ -451,21 +413,19 @@ class Parser
      */
     protected function createCsvFile($type, NodePath $nodePath, &$parentId)
     {
-        $this->headers2[$type] = $this->getHeaderPath($nodePath, $parentId);
-        $safeType = $this->createSafeName($type);
-        if (empty($this->csvFiles[$safeType])) {
-            $this->csvFiles[$safeType] = Table::create(
-                $safeType,
-                $this->headers2[$type],
+        if (empty($this->csvFiles[$type])) {
+            $this->csvFiles[$type] = Table::create(
+                $type,
+                $this->getHeaderPath($nodePath, $parentId),
                 $this->getTemp()
             );
-            $this->csvFiles[$safeType]->addAttributes(["fullDisplayName" => $type]);
-            if (!empty($this->primaryKeys[$safeType])) {
-                $this->csvFiles[$safeType]->setPrimaryKey($this->primaryKeys[$safeType]);
+            $this->csvFiles[$type]->addAttributes(["fullDisplayName" => $type]);
+            if (!empty($this->primaryKeys[$type])) {
+                $this->csvFiles[$type]->setPrimaryKey($this->primaryKeys[$type]);
             }
         }
 
-        return $this->csvFiles[$safeType];
+        return $this->csvFiles[$type];
     }
 
     /**

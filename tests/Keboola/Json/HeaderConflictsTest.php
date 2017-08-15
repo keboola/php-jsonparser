@@ -9,7 +9,6 @@ class HeadersConflictsTest extends ParserTestCase
     public function testObjectArrayCombinedConflictObject()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -37,7 +36,6 @@ class HeadersConflictsTest extends ParserTestCase
     public function testObjectArrayCombinedConflictArray()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -65,7 +63,6 @@ class HeadersConflictsTest extends ParserTestCase
     public function testObjectArrayCombinedConflictParentId()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -93,7 +90,6 @@ class HeadersConflictsTest extends ParserTestCase
     public function testObjectArrayCombinedConflictParentIdArray()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -121,7 +117,6 @@ class HeadersConflictsTest extends ParserTestCase
     public function testObjectArrayCombinedMultiConflict()
     {
         $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
