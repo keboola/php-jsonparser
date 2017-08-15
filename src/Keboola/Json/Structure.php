@@ -117,15 +117,9 @@ class Structure
         $this->data = $this->storeNode($nodePath, $this->data, $newNode);
     }
 
-    public function storeNode(NodePath $nodePath, $data, $newNode)
+    private function storeNode(NodePath $nodePath, array $data, $newNode)
     {
-        if (!is_array($data)) {
-            throw new LogicException("wtf");
-        }
         $nodePath = $nodePath->popFirst($node);
-        if (!isset($data[$node])) {
-            $data[$node] = [];
-        }
         if ($nodePath->isEmpty()) {
             $data[$node] = $newNode;
         } else {
@@ -134,11 +128,8 @@ class Structure
         return $data;
     }
 
-    private function storeValue(NodePath $nodePath, $data, $key, $value)
+    private function storeValue(NodePath $nodePath, array $data, $key, $value)
     {
-        if (!is_array($data)) {
-            throw new LogicException("wtf");
-        }
         $nodePath = $nodePath->popFirst($node);
         if (!isset($data[$node])) {
             $data[$node] = [];
@@ -154,6 +145,9 @@ class Structure
         return $data;
     }
 
+    /**
+     * @return array
+     */
     public function getData()
     {
         return $this->data;
@@ -185,7 +179,7 @@ class Structure
         }
     }
 
-    public function getValues(NodePath $nodePath, $key)
+    private function getValues(NodePath $nodePath, $key)
     {
         $nodeData = $this->getValue($nodePath);
         $result = [];
@@ -200,26 +194,6 @@ class Structure
                         }
                     }
                 }
-            } elseif ($nodeData['nodeType'] == 'array') {
-                if ($nodeData['[]']['nodeType'] == 'scalar') {
-                    foreach ($nodeData['[]'] as $itemName => $value) {
-                        if ($itemName == $key) {
-                            $result['[]'] = $value;
-                        } else {
-                            $result['[]'] = null;
-                        }
-                    }
-                } else {
-                    foreach ($nodeData['[]'] as $itemName => $value) {
-                        if (is_array($value)) {
-                            if (isset($value[$key])) {
-                                $result[$itemName] = $value[$key];
-                            } else {
-                                $result[$itemName] = null;
-                            }
-                        }
-                    }
-                }
             } elseif ($nodeData['nodeType'] == 'scalar') {
                 foreach ($nodeData as $itemName => $value) {
                     if ($itemName == $key) {
@@ -228,29 +202,6 @@ class Structure
                 }
             }
         }
-        return $result;
-    }
-
-    public function getDefinitions($type)
-    {
-        $pathNew = $this->buildNodePathFromString($type);
-        $nodePath = new NodePath($pathNew);
-        $values = $this->getValues($nodePath, 'nodeType');
-
-        // todo - this is compatibility fix
-        $result = [];
-        if (empty($values)) {
-            return [];
-        }
-
-            foreach ($values as $key => $value) {
-                if ($key === '[]') {
-                    $result['data'] = $value;
-                } else {
-                    $result[$key] = $value;
-                }
-            }
-
         return $result;
     }
 
@@ -272,76 +223,6 @@ class Structure
         }
 
         return $result;
-    }
-
-    private function buildNodePathFromString($path) {
-        foreach ($this->data as $key => $value) {
-            // todo overit partial match
-            if (substr($path, 0, strlen($key)) == $key) {
-                $subPath = substr($path, strlen($key) + 1);
-                if (empty($subPath)) {
-                    $subPath = '';
-                }
-                // in root there is always '[]'
-                $npath = $this->findNodePath($subPath, $value['[]']);
-                array_unshift($npath, '[]');
-                array_unshift($npath, $key);
-                return $npath;
-            }
-        }
-
-        throw new LogicException('path not found');
-    }
-
-    private function findNodePath($path, $data)
-    {
-        if (empty($path)) {
-            return [];
-        } else {
-            // todo prochazet od nejdelsiho klice?
-            $keys = array_keys($data);
-            usort($keys, function ($a, $b) { return strlen($a) - strlen($b);});
-            foreach ($keys as $key) {
-
-                if (((substr($path, 0, strlen($key)) === $key) && (
-                            (strlen($path) == strlen($key)) || ($path[(strlen($key))] == '.')))
-                    ) {
-                    if (($key == '[]')) {
-                        return [];
-                    }
-                    $subPath = substr($path, strlen($key) + 1);
-                    if (empty($subPath)) {
-                        $subPath = '';
-                    }
-                    $arrPath = $this->findNodePath($subPath, $data[$key]);
-                    array_unshift($arrPath, $key);
-                    return $arrPath;
-                }
-            }
-            if (isset($data['[]'])) {
-                $data = $data['[]'];
-                $keys = array_keys($data);
-                usort($keys, function ($a, $b) { return strlen($a) - strlen($b);});
-                // todo prochazet od nejdelsiho klice?
-                foreach ($keys as $key) {
-                    if (((substr($path, 0, strlen($key)) === $key) && (
-                            (strlen($path) == strlen($key)) || ($path[(strlen($key))] == '.'))) || (($path == 'data') && ($key = '[]'))) {
-                        if (($path == 'data') && ($key = '[]')) {
-                            return [];
-                        }
-                        $subPath = substr($path, strlen($key) + 1);
-                        if (empty($subPath)) {
-                            $subPath = '';
-                        }
-                        $arrPath = $this->findNodePath($subPath, $data[$key]);
-                        array_unshift($arrPath, $key);
-                        array_unshift($arrPath, '[]');
-                        return $arrPath;
-                    }
-                }
-            }
-        }
-        throw new LogicException("Should not happen");
     }
 
     public function getHeaderNames()
@@ -427,5 +308,13 @@ class Structure
                 }
             }
         }
+    }
+
+    /**
+     * @param array $definitions
+     */
+    public function load(array $definitions)
+    {
+        $this->data = $definitions;
     }
 }

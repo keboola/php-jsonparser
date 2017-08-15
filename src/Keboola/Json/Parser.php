@@ -81,6 +81,7 @@ class Parser
     {
         ini_set('serialize_precision', 17);
         $this->analyzer = $analyzer;
+        $analyzer->getStructure()->load($definitions);
         $this->structure = $analyzer->getStructure();
         $this->temp = new Temp("json-parser");
         $this->cache = new Cache();
@@ -205,8 +206,7 @@ class Parser
             $dataRow->{$column} = json_decode(json_encode($dataRow), true)[$column];
         }
 
-        // skip empty objects & arrays to prevent creating empty tables
-        // or incomplete column names
+        // skip empty objects & arrays to prevent creating empty tables or incomplete column names
         if (!isset($dataRow->{$column})
             || is_null($dataRow->{$column})
             || (empty($dataRow->{$column}) && !is_scalar($dataRow->{$column}))
@@ -220,20 +220,6 @@ class Parser
                 $csvRow->setValue($safeColumn, null);
             }
 
-            return;
-        }
-
-        if ($dataType == "NULL") {
-            // Throw exception instead? Any usecase? TODO get rid of it maybe?
-            $this->analyzer->getLogger()->warning(
-                "Encountered data where 'NULL' was expected from previous analysis",
-                [
-                    'nodePath' => $nodePath->__toString(),
-                    'data' => $dataRow
-                ]
-            );
-
-            $csvRow->setValue($column, json_encode($dataRow));
             return;
         }
 
@@ -308,21 +294,6 @@ class Parser
                             $key = $newColName;
                         }
                         $nnodeData['[]'][$key] = ['nodeType' => 'scalar', 'type' => 'parent'];
-                    } else {
-                        if (isset($nnodeData[$key])) {
-                            // this means that there is a column with a same name as a column with parent name
-                            $newColName = $key;
-                            $i = 0;
-                            while (isset($nnodeData[$newColName])) {
-                                $newColName = $key . '_u' . $i;
-                                $i++;
-                            }
-                            // rename the column in parent
-                            $parent[$newColName] = $value;
-                            unset($parent[$key]);
-                            $key = $newColName;
-                        }
-                        $nnodeData[$key] = ['nodeType' => 'scalar', 'type' => 'parent'];
                     }
                     $trigChange = true;
                 }

@@ -67,9 +67,4 @@ class NodePath
         $last = array_pop($path);
         return new NodePath($path);
     }
-
-    public function getLength()
-    {
-        return count($this->path);
-    }
 }

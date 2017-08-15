@@ -44,9 +44,6 @@ class Analyzer
         $this->strict = $strict;
         $this->log = $logger;
         $this->structure = $structure;
-        if (empty($this->structure)) {
-            $this->structure = new Structure();
-        }
     }
 
     /**
@@ -97,7 +94,6 @@ class Analyzer
         } elseif (is_object($item)) {
             $nodeType = 'object';
             if (\Keboola\Utils\isEmptyObject($item)) {
-                // todo: is this condition necessary?
                 $nodeType = 'null';
             } else {
                 $this->analyzeObject($item, $nodePath);
