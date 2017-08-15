@@ -72,16 +72,11 @@ class Parser
     protected $analyzer;
 
     /**
-     * @var Struct
-     */
-    protected $struct;
-
-    /**
      * @var Structure
      */
     private $structure;
 
-    public function __construct(LoggerInterface $logger, Analyzer $analyzer, Struct $struct, Structure $structure)
+    public function __construct(LoggerInterface $logger, Analyzer $analyzer, Structure $structure)
     {
         ini_set('serialize_precision', 17);
         $this->log = $logger;
@@ -104,12 +99,10 @@ class Parser
      */
     public static function create(LoggerInterface $logger, array $definitions = [], $analyzeRows = -1)
     {
-        $struct = new Struct($logger);
-        $struct->load($definitions);
         $structure = new Structure();
-        $analyzer = new Analyzer($logger, $struct, $structure, $analyzeRows);
+        $analyzer = new Analyzer($logger, $structure, $analyzeRows);
 
-        return new static($logger, $analyzer, $struct, $structure);
+        return new static($logger, $analyzer, $structure);
     }
 
     /**
@@ -149,7 +142,7 @@ class Parser
         }
         */
      //   if (empty($this->analyzer->getRowsAnalyzed()[$type])) {
-            $this->analyzer->analyze($data, $type);
+
             $this->analyzer->analyzeData($data, $type);
     //    }
         $this->structure->getHeaderNames();
@@ -323,8 +316,7 @@ class Parser
 
                     $this->log->error(
                         "Data parse error in '{$column}' - unexpected '"
-                            . $this->analyzer->getType($dataRow->{$column})
-                            . "' where '{$dataType}' was expected!",
+                            . gettype($dataRow->{$column}) . "' where '{$dataType}' was expected!",
                         [ "data" => $jsonColumn, "row" => json_encode($dataRow) ]
                     );
                     $sf = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
@@ -497,7 +489,6 @@ class Parser
     {
         // parse what's in cache before returning results
         $this->processCache();
-
         return $this->csvFiles;
     }
 
@@ -523,34 +514,6 @@ class Parser
                 $this->parse($batch["data"], new NodePath([$batch['type'], '[]']), $batch["parentId"]);
             }
         }
-    }
-
-    /**
-     * @return Struct
-     */
-    public function getStruct()
-    {
-        return $this->struct;
-    }
-
-    /**
-     * Version of $struct array used in parser
-     * @return double
-     * @deprecated use Struct::getStructVersion()
-     */
-    public function getStructVersion()
-    {
-        return $this->struct->getStructVersion();
-    }
-
-    /**
-     * Returns (bool) whether the analyzer analyzed anything in this instance
-     * @return bool
-     * @deprecated
-     */
-    public function hasAnalyzed()
-    {
-        return !empty($this->getAnalyzer()->getRowsAnalyzed());
     }
 
     /**

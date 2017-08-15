@@ -346,7 +346,6 @@ class AnalyzerTest extends ParserTestCase
         ];
 
         $analyzer = new Analyzer(new NullLogger());
-        $analyzer->getStruct()->setAutoUpgradeToArray(true);
         $analyzer->analyzeData($data, 'root');
 
         self::assertEquals(
@@ -413,7 +412,6 @@ class AnalyzerTest extends ParserTestCase
         ];
 
         $analyzer = new Analyzer(new NullLogger());
-        $analyzer->getStructure()->setAutoUpgradeToArray(true);
         $analyzer->analyzeData($data, 'root');
     }
 
@@ -434,7 +432,6 @@ class AnalyzerTest extends ParserTestCase
         ];
 
         $analyzer = new Analyzer(new NullLogger());
-        $analyzer->getStruct()->setAutoUpgradeToArray(true);
         $analyzer->analyzeData($data, 'root');
     }
 
@@ -560,8 +557,6 @@ class AnalyzerTest extends ParserTestCase
     public function testAnalyzeKnownArrayMismatch()
     {
         $analyzer = new Analyzer(new NullLogger());
-        $analyzer->getStruct()->setAutoUpgradeToArray(true);
-
         $data1 = [
             (object) [
                 'id' => 1,

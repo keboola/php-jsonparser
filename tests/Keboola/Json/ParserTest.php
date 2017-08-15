@@ -2,6 +2,7 @@
 namespace Keboola\Json;
 
 use Keboola\Json\Test\ParserTestCase;
+use Psr\Log\NullLogger;
 
 class ParserTest extends ParserTestCase
 {
@@ -24,7 +25,7 @@ class ParserTest extends ParserTestCase
                 ]
             }
         ]');
-        $parser = $this->getParser();
+        $parser = Parser::create(new NullLogger());
 
         $parser->process($json, 'entities');
         // yo dawg
@@ -423,7 +424,7 @@ class ParserTest extends ParserTestCase
      * There's no current use case for this.
      * It should, however, be supported as it is a valid JSON string
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Unsupported data row in 'root'!
+     * @expectedExceptionMessage Unsupported data in 'root.[]'.
      */
     public function testNestedArraysDisabledError()
     {
@@ -452,7 +453,7 @@ class ParserTest extends ParserTestCase
         $parser->process($data);
         self::assertEquals(
             true,
-            $logHandler->hasWarning("Unsupported array nesting in 'root'! Converting to JSON string."),
+            $logHandler->hasWarning("Converting nested array 'root.[]' to JSON string."),
             "Warning should have been logged"
         );
         self::assertEquals(
@@ -625,7 +626,7 @@ class ParserTest extends ParserTestCase
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Data array in 'root.scalars' contains incompatible data types 'integer' and 'string'!
+     * @expectedExceptionMessage Unhandled nodeType change from "integer" to "string" in "root.[].scalars.[]"
      */
     public function testAutoUpgradeToArrayStrict()
     {
@@ -859,23 +860,6 @@ class ParserTest extends ParserTestCase
         );
     }
 
-    public function testParseRowNumeric()
-    {
-        $parser = $this->getParser();
-        $object = (object) [
-            '1' => 'one',
-            '2' => 'two'
-        ];
-
-        $parser->getAnalyzer()->analyzeData([$object], 'root');
-        $parser->getAnalyzer()->analyze([$object], 'root');
-        $parser->getAnalyzer()->getStructure()->getHeaderNames();
-        $row = self::callMethod($parser, 'parseRow', [$object, new NodePath(['root', '[]'])]);
-
-        $expected = (array) $object;
-        self::assertEquals($expected, $row->getRow());
-    }
-
     public function testParseNumericKeys()
     {
         $parser = $this->getParser();
@@ -891,15 +875,6 @@ class ParserTest extends ParserTestCase
             file_get_contents($parser->getCsvFiles()['someType'])
         );
     }
-
-    /*
-    public function testParseNoAnalyze()
-    {
-        $parser = $this->getParser();
-        $parser->parse(["a" => "b"], 'someType', new NodePath(['someType']));
-        self::assertEquals("\"data\"\n\"b\"\n", file_get_contents($parser->getCsvFiles()['someType']));
-    }
-    */
 
     public function testParseNestedArrayEnabled()
     {
