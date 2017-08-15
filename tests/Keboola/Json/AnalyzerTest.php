@@ -1,10 +1,10 @@
 <?php
+
 namespace Keboola\Json;
 
-use Keboola\Json\Test\ParserTestCase;
 use Psr\Log\NullLogger;
 
-class AnalyzerTest extends ParserTestCase
+class AnalyzerTest extends \PHPUnit_Framework_TestCase
 {
     public function testAnalyzeExperimental()
     {
@@ -28,7 +28,7 @@ class AnalyzerTest extends ParserTestCase
                 ]
             ]
         ];
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $analyzer->analyzeData($data, 'root');
 
         self::assertEquals(
@@ -88,7 +88,7 @@ class AnalyzerTest extends ParserTestCase
                 ]
             ]
         ];
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $analyzer->analyzeData($data, 'root');
 
         self::assertEquals(
@@ -153,7 +153,7 @@ class AnalyzerTest extends ParserTestCase
                 ]
             ]
         ];
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $analyzer->analyzeData($data, 'root');
 
         self::assertEquals(
@@ -218,7 +218,7 @@ class AnalyzerTest extends ParserTestCase
                 ]
             ]
         ];
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $analyzer->analyzeData($data, 'root');
 
         self::assertEquals(
@@ -272,8 +272,7 @@ class AnalyzerTest extends ParserTestCase
                 ]
             ]
         ];
-        $analyzer = new Analyzer(new NullLogger());
-        $analyzer->setStrict(true);
+        $analyzer = new Analyzer(new NullLogger(), new Structure(), false, true);
         $analyzer->analyzeData($data, 'root');
 
         self::assertEquals(
@@ -321,8 +320,7 @@ class AnalyzerTest extends ParserTestCase
                 "id" => 2.2
             ]
         ];
-        $analyzer = new Analyzer(new NullLogger());
-        $analyzer->setStrict(true);
+        $analyzer = new Analyzer(new NullLogger(), new Structure(), false, true);
         $analyzer->analyzeData($data, 'root');
     }
 
@@ -345,7 +343,7 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
 
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $analyzer->analyzeData($data, 'root');
 
         self::assertEquals(
@@ -411,7 +409,7 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
 
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $analyzer->analyzeData($data, 'root');
     }
 
@@ -431,33 +429,13 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
 
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $analyzer->analyzeData($data, 'root');
-    }
-
-    public function testIsAnalyzed()
-    {
-        $analyzer = new Analyzer(new NullLogger());
-
-        $data = [
-            (object) [
-                'id' => 1,
-                'str' => "hi"
-            ]
-        ];
-
-        $analyzer->analyze($data, 'test');
-        self::assertFalse($analyzer->isAnalyzed('test'));
-
-        $analyzer = new Analyzer(new NullLogger(), null, null,1);
-        self::assertFalse($analyzer->isAnalyzed('test'));
-        $analyzer->analyze($data, 'test');
-        self::assertTrue($analyzer->isAnalyzed('test'));
     }
 
     public function testAnalyzeEmpty()
     {
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $analyzer->analyzeData([new \stdClass], 'test');
 
         self::assertEquals(
@@ -475,7 +453,7 @@ class AnalyzerTest extends ParserTestCase
 
     public function testAnalyzeRowEmpty()
     {
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $analyzer->analyzeData([
             new \stdClass,
             (object) [
@@ -510,7 +488,7 @@ class AnalyzerTest extends ParserTestCase
 
     public function testAnalyzeKnownArray()
     {
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $data1 = [
             (object) [
                 'id' => 1,
@@ -556,7 +534,7 @@ class AnalyzerTest extends ParserTestCase
      */
     public function testAnalyzeKnownArrayMismatch()
     {
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $data1 = [
             (object) [
                 'id' => 1,
@@ -583,7 +561,7 @@ class AnalyzerTest extends ParserTestCase
      */
     public function testAnalyzeKnownArrayMismatch2()
     {
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $data1 = [
             (object) [
                 'id' => 1,
@@ -623,9 +601,7 @@ class AnalyzerTest extends ParserTestCase
      */
     public function testAnalyzeKnownArrayMismatchStrict()
     {
-        $analyzer = new Analyzer(new NullLogger());
-        $analyzer->setStrict(true);
-        $analyzer->getStructure()->setAutoUpgradeToArray(false);
+        $analyzer = new Analyzer(new NullLogger(), new Structure(false), false, true);
         $data1 = [
             (object) [
                 'id' => 1,
@@ -670,7 +646,7 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
 
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $analyzer->analyzeData($data, 'test');
 
         self::assertEquals(
@@ -722,7 +698,7 @@ class AnalyzerTest extends ParserTestCase
             ]
         ];
 
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $analyzer->analyzeData($data, 'test');
 
         self::assertEquals(
@@ -752,7 +728,7 @@ class AnalyzerTest extends ParserTestCase
 
     public function testArrayOfNull()
     {
-        $analyzer = new Analyzer(new NullLogger());
+        $analyzer = new Analyzer(new NullLogger(), new Structure());
         $analyzer->analyzeData(
             [
                 (object) [
@@ -832,10 +808,7 @@ class AnalyzerTest extends ParserTestCase
 
     public function testUnsupportedNestingStrict()
     {
-        $analyzer = new Analyzer(new NullLogger());
-        $analyzer->setStrict(true);
-        $analyzer->setNestedArrayAsJson(true);
-
+        $analyzer = new Analyzer(new NullLogger(), new Structure(), true, true);
         $analyzer->analyzeData(
             [
                 [1,2,3,[7,8]],
@@ -858,9 +831,7 @@ class AnalyzerTest extends ParserTestCase
 
     public function testUnsupportedNestingNoStrict()
     {
-        $analyzer = new Analyzer(new NullLogger());
-        $analyzer->setStrict(false);
-        $analyzer->setNestedArrayAsJson(true);
+        $analyzer = new Analyzer(new NullLogger(), new Structure(), true, false);
         $analyzer->analyzeData(
             [
                 [1,2,3,[7,8]],

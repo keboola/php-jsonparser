@@ -2,13 +2,13 @@
 
 namespace Keboola\Json;
 
-use Keboola\Json\Test\ParserTestCase;
+use Psr\Log\NullLogger;
 
-class HeadersConflictsTest extends ParserTestCase
+class HeadersConflictsTest extends \PHPUnit_Framework_TestCase
 {
     public function testObjectArrayCombinedConflictObject()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -35,7 +35,7 @@ class HeadersConflictsTest extends ParserTestCase
 
     public function testObjectArrayCombinedConflictArray()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -62,7 +62,7 @@ class HeadersConflictsTest extends ParserTestCase
 
     public function testObjectArrayCombinedConflictParentId()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -89,7 +89,7 @@ class HeadersConflictsTest extends ParserTestCase
 
     public function testObjectArrayCombinedConflictParentIdArray()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -116,7 +116,7 @@ class HeadersConflictsTest extends ParserTestCase
 
     public function testObjectArrayCombinedMultiConflict()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{

@@ -1,4 +1,5 @@
 <?php
+
 namespace Keboola\Json;
 
 use Keboola\Json\Exception\JsonParserException;
@@ -9,12 +10,12 @@ class Analyzer
     /**
      * @var bool
      */
-    protected $strict = false;
+    protected $strict;
 
     /**
      * @var bool
      */
-    protected $nestedArrayAsJson = false;
+    protected $nestedArrayAsJson;
 
     /**
      * @var LoggerInterface
@@ -26,8 +27,21 @@ class Analyzer
      */
     private $structure;
 
-    public function __construct(LoggerInterface $logger, Structure $structure = null, $analyzeRows = -1)
+    /**
+     * Analyzer constructor.
+     * @param LoggerInterface $logger
+     * @param Structure $structure
+     * @param bool $nestedArraysAsJson
+     * @param bool $strict
+     */
+    public function __construct(
+        LoggerInterface $logger,
+        Structure $structure,
+        bool $nestedArraysAsJson = false,
+        bool $strict = false)
     {
+        $this->nestedArrayAsJson = $nestedArraysAsJson;
+        $this->strict = $strict;
         $this->log = $logger;
         $this->structure = $structure;
         if (empty($this->structure)) {
@@ -35,11 +49,26 @@ class Analyzer
         }
     }
 
+    /**
+     * @return Structure
+     */
     public function getStructure()
     {
         return $this->structure;
     }
 
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger()
+    {
+        return $this->log;
+    }
+
+    /**
+     * @param array $data
+     * @param string $rootType
+     */
     public function analyzeData(array $data, string $rootType)
     {
         if (empty($data)) {
@@ -51,7 +80,13 @@ class Analyzer
 
     }
 
-    private function analyzeItem($item, NodePath $nodePath)
+    /**
+     * @param $item
+     * @param NodePath $nodePath
+     * @return string
+     * @throws JsonParserException
+     */
+    private function analyzeItem($item, NodePath $nodePath) : string
     {
         if (is_scalar($item)) {
             if ($this->strict) {
@@ -62,7 +97,7 @@ class Analyzer
         } elseif (is_object($item)) {
             $nodeType = 'object';
             if (\Keboola\Utils\isEmptyObject($item)) {
-                // todo: is this condiion necessary?
+                // todo: is this condition necessary?
                 $nodeType = 'null';
             } else {
                 $this->analyzeObject($item, $nodePath);
@@ -89,6 +124,10 @@ class Analyzer
         return $nodeType;
     }
 
+    /**
+     * @param array $array
+     * @param NodePath $nodePath
+     */
     private function analyzeArray(array $array, NodePath $nodePath)
     {
         $oldType = null;
@@ -98,10 +137,15 @@ class Analyzer
         }
         foreach ($array as $row) {
             $newType = $this->analyzeItem($row, $nodePath);
+            // verify that the items in the array are of same (or compatible) type
             $oldType = $this->checkType($oldType, $newType, $nodePath);
         }
     }
 
+    /**
+     * @param $object
+     * @param NodePath $nodePath
+     */
     private function analyzeObject($object, NodePath $nodePath)
     {
         foreach ($object as $key => $field) {
@@ -109,6 +153,14 @@ class Analyzer
         }
     }
 
+    /**
+     * Check that two types same or compatible.
+     * @param $oldType
+     * @param $newType
+     * @param NodePath $nodePath
+     * @return string
+     * @throws JsonParserException
+     */
     private function checkType($oldType, $newType, NodePath $nodePath) : string
     {
         if (!is_null($oldType) && ($newType !== $oldType) && ($newType !== 'null') && ($oldType !== 'null')) {
@@ -120,29 +172,10 @@ class Analyzer
     }
 
     /**
-     * If enabled, nested arrays will be saved as JSON strings instead
-     * @param bool $bool
-     */
-    public function setNestedArrayAsJson(bool $bool)
-    {
-        $this->nestedArrayAsJson = $bool;
-    }
-
-    /**
      * @return bool
      */
-    public function getNestedArrayAsJson()
+    public function getNestedArrayAsJson() : bool
     {
         return $this->nestedArrayAsJson;
-    }
-
-    /**
-     * Set whether scalars are treated as compatible
-     * within a field (default = false -> compatible)
-     * @param bool $strict
-     */
-    public function setStrict(bool $strict)
-    {
-        $this->strict = $strict;
     }
 }

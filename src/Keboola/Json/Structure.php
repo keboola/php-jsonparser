@@ -2,7 +2,6 @@
 
 namespace Keboola\Json;
 
-use Guzzle\Service\Exception\InconsistentClientTransferException;
 use Keboola\Json\Exception\InconsistentValueException;
 use Keboola\Json\Exception\JsonParserException;
 use Symfony\Component\Console\Exception\LogicException;
@@ -15,27 +14,25 @@ class Structure
     private $data = [];
 
     /**
-     * @var string
+     * @var array
      */
-    private $baseType;
     private $headerIndex = [];
 
-    public function __construct(/*string $baseType*/)
+    /**
+     * @var bool
+     */
+    private $autoUpgradeToArray;
+
+    /**
+     * Structure constructor.
+     * @param bool $autoUpgradeToArray
+     */
+    public function __construct(bool $autoUpgradeToArray = true)
     {
-//        $this->baseType = $baseType;
+        $this->autoUpgradeToArray = $autoUpgradeToArray;
     }
 
-    // TODO: this originaly defaulted to false
-    protected $autoUpgradeToArray = true;
-
-    public function setAutoUpgradeToArray($enable)
-    {
-      //  $this->log->debug("Using automatic conversion of single values to arrays where required.");
-
-        $this->autoUpgradeToArray = (bool) $enable;
-    }
-
-    public function mergearray($array1, $array2)
+    private function mergearray($array1, $array2)
     {
         foreach ($array2 as $key => $value) {
             if (is_array($value)) {
@@ -51,13 +48,11 @@ class Structure
         return $array1;
     }
 
-
     public function addNode(NodePath $nodePath, $key, $value)
     {
         try {
             $this->data = $this->storeValue($nodePath, $this->data, $key, $value);
         } catch (InconsistentValueException $e) {
-            // TODO catch only correct exception
             if ($e->getKey() == 'nodeType') {
                 if (((($e->getPreviousValue() != 'array') && ($e->getNew() == 'array')) ||
                         (($e->getPreviousValue() == 'array') && ($e->getNew() != 'array'))) &&
@@ -110,7 +105,6 @@ class Structure
                 throw new LogicException($e->getMessage());
             }
         }
-        //var_export($this->data, true);
     }
 
     public function getTypeFromNodePath(NodePath $nodePath)
@@ -152,7 +146,6 @@ class Structure
         if ($nodePath->isEmpty()) {
             if (!empty($data[$node][$key]) && ($data[$node][$key] != $value)) {
                 throw new InconsistentValueException($data[$node][$key], $value, $key);
-            //    throw new LogicException("Inconsistent values " . $data[$node][$key] . " and " . $value . " for " . $nodePath . " " . $key);
             }
             $data[$node][$key] = $value;
         } else {
@@ -197,20 +190,6 @@ class Structure
         $nodeData = $this->getValue($nodePath);
         $result = [];
         if (is_array($nodeData)) {
-            // TODO: bwd compat fuckup
-            /*
-            if (isset($nodeData['[]'])) {
-                $elevate = false;
-                foreach ($nodeData['[]'] as $kkey => $value) {
-                    if (is_array($value)) {
-                        $elevate = true;
-                    }
-                }
-                if ($elevate) {
-                    $nodeData = $nodeData['[]'];
-                }
-            }
-*/
             if ($nodeData['nodeType'] == 'object') {
                 foreach ($nodeData as $itemName => $value) {
                     if (is_array($value)) {
@@ -245,8 +224,6 @@ class Structure
                 foreach ($nodeData as $itemName => $value) {
                     if ($itemName == $key) {
                         $result[$nodePath->getLast()] = $value;
-                    } else {
-                     //   $result[$nodePath->getLast()] = null;
                     }
                 }
             }
@@ -257,22 +234,15 @@ class Structure
     public function getDefinitions($type)
     {
         $pathNew = $this->buildNodePathFromString($type);
-       // $path = explode('.', $type);
-     //   $rootType = array_shift($path);
-        //if (!($rootType == $this->baseType)) {
-            //assert($rootType == $this->baseType);
-        //}
-        //array_unshift($path, '[]');
-        //$nodePath = new NodePath($path);
         $nodePath = new NodePath($pathNew);
         $values = $this->getValues($nodePath, 'nodeType');
-//        var_export($path);
+
         // todo - this is compatibility fix
         $result = [];
         if (empty($values)) {
             return [];
         }
-//        if ($values['nodeType'] == 'object') {
+
             foreach ($values as $key => $value) {
                 if ($key === '[]') {
                     $result['data'] = $value;
@@ -280,22 +250,19 @@ class Structure
                     $result[$key] = $value;
                 }
             }
-  //      } elseif ($values['nodeType'] == 'scalar') {
-    //        $result['data'] = 'scalar';
-      //  }
+
         return $result;
     }
 
     public function getDefinitionsNodePath(NodePath $nodePath)
     {
         $values = $this->getValues($nodePath, 'nodeType');
-//        var_export($path);
         // todo - this is compatibility fix
         $result = [];
         if (empty($values)) {
             return [];
         }
-//        if ($values['nodeType'] == 'object') {
+
         foreach ($values as $key => $value) {
             if ($key === '[]') {
                 $result['data'] = $value;
@@ -303,16 +270,11 @@ class Structure
                 $result[$key] = $value;
             }
         }
-        //      } elseif ($values['nodeType'] == 'scalar') {
-        //        $result['data'] = 'scalar';
-        //  }
+
         return $result;
     }
 
     private function buildNodePathFromString($path) {
-        ////if (substr($path, 0, strlen($this->baseType)) != $this->baseType) {
-            //throw new LogicException("Basetype mysmac");
-        //}
         foreach ($this->data as $key => $value) {
             // todo overit partial match
             if (substr($path, 0, strlen($key)) == $key) {
@@ -327,14 +289,7 @@ class Structure
                 return $npath;
             }
         }
-//        $subPath = substr($path, strlen($this->baseType) + 1);
-  //      if (empty($subPath)) {
-    //        $subPath = '';
-      //  }
-        //$npath = $this->findNodePath($subPath, $this->data['[]']);
-        //array_unshift($npath, '[]');
-      //  var_export($npath, true);
-        //return $npath;
+
         throw new LogicException('path not found');
     }
 
@@ -347,13 +302,11 @@ class Structure
             $keys = array_keys($data);
             usort($keys, function ($a, $b) { return strlen($a) - strlen($b);});
             foreach ($keys as $key) {
-  //              if (((substr($path, 0, strlen($key)) === $key) && (
-//                            (strlen($path) == strlen($key)) || ($path[(strlen($key))] == '.'))) || (($path == 'data') && ($key = '[]'))) {
+
                 if (((substr($path, 0, strlen($key)) === $key) && (
                             (strlen($path) == strlen($key)) || ($path[(strlen($key))] == '.')))
-                    /*|| (($path == 'data') && ($key == '[]')*/) {
-                    //if (($path == 'data') && ($key == '[]')) {
-                    if (/*($path == 'data') && */($key == '[]')) {
+                    ) {
+                    if (($key == '[]')) {
                         return [];
                     }
                     $subPath = substr($path, strlen($key) + 1);
@@ -393,13 +346,11 @@ class Structure
 
     public function getHeaderNames()
     {
-      //  $this->headerIndex = [];
         foreach ($this->data as $baseType => &$baseArray) {
             foreach ($baseArray as $nodeName => &$nodeData) {
                 $this->getHeaders($nodeData, new NodePath([$baseType, $nodeName]), '[]', $baseType);
             }
         }
-        //var_export($this->data);
     }
 
     protected function createSafeName($name)
@@ -453,12 +404,6 @@ class Structure
                 $headerName = $this->createSafeName($parentName);
                 $headerName = $this->getUniqueName($baseType, $headerName);
                 $data['headerNames'] = $headerName;
-                //if (isset($this->headerIndex[$baseType][$headerName]) && empty($data['invalidateHeaderNames'])) {
-                 //   $this->headerIndex[$baseType][$headerName]++;
-                  //  $headerName .= md5($headerName) .'_' . $this->headerIndex[$baseType][$headerName];
-                //}
-                //$/this->headerIndex[$baseType][$headerName] = 1;
-                ///$data['headerNames'] = $headerName;
             } elseif ($parentName == '[]') {
                 $data['headerNames'] = 'data';
             } // else already set
@@ -468,21 +413,17 @@ class Structure
             }
             foreach ($data as $key => &$value) {
                 if (is_array($value)) {
-                   // if ($parentName == '[]') {
-                 //       $this->getHeaders($value, $nodePath->addArrayChild(), $parentName, $baseType);
-                    //} else {
-                        if ($key == 'JSON_parentId') {
-                            // BWD compat hack
-                            $childName = $key;
+                    if ($key == 'JSON_parentId') {
+                        // BWD compat hack
+                        $childName = $key;
+                    } else {
+                        if ($parentName) {
+                            $childName = $parentName . '.' . $key;
                         } else {
-                            if ($parentName) {
-                                $childName = $parentName . '.' . $key;
-                            } else {
-                                $childName = $key;
-                            }
+                            $childName = $key;
                         }
-                        $this->getHeaders($value, $nodePath->addChild($key), $childName, $baseType);
-                    //}
+                    }
+                    $this->getHeaders($value, $nodePath->addChild($key), $childName, $baseType);
                 }
             }
         }

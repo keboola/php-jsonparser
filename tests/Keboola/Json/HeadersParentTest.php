@@ -2,13 +2,13 @@
 
 namespace Keboola\Json;
 
-use Keboola\Json\Test\ParserTestCase;
+use Psr\Log\NullLogger;
 
-class HeadersParentDataTest extends ParserTestCase
+class HeadersParentDataTest extends \PHPUnit_Framework_TestCase
 {
     public function testObjectNestedArray()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -28,7 +28,7 @@ class HeadersParentDataTest extends ParserTestCase
 
     public function testObjectArrayCombinedParentId()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -54,7 +54,7 @@ class HeadersParentDataTest extends ParserTestCase
 
     public function testObjectArrayCombinedParentIdArray()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -80,7 +80,7 @@ class HeadersParentDataTest extends ParserTestCase
 
     public function testObjectArrayCombinedTypeParentIdArray()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -106,7 +106,7 @@ class HeadersParentDataTest extends ParserTestCase
 
     public function testObjectArrayCombinedTypeInner()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{

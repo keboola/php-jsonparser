@@ -2,17 +2,15 @@
 namespace Keboola\Json;
 
 use Keboola\Json\Test\ParserTestCase;
+use Psr\Log\NullLogger;
 
 class RealDataTest extends ParserTestCase
 {
     public function testProcess()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
-
         $data = $this->loadJson('Json_tweets_pinkbike');
-
         $parser->process($data);
 
         foreach ($parser->getCsvFiles() as $name => $table) {
@@ -44,10 +42,8 @@ class RealDataTest extends ParserTestCase
 
     public function testTypeCharacters()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data = $this->loadJson('Json_tweets_pinkbike');
-
         $parser->process($data, 'a/b.c&d@e$f');
 
         self::assertEquals(
@@ -81,10 +77,8 @@ class RealDataTest extends ParserTestCase
 
     public function testRowCount()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data = $this->loadJson('Json_tweets_pinkbike');
-
         $parser->process($data);
 
         // -1 offset to compensate for header
@@ -98,7 +92,7 @@ class RealDataTest extends ParserTestCase
 
     public function testValidateHeader()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $header = [
             "KIND_Baseline SEM_Conversions : KIND_Baseline SEM_Conversions: Click-through Conversions",
             "KIND_Baseline SEM_Conversions : KIND_Baseline SEM_Conversions: View-through Conversions",
@@ -172,10 +166,8 @@ class RealDataTest extends ParserTestCase
 
     public function testPrimaryKeys()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data = $this->loadJson('Json_tweets_pinkbike');
-
         $pks = [
             'root_statuses' => 'id',
             'root_statuses_entities_urls' => 'url,JSON_parentId'
@@ -195,7 +187,7 @@ class RealDataTest extends ParserTestCase
      */
     public function testProcessWithAutoUpgradeToArray()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
         $data = $this->loadJson('Json_tweets_pinkbike');
         $parser->process($data);
@@ -229,7 +221,7 @@ class RealDataTest extends ParserTestCase
 
     public function testAssignLongColName()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = $this->loadJson('kbc_components');
         $parser->process($testFile->components);
         $result = '"id","DistributionGroups_outputs_histogramEstimates_persistent",' .
@@ -242,7 +234,7 @@ class RealDataTest extends ParserTestCase
 
     public function testFloatHash()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [

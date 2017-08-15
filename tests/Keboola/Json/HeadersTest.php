@@ -2,9 +2,9 @@
 
 namespace Keboola\Json;
 
-use Keboola\Json\Test\ParserTestCase;
+use Psr\Log\NullLogger;
 
-class HeadersTest extends ParserTestCase
+class HeadersTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @expectedException \Keboola\Json\Exception\NoDataException
@@ -12,7 +12,7 @@ class HeadersTest extends ParserTestCase
      */
     public function testEmptyArray()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{"components": []}'
         );
@@ -21,7 +21,7 @@ class HeadersTest extends ParserTestCase
 
     public function testEmptyObject()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{"components": [{}]}'
         );
@@ -32,7 +32,7 @@ class HeadersTest extends ParserTestCase
 
     public function testAlmostEmptyObject()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{"components": [{"a": null}]}'
         );
@@ -44,7 +44,7 @@ class HeadersTest extends ParserTestCase
 
     public function testLongHeader()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{"components": [{"AReallyTrulyIncrediblyHellishlyLongFromOuterSpaceAndAgePropertyName": null}]}'
         );
@@ -56,7 +56,7 @@ class HeadersTest extends ParserTestCase
 
     public function testObject()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{"components": [{"a": "b"}]}'
         );
@@ -68,7 +68,7 @@ class HeadersTest extends ParserTestCase
 
     public function testArray()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{"components": ["a", "b"]}'
         );
@@ -80,7 +80,7 @@ class HeadersTest extends ParserTestCase
 
     public function testObjectNested()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{

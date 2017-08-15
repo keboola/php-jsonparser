@@ -2,6 +2,8 @@
 namespace Keboola\Json;
 
 use Keboola\Json\Test\ParserTestCase;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use Psr\Log\NullLogger;
 
 class ParserTest extends ParserTestCase
@@ -25,27 +27,20 @@ class ParserTest extends ParserTestCase
                 ]
             }
         ]');
-        $parser = Parser::create(new NullLogger());
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $parser->process($json, 'entities');
-        // yo dawg
-        self::assertEquals(
-            "0",
-            str_getcsv(
-                file(
-                    $parser->getCsvFiles()['entities_hashtags_indices']
-                )[1] // 2nd row
-            )[0] // 1st column
+        self:self::assertEquals("\"data\",\"JSON_parentId\"\n" .
+            "\"0\",\"entities.hashtags_7166de1f0241156ee048591b4492bc56\"\n" .
+            "\"4\",\"entities.hashtags_7166de1f0241156ee048591b4492bc56\"\n" .
+            "\"\",\"entities.hashtags_7166de1f0241156ee048591b4492bc56\"\n",
+            file_get_contents($parser->getCsvFiles()['entities_hashtags_indices']->getPathname())
         );
-       // self:self::assertEquals('fff', file_get_contents($parser->getCsvFiles()['entities_hashtags_indices']->getPathname()));
     }
 
     public function testPrimaryKey()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $parser->addPrimaryKeys(['root' => 'id,date']);
-
         $parser->process([
             (object) [
                 'id' => 1,
@@ -63,8 +58,7 @@ class ParserTest extends ParserTestCase
 
     public function testParentIdPrimaryKey()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data = json_decode('[
             {
                 "pk": 1,
@@ -88,10 +82,8 @@ class ParserTest extends ParserTestCase
 
     public function testParentIdPrimaryKeyMultiLevel()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data = $this->loadJson('multilevel');
-
         $parser->addPrimaryKeys([
             'outer' => "pk",
             'outer_inner' => "pkey"
@@ -107,8 +99,7 @@ class ParserTest extends ParserTestCase
 
     public function testParentIdHash()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data = json_decode('[
             {
                 "pk": 1,
@@ -119,7 +110,6 @@ class ParserTest extends ParserTestCase
                 "arr": ["a","b","c"]
             }
         ]');
-
         $parser->process($data, 'hash');
         foreach ($parser->getCsvFiles() as $type => $file) {
             self::assertEquals(
@@ -134,9 +124,7 @@ class ParserTest extends ParserTestCase
      */
     public function testParentIdHashSameValues()
     {
-        $parser = $this->getParser();
-
-        $data = [];
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data[] = json_decode('{
             "uri": "firstStuff",
             "createdAt": "30/05/13",
@@ -197,8 +185,7 @@ class ParserTest extends ParserTestCase
      */
     public function testParentIdHashSameValuesDeepNesting()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data = [
             json_decode('{
                 "uri": "firstStuff",
@@ -248,7 +235,6 @@ class ParserTest extends ParserTestCase
         ];
 
         $parser->process($data, 'nested_hash_deep');
-
         foreach ($parser->getCsvFiles() as $type => $file) {
             self::assertEquals(
                 file_get_contents($this->getDataDir() . "{$type}.csv"),
@@ -262,12 +248,12 @@ class ParserTest extends ParserTestCase
      */
     public function testParentIdHashTimeDiff()
     {
-        $this->timeDiffCompare($this->getParser());
+        $this->timeDiffCompare($parser = new Parser(new Analyzer(new NullLogger(), new Structure())));
     }
 
     public function testParentIdPrimaryKeyTimeDiff()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $parser->addPrimaryKeys([
             'hash' => 'pk, time',
             'later' => 'pk, time'
@@ -275,7 +261,7 @@ class ParserTest extends ParserTestCase
         $this->timeDiffCompare($parser);
     }
 
-    protected function timeDiffCompare($parser)
+    protected function timeDiffCompare(Parser $parser)
     {
         $data = json_decode('[
             {
@@ -315,8 +301,7 @@ class ParserTest extends ParserTestCase
 
     public function testNoStrictScalarChange()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data = \Keboola\Utils\jsonDecode('[
             {"field": 128},
             {"field": "string"},
@@ -341,9 +326,7 @@ class ParserTest extends ParserTestCase
      */
     public function testStrictScalarChange()
     {
-        $parser = $this->getParser();
-        $parser->getAnalyzer()->setStrict(true);
-        $parser->setAutoUpgradeToArray(false);
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure(false), false, true));
         $data = json_decode('[
             {"field": 128},
             {"field": "string"},
@@ -359,7 +342,7 @@ class ParserTest extends ParserTestCase
     public function testProcessEmptyObjects()
     {
         $json = $this->loadJson('Json_zendesk_comments_empty_objects');
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $parser->process($json->data);
         $files = $parser->getCsvFiles();
 
@@ -370,8 +353,7 @@ class ParserTest extends ParserTestCase
 
     public function testArrayParentId()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data = json_decode('[
             {"field": 128},
             {"field": "string"},
@@ -394,7 +376,7 @@ class ParserTest extends ParserTestCase
 
     public function testProcessSimpleArray()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $parser->process(json_decode('["a","b"]'));
         self::assertEquals(
             [
@@ -408,8 +390,7 @@ class ParserTest extends ParserTestCase
 
     public function testInputDataIntegrity()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $inputData = $this->loadJson('Json_tweets_pinkbike');
         $originalData = $this->loadJson('Json_tweets_pinkbike');
 
@@ -428,23 +409,20 @@ class ParserTest extends ParserTestCase
      */
     public function testNestedArraysDisabledError()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data = json_decode('
             [
                 [1,2,3],
                 [4,5,6]
             ]
         ');
-
         $parser->process($data);
     }
 
     public function testNestedArrays()
     {
-        $logHandler = new \Monolog\Handler\TestHandler();
-        $parser = Parser::create(new \Monolog\Logger('test', [$logHandler]));
-        $parser->getAnalyzer()->setNestedArrayAsJson(true);
-
+        $logHandler = new TestHandler();
+        $parser = new Parser(new Analyzer(new Logger('test', [$logHandler]), new Structure(), true));
         $data = [
             [1,2,3,[7,8]],
             [4,5,6]
@@ -464,7 +442,7 @@ class ParserTest extends ParserTestCase
 
     public function testHeaderSpecialChars()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data = json_decode('[
             {
                 "_id": 123456,
@@ -483,7 +461,8 @@ class ParserTest extends ParserTestCase
         $parser->process($data);
 
         self::assertEquals(
-            '"id","KeywordRanking_attributes_date","KeywordRanking_stuff_I_ARE_POTAT","KeywordRanking_stuff_kek_ser_ou_ly"' . "\n" .
+            '"id","KeywordRanking_attributes_date","KeywordRanking_stuff_I_ARE_POTAT"' .
+            ',"KeywordRanking_stuff_kek_ser_ou_ly"' . "\n" .
             '"123456","2015-03-20","aaa$@!","now"' . "\n",
             file_get_contents($parser->getCsvFiles()['root'])
         );
@@ -495,8 +474,7 @@ class ParserTest extends ParserTestCase
      */
     public function testStringArrayMixFail()
     {
-        $parser = $this->getParser();
-        $parser->setAutoUpgradeToArray(false);
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure(false)));
         $data = [
             (object) [
                 "id" => 1,
@@ -517,8 +495,7 @@ class ParserTest extends ParserTestCase
      */
     public function testStringArrayMixFailOppo()
     {
-        $parser = $this->getParser();
-        $parser->setAutoUpgradeToArray(false);
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure(false)));
         $data = [
             (object) [
                 "id" => 1,
@@ -535,7 +512,7 @@ class ParserTest extends ParserTestCase
 
     public function testAutoUpgradeToArray()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
 
         // Test with object > array > object
         $data = [
@@ -565,8 +542,6 @@ class ParserTest extends ParserTestCase
         ];
 
         $parser->process($data);
-
-        // TODO guess this could be in files..
         self::assertEquals(
             '"key"' . "\n" .
             '"root_eae48f50d1159c41f633f876d6c66411"' . "\n" .
@@ -630,10 +605,7 @@ class ParserTest extends ParserTestCase
      */
     public function testAutoUpgradeToArrayStrict()
     {
-        $parser = $this->getParser();
-        $parser->setAutoUpgradeToArray(false);
-        $parser->getAnalyzer()->setStrict(true);
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure(false), false, true));
         $data = [
             (object) [
                 'id' => 1,
@@ -659,7 +631,6 @@ class ParserTest extends ParserTestCase
             ]
         ];
         $parser->process($data);
-
         $parser->getCsvFiles();
     }
 
@@ -669,8 +640,7 @@ class ParserTest extends ParserTestCase
      */
     public function testAutoUpgradeToArrayMismatch()
     {
-        $parser = $this->getParser();
-        $parser->setAutoUpgradeToArray(false);
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure(false)));
         $data = [
             (object) [
                 'key' => [
@@ -702,7 +672,7 @@ class ParserTest extends ParserTestCase
      */
     public function testAutoUpgradeToArrayString()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
 
         // Test with object > array > object
         $data = [
@@ -713,7 +683,6 @@ class ParserTest extends ParserTestCase
             ]],
             (object) ['key' => 'str3']
         ];
-
         $parser->process($data);
 
         self::assertEquals(
@@ -736,7 +705,7 @@ class ParserTest extends ParserTestCase
 
     public function testIncompleteData()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         /*
         $parser->getStruct()->load([
             'root' => [
@@ -763,8 +732,7 @@ class ParserTest extends ParserTestCase
      */
     public function testEmptyData()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $parser->process([]);
     }
 
@@ -774,15 +742,13 @@ class ParserTest extends ParserTestCase
      */
     public function testNullData()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $parser->process([null]);
     }
 
     public function testArrayOfNull()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $parser->process(
             [
                 (object) [
@@ -862,12 +828,10 @@ class ParserTest extends ParserTestCase
 
     public function testParseNumericKeys()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure(), true));
         $testFile = \Keboola\Utils\jsonDecode(
             '{"data": [{"1": "one", "2": "two"}]}'
         );
-
-        $parser->getAnalyzer()->setNestedArrayAsJson(true);
         $parser->process($testFile->data, 'someType');
         self::assertEquals(['someType'], array_keys($parser->getCsvFiles()));
         self::assertEquals(
@@ -878,12 +842,10 @@ class ParserTest extends ParserTestCase
 
     public function testParseNestedArrayEnabled()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure(), true));
         $testFile = \Keboola\Utils\jsonDecode(
             '{"a": [["c", "d"], ["e", "f"]]}'
         );
-
-        $parser->getAnalyzer()->setNestedArrayAsJson(true);
         $parser->process([$testFile], 'someType');
         self::assertEquals(['someType', 'someType_a'], array_keys($parser->getCsvFiles()));
         self::assertEquals(
@@ -900,12 +862,10 @@ class ParserTest extends ParserTestCase
 
     public function testParseNullInconsistency()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure(), true));
         $testFile = \Keboola\Utils\jsonDecode(
             '{"data": [null, "a"]}'
         );
-
-        $parser->getAnalyzer()->setNestedArrayAsJson(true);
         $parser->process($testFile->data, 'someType');
         self::assertEquals(['someType'], array_keys($parser->getCsvFiles()));
         self::assertEquals(
@@ -920,7 +880,7 @@ class ParserTest extends ParserTestCase
      */
     public function testParseInvalidParentId()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{"data": ["a", "b"]}'
         );
@@ -931,11 +891,10 @@ class ParserTest extends ParserTestCase
 
     public function testParseInvalidPrimaryKey()
     {
-        $parser = $this->getParser();
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure(), true));
         $testFile = \Keboola\Utils\jsonDecode(
             '{"data": [{"id": "a", "val": ["a"]}, {"id": "b", "val": ["b"]}]}'
         );
-        $parser->getAnalyzer()->setNestedArrayAsJson(true);
         $parser->addPrimaryKeys(["someType_val" => "id"]);
         $parser->process($testFile->data, 'someType');
         self::assertEquals(['someType', 'someType_val'], array_keys($parser->getCsvFiles()));
