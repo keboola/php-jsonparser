@@ -203,7 +203,7 @@ class Structure
      */
     public function getData()
     {
-        foreach ($this->data as $key => $value) {
+        foreach ($this->data as $value) {
             $this->validateDefinitions($value);
         }
         return $this->data;
@@ -314,6 +314,15 @@ class Structure
     }
 
     /**
+     * Get structure version for compatibility.
+     * @return int
+     */
+    public function getVersion()
+    {
+        return 3;
+    }
+
+    /**
      * Return a legacy type for the given node.
      * @param NodePath $nodePath
      * @return string
@@ -420,7 +429,7 @@ class Structure
     public function load(array $definitions)
     {
         $this->data = $definitions;
-        foreach ($definitions as $key => $value) {
+        foreach ($definitions as $value) {
             $this->validateDefinitions($value);
         }
     }
