@@ -385,7 +385,7 @@ class AnalyzerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Data array in 'root.[].arrOfScalars' contains incompatible types 'scalar' and 'object'
+     * @expectedExceptionMessage Data array in 'root.[].arrOfScalars' contains incompatible types 'object' and 'scalar'
      */
     public function testAnalyzeAutoArraysError()
     {
@@ -530,7 +530,7 @@ class AnalyzerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Data array in 'test.[].arr' contains incompatible types 'object' and 'scalar'
+     * @expectedExceptionMessage Data array in 'test.[].arr' contains incompatible types 'scalar' and 'object'
      */
     public function testAnalyzeKnownArrayMismatch()
     {
@@ -618,17 +618,6 @@ class AnalyzerTest extends \PHPUnit_Framework_TestCase
 
         $analyzer->analyzeData($data1, 'test');
         $analyzer->analyzeData($data2, 'test');
-
-        self::assertEquals(
-            [
-                'test.arr' => ['data' => 'scalar'],
-                'test' => [
-                    'id' => 'scalar',
-                    'arr' => 'arrayOfscalar'
-                ]
-            ],
-            $analyzer->getStructure()->getData()
-        );
     }
 
     public function testAnalyzeEmptyArrayOfObject()
@@ -851,4 +840,54 @@ class AnalyzerTest extends \PHPUnit_Framework_TestCase
             $analyzer->getStructure()->getData()
         );
     }
+
+    public function testAnalyzeTypesStrict()
+    {
+        $analyzer = new Analyzer(new NullLogger(), new Structure(), false, true);
+        $data1 = [
+            (object) [
+                'id' => 1,
+                'arr' => [1,2],
+                'string' => 'text',
+                'float' => 2.4,
+                'bool' => false,
+                'null' => null
+            ]
+        ];
+        $analyzer->analyzeData($data1, 'test');
+        self::assertEquals(
+            [
+
+                'test' => [
+                    '[]' => [
+                        'nodeType' => 'object',
+                        'id' => [
+                            'nodeType' => 'integer',
+                        ],
+                        'arr' => [
+                            'nodeType' => 'array',
+                            '[]' => [
+                                'nodeType' => 'integer',
+                            ],
+                        ],
+                        'string' => [
+                            'nodeType' => 'string',
+                        ],
+                        'float' => [
+                            'nodeType' => 'double',
+                        ],
+                        'bool' => [
+                            'nodeType' => 'boolean',
+                        ],
+                        'null' => [
+                            'nodeType' => 'null',
+                        ],
+                    ],
+                    'nodeType' => 'array',
+                ],
+            ],
+            $analyzer->getStructure()->getData()
+        );
+    }
+
 }

@@ -62,9 +62,9 @@ class NodePath
         return end($this->path);
     }
 
-    public function popLast(&$last) {
+    public function popLast() {
         $path = $this->path;
-        $last = array_pop($path);
+        array_pop($path);
         return new NodePath($path);
     }
 }

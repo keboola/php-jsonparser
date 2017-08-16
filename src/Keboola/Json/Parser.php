@@ -37,11 +37,6 @@ use Psr\Log\LoggerInterface;
 class Parser
 {
     /**
-     * Column name for an array of scalars
-     */
-    const DATA_COLUMN = 'data';
-
-    /**
      * @var Table[]
      */
     private $csvFiles = [];
@@ -112,7 +107,7 @@ class Parser
         }
 
         $this->analyzer->analyzeData($data, $type);
-        $this->structure->getHeaderNames();
+        $this->structure->generateHeaderNames();
         $this->cache->store(["data" => $data, "type" => $type, "parentId" => $parentId]);
     }
 
@@ -133,9 +128,9 @@ class Parser
             // in case of non-associative array of strings
             // prepare {"data": $value} objects for each row
             if (is_scalar($row) || is_null($row)) {
-                $row = (object) [self::DATA_COLUMN => $row];
+                $row = (object) [Structure::DATA_COLUMN => $row];
             } elseif ($this->analyzer->getNestedArrayAsJson() && is_array($row)) {
-                $row = (object) [self::DATA_COLUMN => json_encode($row)];
+                $row = (object) [Structure::DATA_COLUMN => json_encode($row)];
             }
 
             // Add parentId to each row
@@ -164,18 +159,11 @@ class Parser
         array $parentCols = [],
         $outerObjectHash = null
     ) {
-        $headers2 = $this->getHeaderPath($nodePath, $parentCols);
-        $csvRow = new CsvRow($headers2);
-
+        $csvRow = new CsvRow($this->getHeaders($nodePath, $parentCols));
         // Generate parent ID for arrays
-        $arrayParentId = $this->getPrimaryKeyValue(
-            $dataRow,
-            $nodePath,
-            $outerObjectHash
-        );
-
-        $arr3 = $this->structure->getDefinitionsNodePath($nodePath);
-        foreach (array_replace($arr3, $parentCols) as $column => $dataType) {
+        $arrayParentId = $this->getPrimaryKeyValue($dataRow, $nodePath, $outerObjectHash);
+        $columns = $this->structure->getColumnTypes($nodePath);
+        foreach (array_replace($columns, $parentCols) as $column => $dataType) {
             $this->parseField($dataRow, $csvRow, $arrayParentId, $column, $dataType, $nodePath);
         }
 
@@ -213,9 +201,9 @@ class Parser
         ) {
             // do not save empty objects to prevent creation of ["obj_name" => null]
             if ($dataType != 'object') {
-                $safeColumn = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
+                $safeColumn = $this->structure->getNodeProperty($nodePath->addChild($column), 'headerNames');
                 if ($safeColumn === null) {
-                    $safeColumn = $this->structure->getSingleValue($nodePath, 'headerNames');
+                    $safeColumn = $this->structure->getNodeProperty($nodePath, 'headerNames');
                 }
                 $csvRow->setValue($safeColumn, null);
             }
@@ -228,7 +216,7 @@ class Parser
                 if (!is_array($dataRow->{$column})) {
                     $dataRow->{$column} = [$dataRow->{$column}];
                 }
-                $sf = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
+                $sf = $this->structure->getNodeProperty($nodePath->addChild($column), 'headerNames');
                 $csvRow->setValue($sf, $arrayParentId);
                 $this->parse($dataRow->{$column}, $nodePath->addChild($column)->addArrayChild(), $arrayParentId);
                 break;
@@ -242,9 +230,9 @@ class Parser
             default:
                 // If a column is an object/array while $struct expects a single column, log an error
                 if (is_scalar($dataRow->{$column})) {
-                    $sf = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
+                    $sf = $this->structure->getNodeProperty($nodePath->addChild($column), 'headerNames');
                     if ($sf === null) {
-                        $sf = $this->structure->getSingleValue($nodePath, 'headerNames');
+                        $sf = $this->structure->getNodeProperty($nodePath, 'headerNames');
                     }
                     $csvRow->setValue($sf, $dataRow->{$column});
                 } else {
@@ -255,59 +243,61 @@ class Parser
                             . gettype($dataRow->{$column}) . "' where '{$dataType}' was expected!",
                         [ "data" => $jsonColumn, "row" => json_encode($dataRow) ]
                     );
-                    $sf = $this->structure->getSingleValue($nodePath->addChild($column), 'headerNames');
+                    $sf = $this->structure->getNodeProperty($nodePath->addChild($column), 'headerNames');
                     $csvRow->setValue($sf, $jsonColumn);
                 }
                 break;
         }
     }
 
-    private function getHeaderPath(NodePath $nodePath, &$parent = false, $parentCheck = false)
+    /**
+     * Get column names for a particular node path
+     * @param NodePath $nodePath
+     * @param bool $parent Parent column, may be renamed in case a conflict occurs
+     * @return array
+     */
+    private function getHeaders(NodePath $nodePath, &$parent = false)
     {
         $headers = [];
-        $thisNodeName = $nodePath->getLast();
-        $nodeData = $this->structure->getValue($nodePath);
+        $nodeData = $this->structure->getNode($nodePath);
         if ($nodeData['nodeType'] == 'scalar') {
             $headers[] = $nodeData['headerNames'];
         }
         if (is_array($parent) && !empty($parent)) {
-            $nnodePath = $nodePath->popLast($thisNodeName);
-            $nnodeData = $this->structure->getValue($nnodePath);
-            $parentCheck = array_keys($parent);
-            $trigChange = false;
             foreach ($parent as $key => $value) {
-                if (!isset($nnodeData[$key]) && !isset($nodeData['[]'][$key]) && empty($nodeData[$key]['type'])
+                // check all parent columns
+                $previousPath = $nodePath->popLast();
+                $previousNode = $this->structure->getNode($previousPath);
+                /* this is a WTF, but getHeaders is called for every row, so the below code must
+                     not be called if the parent was already generated. */
+                if (!isset($previousNode[$key]) && !isset($nodeData['[]'][$key]) && empty($nodeData[$key]['type'])
                     && empty($nodeData['[]'][$key]['type'])) {
-                    // this is a WTF, but getHeaders is called for every row, so a header must be called only once
-                    if ($nnodeData['nodeType'] == 'array') {
-                        if (isset($nnodeData['[]'][$key])) {
-                            // this means that there is a column with a same name as a column with parent name
-                            $newColName = $key;
-                            $i = 0;
-                            while (isset($nnodeData['[]'][$newColName])) {
-                                $newColName = $key . '_u' . $i;
-                                $i++;
-                            }
-                            // rename the column in parent
-                            $parent[$newColName] = $value;
-                            unset($parent[$key]);
-                            $key = $newColName;
+                    // check that there is a column with a same name as a column with parent name
+                    if (isset($previousNode['[]'][$key])) {
+                        // generate new column name
+                        $newColName = $key;
+                        $i = 0;
+                        while (isset($previousNode['[]'][$newColName])) {
+                            $newColName = $key . '_u' . $i;
+                            $i++;
                         }
-                        $nnodeData['[]'][$key] = ['nodeType' => 'scalar', 'type' => 'parent'];
+                        // rename the column in parent
+                        $parent[$newColName] = $value;
+                        unset($parent[$key]);
+                        $key = $newColName;
                     }
-                    $trigChange = true;
+                    // either way we need to store the parent column in structure
+                    $previousNode['[]'][$key] = ['nodeType' => 'scalar', 'type' => 'parent'];
+                    $this->structure->saveNode($previousPath, $previousNode);
+                    $this->structure->generateHeaderNames();
+                    $nodeData = $this->structure->getNode($nodePath);
                 }
-            }
-            if ($trigChange) {
-                $this->structure->saveNode($nnodePath, $nnodeData);
-                $this->structure->getHeaderNames();
-                $nodeData = $this->structure->getValue($nodePath);
             }
         }
         foreach ($nodeData as $nodeName => $data) {
             if (is_array($data) && ($data['nodeType'] == 'object')) {
                 $pparent = false;
-                $ch = $this->getHeaderPath($nodePath->addChild($nodeName), $pparent, $parentCheck);
+                $ch = $this->getHeaders($nodePath->addChild($nodeName), $pparent);
                 $headers = array_merge($headers, $ch);
             } else if (is_array($data)) {
                 $headers[] = $data['headerNames'];
@@ -329,7 +319,7 @@ class Parser
         if (empty($this->csvFiles[$type])) {
             $this->csvFiles[$type] = Table::create(
                 $type,
-                $this->getHeaderPath($nodePath, $parentId),
+                $this->getHeaders($nodePath, $parentId),
                 $this->temp
             );
             $this->csvFiles[$type]->addAttributes(["fullDisplayName" => $type]);
@@ -349,26 +339,27 @@ class Parser
      */
     private function getPrimaryKeyValue(\stdClass $dataRow, NodePath $nodePath, $outerObjectHash = null)
     {
-        $safeColumn = $this->structure->getTypeFromNodePath($nodePath);
-        if (!empty($this->primaryKeys[$safeColumn])) {
-            $pk = $this->primaryKeys[$safeColumn];
-            $pKeyCols = explode(',', $pk);
+        $column = $this->structure->getTypeFromNodePath($nodePath);
+        if (!empty($this->primaryKeys[$column])) {
+            $pKeyCols = explode(',', $this->primaryKeys[$column]);
             $pKeyCols = array_map('trim', $pKeyCols);
             $values = [];
             foreach ($pKeyCols as $pKeyCol) {
                 if (empty($dataRow->{$pKeyCol})) {
                     $values[] = md5(serialize($dataRow) . $outerObjectHash);
                     $this->analyzer->getLogger()->warning(
-                        "Primary key for type '{$safeColumn}' was set to '{$pk}', but its column '{$pKeyCol}' does not exist! Using hash to link child objects instead.",
+                        "Primary key for type '{$column}' was set to '". $this->primaryKeys[$column] .
+                        "', but its column '{$pKeyCol}' does not exist! Using hash to link child objects instead.",
                         ['row' => $dataRow]
                     );
                 } else {
                     $values[] = $dataRow->{$pKeyCol};
                 }
             }
-
+            // this awkward format is because of backward compatibility
             return $nodePath->toCleanString() . "_" . join(";", $values);
         } else {
+            // this awkward format is because of backward compatibility
             return $nodePath->toCleanString() . '_' . md5(serialize($dataRow) . $outerObjectHash);
         }
     }
@@ -392,14 +383,12 @@ class Parser
                         ]
                     );
                 }
+                return $parentId;
             } else {
-                $parentId = ['JSON_parentId' => $parentId];
+                return ['JSON_parentId' => $parentId];
             }
-        } else {
-            $parentId = [];
         }
-
-        return $parentId;
+        return [];
     }
 
     /**

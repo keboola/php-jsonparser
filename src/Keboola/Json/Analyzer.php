@@ -73,7 +73,7 @@ class Analyzer
         }
         $path = new NodePath([$rootType]);
         $this->analyzeArray($data, $path);
-        $this->structure->addNode($path, 'nodeType', 'array');
+        $this->structure->saveNodeValue($path, 'nodeType', 'array');
 
     }
 
@@ -116,7 +116,7 @@ class Analyzer
             // this is probably only resource, which should not be here anyway
             throw new JsonParserException("Unsupported data in '$nodePath'.", ['item' => $item]);
         }
-        $this->structure->addNode($nodePath, 'nodeType', $nodeType);
+        $this->structure->saveNodeValue($nodePath, 'nodeType', $nodeType);
         return $nodeType;
     }
 
@@ -129,7 +129,7 @@ class Analyzer
         $oldType = null;
         $nodePath = $nodePath->addArrayChild();
          if (empty($array)) {
-            $this->structure->addNode($nodePath, 'nodeType', 'null');
+            $this->structure->saveNodeValue($nodePath, 'nodeType', 'null');
         }
         foreach ($array as $row) {
             $newType = $this->analyzeItem($row, $nodePath);
