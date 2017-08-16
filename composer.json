@@ -23,7 +23,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Keboola\\Json\\": "src/Keboola/Json"
+            "Keboola\\Json\\": "src",
+            "Keboola\\Json\\Tests\\": "tests"
         }
     }
 }

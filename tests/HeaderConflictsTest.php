@@ -1,11 +1,14 @@
 <?php
 
-namespace Keboola\Json;
+namespace Keboola\Json\Tests;
 
+use Keboola\Json\Analyzer;
+use Keboola\Json\Parser;
+use Keboola\Json\Structure;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
-class HeadersConflictsTest extends TestCase
+class HeaderConflictsTest extends TestCase
 {
     public function testObjectArrayCombinedConflictObject()
     {

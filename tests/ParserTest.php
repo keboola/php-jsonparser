@@ -1,7 +1,10 @@
 <?php
-namespace Keboola\Json;
 
-use Keboola\Json\Test\ParserTestCase;
+namespace Keboola\Json\Tests;
+
+use Keboola\Json\Analyzer;
+use Keboola\Json\Parser;
+use Keboola\Json\Structure;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use Psr\Log\NullLogger;

@@ -1,7 +1,9 @@
 <?php
 
-namespace Keboola\Json;
+namespace Keboola\Json\Tests;
 
+use Keboola\Json\NodePath;
+use Keboola\Json\Structure;
 use PHPUnit\Framework\TestCase;
 
 class StructureTest extends TestCase
