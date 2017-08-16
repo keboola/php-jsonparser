@@ -17,6 +17,7 @@ class Structure
     const PROP_NODE_TYPE = 'type';
 
     const PROP_HEADER = 'headerNames';
+    const ARRAY_NAME = '[]';
 
     private static $nodeDataTypes = ['null', 'array', 'object', 'scalar', 'string', 'integer', 'double', 'boolean'];
 
@@ -100,24 +101,24 @@ class Structure
         if ((($node['nodeType'] == 'array') || ($newType == 'array')) && $this->autoUpgradeToArray) {
             $this->checkArrayUpgrade($node, $nodePath, $newType);
             // copy all properties to the array
-            if (!empty($node[NodePath::ARRAY_NAME])) {
-                foreach ($node[NodePath::ARRAY_NAME] as $key => $value) {
-                    $newNode[NodePath::ARRAY_NAME][$key] = $value;
+            if (!empty($node[self::ARRAY_NAME])) {
+                foreach ($node[self::ARRAY_NAME] as $key => $value) {
+                    $newNode[self::ARRAY_NAME][$key] = $value;
                 }
             }
             foreach ($node as $key => $value) {
-                if (is_array($value) && ($key != NodePath::ARRAY_NAME)) {
-                    $newNode[NodePath::ARRAY_NAME][$key] = $value;
+                if (is_array($value) && ($key != self::ARRAY_NAME)) {
+                    $newNode[self::ARRAY_NAME][$key] = $value;
                 }
             }
             if ($newType != 'array') {
-                $newNode[NodePath::ARRAY_NAME]['nodeType'] = $newType;
+                $newNode[self::ARRAY_NAME]['nodeType'] = $newType;
             } else {
-                $newNode[NodePath::ARRAY_NAME]['nodeType'] = $node['nodeType'];
+                $newNode[self::ARRAY_NAME]['nodeType'] = $node['nodeType'];
             }
             $newNode['nodeType'] = 'array';
             if (!empty($node['headerNames'])) {
-                $newNode[NodePath::ARRAY_NAME]['headerNames'] = self::DATA_COLUMN;
+                $newNode[self::ARRAY_NAME]['headerNames'] = self::DATA_COLUMN;
                 $newNode['headerNames'] = $node['headerNames'];
             }
             $this->data = $this->storeNode($nodePath, $this->data, $newNode);
@@ -140,7 +141,7 @@ class Structure
         if ((($node['nodeType'] == 'array') || ($newType == 'array')) && $this->autoUpgradeToArray) {
             // if one of the two different types is array, we may consider upgrade
             // at this moment, the array items should already be set
-            if (empty($node[NodePath::ARRAY_NAME]['nodeType'])) {
+            if (empty($node[self::ARRAY_NAME]['nodeType'])) {
                 throw new JsonParserException("Array contents are unknown");
             }
             // now get the non array type
@@ -150,15 +151,15 @@ class Structure
                 $nonArray = $node['nodeType'];
             }
             // now verify if array contents match the non-array type
-            if (($node[NodePath::ARRAY_NAME]['nodeType'] != $nonArray) && ($nonArray != 'null') &&
-                $node[NodePath::ARRAY_NAME]['nodeType'] != 'null') {
+            if (($node[self::ARRAY_NAME]['nodeType'] != $nonArray) && ($nonArray != 'null') &&
+                $node[self::ARRAY_NAME]['nodeType'] != 'null') {
                 throw new JsonParserException("Data array in '" . $nodePath->__toString() .
-                    "' contains incompatible types '" . $node[NodePath::ARRAY_NAME]['nodeType'] . "' and '" .
+                    "' contains incompatible types '" . $node[self::ARRAY_NAME]['nodeType'] . "' and '" .
                     $nonArray . "'");
             }
         } else {
             throw new JsonParserException("Data array in '" . $nodePath->__toString() .
-                "' contains incompatible types '" . $node[NodePath::ARRAY_NAME]['nodeType'] . "' and '" .
+                "' contains incompatible types '" . $node[self::ARRAY_NAME]['nodeType'] . "' and '" .
                 $newType . "'");
         }
     }
@@ -430,7 +431,7 @@ class Structure
         if (!isset($definitions[self::PROP_NODE_DATA_TYPE])) {
             throw new JsonParserException("Node data type is not set.", $definitions);
         }
-        if (($definitions[self::PROP_NODE_DATA_TYPE] == 'array') && empty($definitions[NodePath::ARRAY_NAME])) {
+        if (($definitions[self::PROP_NODE_DATA_TYPE] == 'array') && empty($definitions[self::ARRAY_NAME])) {
             throw new JsonParserException("Array node does not have array.", $definitions);
         }
         foreach ($definitions as $key => $value) {
@@ -440,7 +441,7 @@ class Structure
                     throw new JsonParserException("Conflict property $key", $definitions);
                 }
                 $this->validateDefinitions($value);
-                if ($key == NodePath::ARRAY_NAME) {
+                if ($key == self::ARRAY_NAME) {
                     if ($definitions[self::PROP_NODE_DATA_TYPE] != 'array') {
                         throw new JsonParserException("Array $key is not an array.", $definitions);
                     }

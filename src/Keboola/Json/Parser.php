@@ -6,7 +6,6 @@ use Keboola\CsvTable\Table;
 use Keboola\Temp\Temp;
 use Keboola\Json\Exception\JsonParserException;
 use Keboola\Json\Exception\NoDataException;
-use Psr\Log\LoggerInterface;
 
 /**
  * JSON to CSV data analyzer and parser/converter
@@ -218,7 +217,7 @@ class Parser
                 }
                 $sf = $this->structure->getNodeProperty($nodePath->addChild($column), 'headerNames');
                 $csvRow->setValue($sf, $arrayParentId);
-                $this->parse($dataRow->{$column}, $nodePath->addChild($column)->addArrayChild(), $arrayParentId);
+                $this->parse($dataRow->{$column}, $nodePath->addChild($column)->addChild(Structure::ARRAY_NAME), $arrayParentId);
                 break;
             case "object":
                 $childRow = $this->parseRow($dataRow->{$column}, $nodePath->addChild($column), [], $arrayParentId);

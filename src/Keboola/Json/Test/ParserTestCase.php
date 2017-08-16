@@ -1,10 +1,10 @@
 <?php
+
 namespace Keboola\Json\Test;
 
-use Keboola\Json\Parser;
-use Psr\Log\NullLogger;
+use PHPUnit\Framework\TestCase;
 
-class ParserTestCase extends \PHPUnit_Framework_TestCase
+class ParserTestCase extends TestCase
 {
     protected function loadJson($fileName)
     {

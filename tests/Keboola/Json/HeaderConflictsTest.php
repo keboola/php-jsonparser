@@ -2,9 +2,10 @@
 
 namespace Keboola\Json;
 
+use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
-class HeadersConflictsTest extends \PHPUnit_Framework_TestCase
+class HeadersConflictsTest extends TestCase
 {
     public function testObjectArrayCombinedConflictObject()
     {

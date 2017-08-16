@@ -4,65 +4,94 @@ namespace Keboola\Json;
 
 class NodePath
 {
-    const ARRAY_NAME = '[]';
     /**
      * @var array
      */
     private $path;
 
+    /**
+     * NodePath constructor.
+     * @param array $path
+     */
     public function __construct(array $path)
     {
         $this->path = $path;
     }
 
-    public function __toString()
+    /**
+     * @return string
+     */
+    public function __toString() : string
     {
         return implode('.', $this->path);
     }
 
-    public function toCleanString()
+    /**
+     * Convert path to user-display string.
+     * @return string
+     */
+    public function toCleanString() : string
     {
         $path = array_filter($this->path, function ($val) { return $val != '[]';});
         return implode('.', $path);
     }
 
-    public function addArrayChild()
-    {
-        $path = $this->path;
-        $path[] = self::ARRAY_NAME;
-        return new NodePath($path);
-    }
-
-    public function addChild($key)
+    /**
+     * Return new path with an added child.
+     * @param string $key
+     * @return NodePath
+     */
+    public function addChild(string $key) : NodePath
     {
         $path = $this->path;
         $path[] = $key;
         return new NodePath($path);
     }
 
-    public function isArray()
+    /**
+     * Return true if the path points to array.
+     * @return bool
+     */
+    public function isArray() : bool
     {
-        return end($this->path) == self::ARRAY_NAME;
+        return end($this->path) == Structure::ARRAY_NAME;
     }
 
-    public function popFirst(&$first)
+    /**
+     * Remove the first item from path and return new path
+     * @param string $first
+     * @return NodePath
+     */
+    public function popFirst(&$first) : NodePath
     {
         $path = $this->path;
         $first = array_shift($path);
         return new NodePath($path);
     }
 
-    public function isEmpty()
+    /**
+     * @return bool
+     */
+    public function isEmpty() : bool
     {
         return count($this->path) === 0;
     }
 
-    public function getLast()
+    /**
+     * Return last item of the path
+     * @return string
+     */
+    public function getLast() : string
     {
         return end($this->path);
     }
 
-    public function popLast() {
+    /**
+     * Remove last item of the path and return new path.
+     * @return NodePath
+     */
+    public function popLast() : NodePath
+    {
         $path = $this->path;
         array_pop($path);
         return new NodePath($path);

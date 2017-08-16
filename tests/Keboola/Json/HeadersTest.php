@@ -2,9 +2,10 @@
 
 namespace Keboola\Json;
 
+use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
-class HeadersTest extends \PHPUnit_Framework_TestCase
+class HeadersTest extends TestCase
 {
     /**
      * @expectedException \Keboola\Json\Exception\NoDataException

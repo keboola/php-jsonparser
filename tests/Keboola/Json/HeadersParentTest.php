@@ -2,9 +2,10 @@
 
 namespace Keboola\Json;
 
+use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
-class HeadersParentDataTest extends \PHPUnit_Framework_TestCase
+class HeadersParentDataTest extends TestCase
 {
     public function testObjectNestedArray()
     {

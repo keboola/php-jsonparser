@@ -2,9 +2,10 @@
 
 namespace Keboola\Json;
 
+use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
-class AnalyzerTest extends \PHPUnit_Framework_TestCase
+class AnalyzerTest extends TestCase
 {
     public function testAnalyzeExperimental()
     {
@@ -579,20 +580,8 @@ class AnalyzerTest extends \PHPUnit_Framework_TestCase
                 ]
             ]
         ];
-
         $analyzer->analyzeData($data1, 'test');
         $analyzer->analyzeData($data2, 'test');
-
-        self::assertEquals(
-            [
-                'test.arr' => ['data' => 'scalar'],
-                'test' => [
-                    'id' => 'scalar',
-                    'arr' => 'arrayOfscalar'
-                ]
-            ],
-            $analyzer->getStructure()->getData()
-        );
     }
 
     /**
@@ -805,7 +794,7 @@ class AnalyzerTest extends \PHPUnit_Framework_TestCase
             ],
             'test'
         );
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'test' => [
                     'nodeType' => 'array',
@@ -828,7 +817,7 @@ class AnalyzerTest extends \PHPUnit_Framework_TestCase
             ],
             'test'
         );
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'test' => [
                     'nodeType' => 'array',

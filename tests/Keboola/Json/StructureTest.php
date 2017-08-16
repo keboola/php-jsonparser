@@ -2,9 +2,9 @@
 
 namespace Keboola\Json;
 
-use Keboola\Json\Test\ParserTestCase;
+use PHPUnit\Framework\TestCase;
 
-class StructureTest extends ParserTestCase
+class StructureTest extends TestCase
 {
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException

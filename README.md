@@ -8,14 +8,14 @@ Uses Keboola\CsvFile for results
 ## Usage
 
 ```php
-    use Keboola\Json\Parser;
-	$parser = Parser::create(new \Monolog\Logger('json-parser'));
-	$file = file_get_contents("some/data.json");
-	$json = json_decode($file);
+use Keboola\Json\Parser;
+$parser = Parser::create(new \Monolog\Logger('json-parser'));
+$file = file_get_contents("some/data.json");
+$json = json_decode($file);
 
-	$parser->process($json);
+$parser->process($json);
 
-	$results = $parser->getCsvFiles(); // array of CsvFile objects
+$results = $parser->getCsvFiles(); // array of CsvFile objects
 ```
 
 
@@ -41,9 +41,9 @@ Analyzes and parses JSON data into n*CSV files.
 The analyze function loops through each row of an array (generally an array of results) and passes the row into analyzeRow() method. If the row only contains a string, it's stored in a "data" column, otherwise the row should usually be an object, so each of the object's variables will be used as a column name, and it's value analysed:
 - if it's a scalar, it'll be saved as a value of that column.
 - if it's another object, it'll be parsed recursively to analyzeRow(), with it's variable names prepended by current object's name
-	- example:
-			"parent": {
-				"child" : "value1"
-			}
-			will result into a "parent_child" column with a string type of "value1"
+    - example:
+        "parent": {
+            "child" : "value1"
+        }
+    will result into a "parent_child" column with a string type of "value1"
 - if it's an array, it'll be passed to analyze() to create a new table, linked by JSON_parentId

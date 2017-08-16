@@ -127,7 +127,7 @@ class Analyzer
     private function analyzeArray(array $array, NodePath $nodePath)
     {
         $oldType = null;
-        $nodePath = $nodePath->addArrayChild();
+        $nodePath = $nodePath->addChild(Structure::ARRAY_NAME);
          if (empty($array)) {
             $this->structure->saveNodeValue($nodePath, 'nodeType', 'null');
         }
