@@ -68,6 +68,15 @@ class Structure
         }
     }
 
+    private function getNodeName($nodeName)
+    {
+        if ($nodeName == '[]') {
+            return $nodeName;
+        } else {
+            return '_' . $nodeName;
+        }
+    }
+
     /**
      * Store a particular value of a particular property for a given node.
      * @param NodePath $nodePath Node Path
@@ -80,6 +89,7 @@ class Structure
     private function storeValue(NodePath $nodePath, array $data, string $property, $value) : array
     {
         $nodePath = $nodePath->popFirst($nodeName);
+        $nodeName = $this->getNodeName($nodeName);
         if (!isset($data[$nodeName])) {
             $data[$nodeName] = [];
         }
@@ -96,6 +106,13 @@ class Structure
         return $data;
     }
 
+    /**
+     * Upgrade a node to array
+     * @param array $node
+     * @param NodePath $nodePath
+     * @param string $newType
+     * @throws JsonParserException
+     */
     private function handleUpgrade(array $node, NodePath $nodePath, string $newType)
     {
         if ((($node['nodeType'] == 'array') || ($newType == 'array')) && $this->autoUpgradeToArray) {
@@ -185,6 +202,7 @@ class Structure
     private function storeNode(NodePath $nodePath, array $data, array $node) : array
     {
         $nodePath = $nodePath->popFirst($nodeName);
+        $nodeName = $this->getNodeName($nodeName);
         if ($nodePath->isEmpty()) {
             $data[$nodeName] = $node;
         } else {
@@ -221,6 +239,7 @@ class Structure
             $data = $this->data;
         }
         $nodePath = $nodePath->popFirst($nodeName);
+        $nodeName = $this->getNodeName($nodeName);
         if (!isset($data[$nodeName])) {
             return null;
         }
@@ -261,6 +280,7 @@ class Structure
             if ($nodeData['nodeType'] == 'object') {
                 foreach ($nodeData as $itemName => $value) {
                     if (is_array($value)) {
+                        if ($itemName != '[]') {$itemName = substr($itemName, 1);} // TODO nejak to fixnout
                         // it is a child node
                         if (isset($value[$property])) {
                             $result[$itemName] = $value[$property];
@@ -307,6 +327,7 @@ class Structure
         foreach ($this->data as $baseType => &$baseArray) {
             foreach ($baseArray as $nodeName => &$nodeData) {
                 if (is_array($nodeData)) {
+                    if ($nodeName != '[]') {$nodeName = substr($nodeName, 1);} // TODO nejak to fixnout
                     $this->generateHeaderName($nodeData, new NodePath([$baseType, $nodeName]), '[]', $baseType);
                 }
             }
@@ -411,6 +432,7 @@ class Structure
         }
         foreach ($data as $key => &$value) {
             if (is_array($value)) {
+                if ($key != '[]') {$key = substr($key, 1);}
                 if (!$parentName || (!empty($data[$key]['type']) && $data[$key]['type'] == 'parent')) {
                     // skip nesting if there is nowhere to nest (array or parent-type child)
                     $childName = $key;

@@ -27,11 +27,11 @@ class StructureTest extends TestCase
         $structure->saveNode(new NodePath(['root', '[]', 'prop']), ['nodeType' => 'scalar']);
         self::assertEquals(
             [
-                'root' => [
+                '_root' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'object',
-                        'prop' => [
+                        '_prop' => [
                             'nodeType' => 'scalar',
                         ],
                     ],
@@ -74,7 +74,7 @@ class StructureTest extends TestCase
         $structure->saveNodeValue(new NodePath(['root', '[]']), 'headerNames','my-object');
         self::assertEquals(
             [
-                'root' => [
+                '_root' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'object',
@@ -118,9 +118,9 @@ class StructureTest extends TestCase
         $structure->saveNodeValue(new NodePath(['root', 'obj']), 'nodeType','string');
         self::assertEquals(
             [
-                'root' => [
+                '_root' => [
                     'nodeType' => 'object',
-                    'obj' => [
+                    '_obj' => [
                         'nodeType' => 'string',
                     ],
                 ],
@@ -137,9 +137,9 @@ class StructureTest extends TestCase
         $structure->saveNodeValue(new NodePath(['root', 'obj']), 'nodeType','null');
         self::assertEquals(
             [
-                'root' => [
+                '_root' => [
                     'nodeType' => 'object',
-                    'obj' => [
+                    '_obj' => [
                         'nodeType' => 'object',
                     ],
                 ],
@@ -158,11 +158,11 @@ class StructureTest extends TestCase
         $structure->saveNodeValue(new NodePath(['root', '[]', 'str']), 'nodeType','array');
         self::assertEquals(
             [
-                'root' => [
+                '_root' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'object',
-                        'str' => [
+                        '_str' => [
                             '[]' => [
                                 'nodeType' => 'scalar',
                             ],
@@ -186,14 +186,14 @@ class StructureTest extends TestCase
         $structure->saveNodeValue(new NodePath(['root', '[]', 'obj']), 'nodeType','object');
         self::assertEquals(
             [
-                'root' => [
+                '_root' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'object',
-                        'obj' => [
+                        '_obj' => [
                             '[]' => [
                                 'nodeType' => 'object',
-                                'prop' => [
+                                '_prop' => [
                                     'nodeType' => 'scalar',
                                 ],
                             ],
@@ -217,14 +217,14 @@ class StructureTest extends TestCase
         $structure->saveNodeValue(new NodePath(['root', '[]', 'obj']), 'nodeType','array');
         self::assertEquals(
             [
-                'root' => [
+                '_root' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'object',
-                        'obj' => [
+                        '_obj' => [
                             '[]' => [
                                 'nodeType' => 'object',
-                                'prop' => [
+                                '_prop' => [
                                     'nodeType' => 'scalar',
                                 ],
                                 'headerNames' => 'data',
@@ -311,9 +311,9 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $data = [
-            'root' => [
+            '_root' => [
                 'nodeType' => 'object',
-                'obj' => [
+                '_obj' => [
                     'nodeType' => 'string',
                 ],
             ],
@@ -341,9 +341,9 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $data = [
-            'root' => [
+            '_root' => [
                 'nodeType' => 'object',
-                'obj' => [
+                '_obj' => [
                     'nodeType' => 'string',
                 ],
             ],
@@ -356,17 +356,17 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $data = [
-            'root' => [
+            '_root' => [
                 'nodeType' => 'object',
-                'obj' => [
+                '_obj' => [
                     'nodeType' => 'object',
-                    'prop1' => [
+                    '_prop1' => [
                         'nodeType' => 'array',
                         '[]' => [
                             'nodeType' => 'scalar',
                         ]
                     ],
-                    'prop2' => [
+                    '_prop2' => [
                         'nodeType' => 'scalar'
                     ],
                 ],
@@ -383,17 +383,17 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $data = [
-            'root' => [
+            '_root' => [
                 'nodeType' => 'object',
-                'obj' => [
+                '_obj' => [
                     'nodeType' => 'object',
-                    'prop1' => [
+                    '_prop1' => [
                         'nodeType' => 'array',
                         '[]' => [
                             'nodeType' => 'scalar',
                         ]
                     ],
-                    'prop2' => [
+                    '_prop2' => [
                         'nodeType' => 'scalar'
                     ],
                 ],
@@ -410,17 +410,17 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $data = [
-            'root' => [
+            '_root' => [
                 'nodeType' => 'object',
-                'obj' => [
+                '_obj' => [
                     'nodeType' => 'object',
-                    'prop1' => [
+                    '_prop1' => [
                         'nodeType' => 'array',
                         '[]' => [
                             'nodeType' => 'scalar'
                         ]
                     ],
-                    'prop2' => [
+                    '_prop2' => [
                         'nodeType' => 'scalar'
                     ],
                 ],
@@ -437,23 +437,23 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $data = [
-            'root' => [
+            '_root' => [
                 'nodeType' => 'array',
                 '[]' => [
                     'nodeType' => 'object',
-                    'a very long name of a property of an object which exceeds the length of 60 characters' => [
+                    '_a very long name of a property of an object which exceeds the length of 60 characters' => [
                         'nodeType' => 'object'
                     ],
-                    'some special characters!@##%$*&(^%$#09do' => [
+                    '_some special characters!@##%$*&(^%$#09do' => [
                         'nodeType' => 'scalar',
                     ],
-                    'prop2.something' => [
+                    '_prop2.something' => [
                         'nodeType' => 'scalar'
                     ],
-                    'prop2_something' => [
+                    '_prop2_something' => [
                         'nodeType' => 'scalar'
                     ],
-                    'array' => [
+                    '_array' => [
                         'nodeType' => 'array',
                         '[]' => [
                             'nodeType' => 'scalar',
@@ -466,25 +466,25 @@ class StructureTest extends TestCase
         $structure->generateHeaderNames();
         self::assertEquals(
             [
-                'root' => [
+                '_root' => [
                     '[]' => [
-                        'a very long name of a property of an object which exceeds the length of 60 characters' => [
+                        '_a very long name of a property of an object which exceeds the length of 60 characters' => [
                             'nodeType' => 'object',
                             'headerNames' => 'of_an_object_which_exceeds_the_length_of_60_characters',
                         ],
-                        'some special characters!@##%$*&(^%$#09do' => [
+                        '_some special characters!@##%$*&(^%$#09do' => [
                             'nodeType' => 'scalar',
                             'headerNames' => 'some_special_characters_09do'
                         ],
-                        'prop2.something' => [
+                        '_prop2.something' => [
                             'nodeType' => 'scalar',
                             'headerNames' => 'prop2_something',
                         ],
-                        'prop2_something' => [
+                        '_prop2_something' => [
                             'nodeType' => 'scalar',
                             'headerNames' => 'prop2_something_u0',
                         ],
-                        'array' => [
+                        '_array' => [
                             'nodeType' => 'array',
                             'headerNames' => 'array',
                             '[]' => [
@@ -516,7 +516,7 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $structure->load([
-            'root' => [
+            '_root' => [
                 'nodeType' => 'invalid-type',
                 '[]' => [
                     'nodeType' => 'scalar',
@@ -527,15 +527,15 @@ class StructureTest extends TestCase
 
     /**
      * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Undefined property invalidProperty
+     * @expectedExceptionMessage Undefined property _invalidProperty
      */
     public function testLoadInvalid2()
     {
         $structure = new Structure();
         $structure->load([
-            'root' => [
+            '_root' => [
                 'nodeType' => 'array',
-                'invalidProperty' => 'array',
+                '_invalidProperty' => 'array',
                 '[]' => [
                     'nodeType' => 'scalar',
                 ],
@@ -551,10 +551,10 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $structure->load([
-            'root' => [
+            '_root' => [
                 'headerNames' => 'root',
                 'nodeType' => 'array',
-                'invalidArray' => [
+                '_invalidArray' => [
                     'nodeType' => 'scalar',
                 ],
             ],
@@ -569,15 +569,15 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $structure->load([
-            'root' => [
+            '_root' => [
                 'nodeType' => 'array',
                 '[]' => [
                     'nodeType' => 'object',
-                    'prop1' => [
+                    '_prop1' => [
                         'nodeType' => 'scalar',
                         'type' => 'parent',
                     ],
-                    'prop2' => [
+                    '_prop2' => [
                         'nodeType' => [
                             'invalid-node-type'
                         ]
@@ -595,15 +595,15 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $structure->load([
-            'root' => [
+            '_root' => [
                 'nodeType' => 'array',
                 '[]' => [
                     'nodeType' => 'object',
-                    'prop1' => [
+                    '_prop1' => [
                         'nodeType' => 'scalar',
                         'type' => 'parent',
                     ],
-                    'prop2' => [
+                    '_prop2' => [
                         'nodeType' => 'object',
                         'invalid-property' => 'fooBar',
                     ],
@@ -620,7 +620,7 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $structure->load([
-            'root' => [
+            '_root' => [
                 '[]' => [
                     'nodeType' => 'object',
                 ],

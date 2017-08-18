@@ -269,24 +269,28 @@ class Parser
                 $previousNode = $this->structure->getNode($previousPath);
                 /* this is a WTF, but getHeaders is called for every row, so the below code must
                      not be called if the parent was already generated. */
-                if (!isset($previousNode[$key]) && !isset($nodeData['[]'][$key]) && empty($nodeData[$key]['type'])
-                    && empty($nodeData['[]'][$key]['type'])) {
+                if (!isset($previousNode[$key]) && !isset($nodeData['[]']['_' . $key]) && empty($nodeData['_' . $key]['type'])
+                    && empty($nodeData['[]']['_' . $key]['type'])) {
                     // check that there is a column with a same name as a column with parent name
-                    if (isset($previousNode['[]'][$key])) {
+                    // TODO: tohle nejak fixnout
+                    if (isset($previousNode['[]']['_' . $key])) {
                         // generate new column name
                         $newColName = $key;
                         $i = 0;
-                        while (isset($previousNode['[]'][$newColName])) {
+                        while (isset($previousNode['[]']['_' . $newColName])) {
                             $newColName = $key . '_u' . $i;
                             $i++;
                         }
                         // rename the column in parent
+                        //$nnewColName = $newColName;
+                       // if ($newColName != '[]') {$nnewColName = substr($newColName, 1);} // TODO nejak to fixnout
                         $parent[$newColName] = $value;
                         unset($parent[$key]);
                         $key = $newColName;
                     }
                     // either way we need to store the parent column in structure
-                    $previousNode['[]'][$key] = ['nodeType' => 'scalar', 'type' => 'parent'];
+                    // TODO: tohle nejak fixnout
+                    $previousNode['[]']['_' . $key] = ['nodeType' => 'scalar', 'type' => 'parent'];
                     $this->structure->saveNode($previousPath, $previousNode);
                     $this->structure->generateHeaderNames();
                     $nodeData = $this->structure->getNode($nodePath);
@@ -296,6 +300,7 @@ class Parser
         foreach ($nodeData as $nodeName => $data) {
             if (is_array($data) && ($data['nodeType'] == 'object')) {
                 $pparent = false;
+                if ($nodeName != '[]') {$nodeName = substr($nodeName, 1);} // TODO nejak to fixnout
                 $ch = $this->getHeaders($nodePath->addChild($nodeName), $pparent);
                 $headers = array_merge($headers, $ch);
             } else if (is_array($data)) {

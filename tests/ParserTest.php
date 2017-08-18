@@ -720,14 +720,14 @@ class ParserTest extends ParserTestCase
     public function testIncompleteData()
     {
         $definitions = [
-            'root' => [
+            '_root' => [
                 'nodeType' => 'array',
                 '[]' => [
                     'nodeType' => 'object',
-                    'id' => [
+                    '_id' => [
                         'nodeType' => 'scalar',
                     ],
-                    'value' => [
+                    '_value' => [
                         'nodeType' => 'scalar',
                     ],
                 ],

@@ -36,26 +36,26 @@ class AnalyzerTest extends TestCase
 
         self::assertEquals(
             [
-                'root' => [
+                '_root' => [
                     '[]' => [
-                        'id' => [
+                        '_id' => [
                             'nodeType' => 'scalar'
                         ],
-                        'arr' => [
+                        '_arr' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'scalar'
                             ]
                         ],
-                        'obj' => [
+                        '_obj' => [
                             'nodeType' => 'object',
-                            'str' => [
+                            '_str' => [
                                 'nodeType' => 'scalar'
                             ],
-                            'double' => [
+                            '_double' => [
                                 'nodeType' => 'scalar'
                             ],
-                            'scalar' => [
+                            '_scalar' => [
                                 'nodeType' => 'scalar'
                             ]
                         ],
@@ -96,26 +96,26 @@ class AnalyzerTest extends TestCase
 
         self::assertEquals(
             [
-                'root' => [
+                '_root' => [
                     '[]' => [
-                        'id' => [
+                        '_id' => [
                             'nodeType' => 'scalar'
                         ],
-                        'arr' => [
+                        '_arr' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'scalar'
                             ]
                         ],
-                        'obj' => [
+                        '_obj' => [
                             'nodeType' => 'object',
-                            'str' => [
+                            '_str' => [
                                 'nodeType' => 'scalar'
                             ],
-                            'double' => [
+                            '_double' => [
                                 'nodeType' => 'scalar'
                             ],
-                            'scalar' => [
+                            '_scalar' => [
                                 'nodeType' => 'scalar'
                             ]
                         ],
@@ -161,29 +161,29 @@ class AnalyzerTest extends TestCase
 
         self::assertEquals(
             [
-                'root' => [
+                '_root' => [
                     '[]' => [
-                        'id' => [
+                        '_id' => [
                             'nodeType' => 'scalar'
                         ],
-                        'arr' => [
+                        '_arr' => [
                             '[]' => [
                                 'nodeType' => 'scalar'
                             ],
                             'nodeType' => 'array'
                         ],
-                        'obj' => [
+                        '_obj' => [
                             'nodeType' => 'object',
-                            'str' => [
+                            '_str' => [
                                 'nodeType' => 'scalar'
                             ],
-                            'double' => [
+                            '_double' => [
                                 'nodeType' => 'scalar'
                             ],
-                            'arr2' => [
+                            '_arr2' => [
                                 '[]' => [
                                     'nodeType' => 'object',
-                                    'id' => [
+                                    '_id' => [
                                         'nodeType' => 'scalar'
                                     ],
                                 ],
@@ -226,24 +226,24 @@ class AnalyzerTest extends TestCase
 
         self::assertEquals(
             [
-                'root' => [
+                '_root' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'object',
-                        'arr' => [
+                        '_arr' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'scalar'
                             ]
                         ],
-                        'obj' => [
+                        '_obj' => [
                             'nodeType' => 'object',
-                            'str' => [
+                            '_str' => [
                                 'nodeType' => 'scalar'
                             ],
-                            'obj2' => [
+                            '_obj2' => [
                                 'nodeType' => 'object',
-                                'id' => [
+                                '_id' => [
                                     'nodeType' => 'scalar'
                                 ]
                             ]
@@ -280,25 +280,25 @@ class AnalyzerTest extends TestCase
 
         self::assertEquals(
             [
-                'root' => [
+                '_root' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'object',
-                        'id' => [
+                        '_id' => [
                             'nodeType' => 'integer',
                         ],
-                        'arr' => [
+                        '_arr' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'integer'
                             ]
                         ],
-                        'obj' => [
+                        '_obj' => [
                             'nodeType' => 'object',
-                            'str' => [
+                            '_str' => [
                                 'nodeType' => 'string'
                             ],
-                            'double' => [
+                            '_double' => [
                                 'nodeType' => 'double'
                             ],
                         ],
@@ -351,30 +351,30 @@ class AnalyzerTest extends TestCase
 
         self::assertEquals(
             [
-                'root' => [
+                '_root' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'object',
-                        'id' => [
+                        '_id' => [
                             'nodeType' => 'scalar'
                         ],
-                        'arr' => [
+                        '_arr' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'scalar',
                             ],
                         ],
-                        'arrOfScalars' => [
+                        '_arrOfScalars' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'scalar'
                             ],
                         ],
-                        'arrOfObjects' => [
+                        '_arrOfObjects' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'object',
-                                'innerId' => [
+                                '_innerId' => [
                                     'nodeType' => 'scalar',
                                 ],
                             ],
@@ -443,7 +443,7 @@ class AnalyzerTest extends TestCase
 
         self::assertEquals(
             [
-                'test' => [
+                '_test' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'null',
@@ -469,14 +469,14 @@ class AnalyzerTest extends TestCase
 
         self::assertEquals(
             [
-                'test' => [
+                '_test' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'object',
-                        'k' => [
+                        '_k' => [
                             'nodeType' => 'scalar'
                         ],
-                        'field' => [
+                        '_field' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'scalar'
@@ -511,14 +511,14 @@ class AnalyzerTest extends TestCase
 
         self::assertEquals(
             [
-                'test' => [
+                '_test' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'object',
-                        'id' => [
+                        '_id' => [
                             'nodeType' => 'scalar',
                         ],
-                        'arr' => [
+                        '_arr' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'scalar',
@@ -631,18 +631,18 @@ class AnalyzerTest extends TestCase
 
         self::assertEquals(
             [
-                'test' => [
+                '_test' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'object',
-                        'id' => [
+                        '_id' => [
                             'nodeType' => 'scalar'
                         ],
-                        'arr' => [
+                        '_arr' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'object',
-                                'val' => [
+                                '_val' => [
                                     'nodeType' => 'scalar',
                                 ],
                             ],
@@ -683,18 +683,18 @@ class AnalyzerTest extends TestCase
 
         self::assertEquals(
             [
-                'test' => [
+                '_test' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'object',
-                        'id' => [
+                        '_id' => [
                             'nodeType' => 'scalar',
                         ],
-                        'arr' => [
+                        '_arr' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'object',
-                                'val' => [
+                                '_val' => [
                                     'nodeType' => 'scalar',
                                 ],
                             ],
@@ -739,42 +739,42 @@ class AnalyzerTest extends TestCase
 
         self::assertEquals(
             [
-                's2null' => [
+                '_s2null' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'object',
-                        'val' => [
+                        '_val' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'scalar'
                             ],
                         ],
-                        'obj' => [
+                        '_obj' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'object',
-                                'key' => [
+                                '_key' => [
                                     'nodeType' => 'scalar'
                                 ],
                             ],
                         ],
                     ],
                 ],
-                'null2s' => [
+                '_null2s' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'object',
-                        'val' => [
+                        '_val' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'scalar',
                             ],
                         ],
-                        'obj' => [
+                        '_obj' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'object',
-                                'key' => [
+                                '_key' => [
                                     'nodeType' => 'scalar'
                                 ]
                             ],
@@ -798,7 +798,7 @@ class AnalyzerTest extends TestCase
         );
         self::assertEquals(
             [
-                'test' => [
+                '_test' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'string'
@@ -821,7 +821,7 @@ class AnalyzerTest extends TestCase
         );
         self::assertEquals(
             [
-                'test' => [
+                '_test' => [
                     'nodeType' => 'array',
                     '[]' => [
                         'nodeType' => 'scalar'
@@ -849,28 +849,28 @@ class AnalyzerTest extends TestCase
         self::assertEquals(
             [
 
-                'test' => [
+                '_test' => [
                     '[]' => [
                         'nodeType' => 'object',
-                        'id' => [
+                        '_id' => [
                             'nodeType' => 'integer',
                         ],
-                        'arr' => [
+                        '_arr' => [
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'integer',
                             ],
                         ],
-                        'string' => [
+                        '_string' => [
                             'nodeType' => 'string',
                         ],
-                        'float' => [
+                        '_float' => [
                             'nodeType' => 'double',
                         ],
-                        'bool' => [
+                        '_bool' => [
                             'nodeType' => 'boolean',
                         ],
-                        'null' => [
+                        '_null' => [
                             'nodeType' => 'null',
                         ],
                     ],
