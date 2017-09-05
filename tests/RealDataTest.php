@@ -267,4 +267,32 @@ class RealDataTest extends ParserTestCase
             "\"0.01\",\"root_692c6f543db16772f6a86c8baa0e62be\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_data']));
     }
+
+    public function testEmptyArray()
+    {
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{
+                "components": [
+                    {
+                        "id": "a1",
+                        "data": []
+                    },
+                    {
+                        "id": "b1",
+                        "data": ["test"]
+                    }
+                ]
+            }'
+        );
+        $parser->process($testFile->components);
+        self::assertEquals(['root', 'root_data'], array_keys($parser->getCsvFiles()));
+        $result = "\"id\",\"data\"\n" .
+            "\"a1\",\"\"\n" .
+            "\"b1\",\"root_5befb93e296c823d90e855bc25136d9e\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+        $result = "\"data\",\"JSON_parentId\"\n" .
+            "\"test\",\"root_5befb93e296c823d90e855bc25136d9e\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_data']));
+    }
 }

@@ -217,7 +217,10 @@ class Parser
                 }
                 $sf = $this->structure->getNodeProperty($nodePath->addChild($column), 'headerNames');
                 $csvRow->setValue($sf, $arrayParentId);
-                $this->parse($dataRow->{$column}, $nodePath->addChild($column)->addChild(Structure::ARRAY_NAME), $arrayParentId);
+                $this->parse(
+                    $dataRow->{$column},
+                    $nodePath->addChild($column)->addChild(Structure::ARRAY_NAME), $arrayParentId
+                );
                 break;
             case "object":
                 $childRow = $this->parseRow($dataRow->{$column}, $nodePath->addChild($column), [], $arrayParentId);
@@ -267,30 +270,32 @@ class Parser
                 // check all parent columns
                 $previousPath = $nodePath->popLast();
                 $previousNode = $this->structure->getNode($previousPath);
-                /* this is a WTF, but getHeaders is called for every row, so the below code must
+                /* this is a slight WTF, but getHeaders is called for every row, so the below code must
                      not be called if the parent was already generated. */
-                if (!isset($previousNode[$key]) && !isset($nodeData['[]']['_' . $key]) && empty($nodeData['_' . $key]['type'])
-                    && empty($nodeData['[]']['_' . $key]['type'])) {
+                $actualKey = $this->structure->encodeNodeName($key);
+                if (!isset($previousNode[$key]) && !isset($nodeData[Structure::ARRAY_NAME][$actualKey]) &&
+                    empty($nodeData[$actualKey]['type']) &&
+                    empty($nodeData[Structure::ARRAY_NAME][$actualKey]['type'])
+                ) {
                     // check that there is a column with a same name as a column with parent name
-                    // TODO: tohle nejak fixnout
-                    if (isset($previousNode['[]']['_' . $key])) {
+                    if (isset($previousNode[Structure::ARRAY_NAME][$actualKey])) {
                         // generate new column name
                         $newColName = $key;
                         $i = 0;
-                        while (isset($previousNode['[]']['_' . $newColName])) {
+                        while (isset($previousNode[Structure::ARRAY_NAME]
+                            [$this->structure->encodeNodeName($newColName)])
+                        ) {
                             $newColName = $key . '_u' . $i;
                             $i++;
                         }
                         // rename the column in parent
-                        //$nnewColName = $newColName;
-                       // if ($newColName != '[]') {$nnewColName = substr($newColName, 1);} // TODO nejak to fixnout
                         $parent[$newColName] = $value;
                         unset($parent[$key]);
                         $key = $newColName;
                     }
                     // either way we need to store the parent column in structure
-                    // TODO: tohle nejak fixnout
-                    $previousNode['[]']['_' . $key] = ['nodeType' => 'scalar', 'type' => 'parent'];
+                    $previousNode[Structure::ARRAY_NAME][$this->structure->encodeNodeName($key)] =
+                        ['nodeType' => 'scalar', 'type' => 'parent'];
                     $this->structure->saveNode($previousPath, $previousNode);
                     $this->structure->generateHeaderNames();
                     $nodeData = $this->structure->getNode($nodePath);
@@ -300,7 +305,7 @@ class Parser
         foreach ($nodeData as $nodeName => $data) {
             if (is_array($data) && ($data['nodeType'] == 'object')) {
                 $pparent = false;
-                if ($nodeName != '[]') {$nodeName = substr($nodeName, 1);} // TODO nejak to fixnout
+                $nodeName = $this->structure->decodeNodeName($nodeName);
                 $ch = $this->getHeaders($nodePath->addChild($nodeName), $pparent);
                 $headers = array_merge($headers, $ch);
             } else if (is_array($data)) {
