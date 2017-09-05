@@ -15,7 +15,7 @@ class StructureTest extends TestCase
     public function testSaveNodeInvalid()
     {
         $structure = new Structure();
-        $structure->saveNode(new NodePath(['root', '[]']), ['nodeType' => 'array']);
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'array']);
         self::assertEquals([], $structure->getData());
     }
 
@@ -23,8 +23,8 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
-        $structure->saveNode(new NodePath(['root', '[]']), ['nodeType' => 'object']);
-        $structure->saveNode(new NodePath(['root', '[]', 'prop']), ['nodeType' => 'scalar']);
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'object']);
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME, 'prop']), ['nodeType' => 'scalar']);
         self::assertEquals(
             [
                 '_root' => [
@@ -49,7 +49,7 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
-        $structure->saveNode(new NodePath(['root', '[]']), ['nodeType' => ['object']]);
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => ['object']]);
         $structure->getData();
     }
 
@@ -61,8 +61,10 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
-        $structure->saveNode(new NodePath(['root', '[]']), ['nodeType' => 'object']);
-        $structure->saveNode(new NodePath(['root', '[]', '[]']), ['nodeType' => 'scalar']);
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'object']);
+        $structure->saveNode(
+            new NodePath(['root', Structure::ARRAY_NAME, Structure::ARRAY_NAME]), ['nodeType' => 'scalar']
+        );
         $structure->getData();
     }
 
@@ -70,8 +72,8 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
-        $structure->saveNode(new NodePath(['root', '[]']), ['nodeType' => 'object']);
-        $structure->saveNodeValue(new NodePath(['root', '[]']), 'headerNames','my-object');
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'object']);
+        $structure->saveNodeValue(new NodePath(['root', Structure::ARRAY_NAME]), 'headerNames','my-object');
         self::assertEquals(
             [
                 '_root' => [
@@ -152,10 +154,14 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
-        $structure->saveNode(new NodePath(['root', '[]']), ['nodeType' => 'object']);
-        $structure->saveNode(new NodePath(['root', '[]', 'str']), ['nodeType' => 'scalar']);
-        $structure->saveNodeValue(new NodePath(['root', '[]', 'str', '[]']), 'nodeType','scalar');
-        $structure->saveNodeValue(new NodePath(['root', '[]', 'str']), 'nodeType','array');
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'object']);
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME, 'str']), ['nodeType' => 'scalar']);
+        $structure->saveNodeValue(
+            new NodePath(['root', Structure::ARRAY_NAME, 'str', Structure::ARRAY_NAME]),
+            'nodeType',
+            'scalar'
+        );
+        $structure->saveNodeValue(new NodePath(['root', Structure::ARRAY_NAME, 'str']), 'nodeType','array');
         self::assertEquals(
             [
                 '_root' => [
@@ -179,11 +185,14 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
-        $structure->saveNode(new NodePath(['root', '[]']), ['nodeType' => 'object']);
-        $structure->saveNode(new NodePath(['root', '[]', 'obj']), ['nodeType' => 'array']);
-        $structure->saveNode(new NodePath(['root', '[]', 'obj', '[]']), ['nodeType' => 'object']);
-        $structure->saveNode(new NodePath(['root', '[]', 'obj', '[]', 'prop']), ['nodeType' => 'scalar']);
-        $structure->saveNodeValue(new NodePath(['root', '[]', 'obj']), 'nodeType','object');
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'object']);
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), ['nodeType' => 'array']);
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME, 'obj', '[]']), ['nodeType' => 'object']);
+        $structure->saveNode(
+            new NodePath(['root', Structure::ARRAY_NAME, 'obj', Structure::ARRAY_NAME, 'prop']),
+            ['nodeType' => 'scalar']
+        );
+        $structure->saveNodeValue(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), 'nodeType','object');
         self::assertEquals(
             [
                 '_root' => [
@@ -210,11 +219,20 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
-        $structure->saveNode(new NodePath(['root', '[]']), ['nodeType' => 'object']);
-        $structure->saveNode(new NodePath(['root', '[]', 'obj']), ['nodeType' => 'object', 'headerNames' => 'my-obj']);
-        $structure->saveNode(new NodePath(['root', '[]', 'obj', '[]']), ['nodeType' => 'object']);
-        $structure->saveNode(new NodePath(['root', '[]', 'obj', '[]', 'prop']), ['nodeType' => 'scalar']);
-        $structure->saveNodeValue(new NodePath(['root', '[]', 'obj']), 'nodeType','array');
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'object']);
+        $structure->saveNode(
+            new NodePath(['root', Structure::ARRAY_NAME, 'obj']),
+            ['nodeType' => 'object', 'headerNames' => 'my-obj']
+        );
+        $structure->saveNode(
+            new NodePath(['root', Structure::ARRAY_NAME, 'obj', Structure::ARRAY_NAME]),
+            ['nodeType' => 'object']
+        );
+        $structure->saveNode(
+            new NodePath(['root', Structure::ARRAY_NAME, 'obj', Structure::ARRAY_NAME, 'prop']),
+        ['nodeType' => 'scalar']
+    );
+        $structure->saveNodeValue(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), 'nodeType','array');
         self::assertEquals(
             [
                 '_root' => [
@@ -247,9 +265,9 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
-        $structure->saveNode(new NodePath(['root', '[]']), ['nodeType' => 'object']);
-        $structure->saveNode(new NodePath(['root', '[]', 'obj']), ['nodeType' => 'object']);
-        $structure->saveNodeValue(new NodePath(['root', '[]', 'obj']), 'nodeType','array');
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'object']);
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), ['nodeType' => 'object']);
+        $structure->saveNodeValue(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), 'nodeType','array');
     }
 
     /**
@@ -260,9 +278,9 @@ class StructureTest extends TestCase
     {
         $structure = new Structure(false);
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
-        $structure->saveNode(new NodePath(['root', '[]']), ['nodeType' => 'object']);
-        $structure->saveNode(new NodePath(['root', '[]', 'obj']), ['nodeType' => 'object']);
-        $structure->saveNodeValue(new NodePath(['root', '[]', 'obj']), 'nodeType','array');
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'object']);
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), ['nodeType' => 'object']);
+        $structure->saveNodeValue(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), 'nodeType','array');
     }
 
     /**
@@ -273,9 +291,9 @@ class StructureTest extends TestCase
     {
         $structure = new Structure(false);
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
-        $structure->saveNode(new NodePath(['root', '[]']), ['nodeType' => 'object']);
-        $structure->saveNode(new NodePath(['root', '[]', 'obj']), ['nodeType' => 'object']);
-        $structure->saveNodeValue(new NodePath(['root', '[]', 'obj']), 'nodeType','string');
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'object']);
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), ['nodeType' => 'object']);
+        $structure->saveNodeValue(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), 'nodeType','string');
     }
 
     /**
@@ -286,10 +304,10 @@ class StructureTest extends TestCase
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
-        $structure->saveNode(new NodePath(['root', '[]']), ['nodeType' => 'object']);
-        $structure->saveNode(new NodePath(['root', '[]', 'str']), ['nodeType' => 'scalar']);
-        $structure->saveNodeValue(new NodePath(['root', '[]', 'str', '[]']), 'nodeType','object');
-        $structure->saveNodeValue(new NodePath(['root', '[]', 'str']), 'nodeType','array');
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'object']);
+        $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME, 'str']), ['nodeType' => 'scalar']);
+        $structure->saveNodeValue(new NodePath(['root', Structure::ARRAY_NAME, 'str', '[]']), 'nodeType','object');
+        $structure->saveNodeValue(new NodePath(['root', Structure::ARRAY_NAME, 'str']), 'nodeType','array');
     }
 
     public function testLoad()
@@ -505,7 +523,10 @@ class StructureTest extends TestCase
     public function testGetTypeFromPath()
     {
         $structure = new Structure();
-        self::assertEquals('root_prop', $structure->getTypeFromNodePath(new NodePath(['root', '[]', 'prop'])));
+        self::assertEquals(
+            'root_prop',
+            $structure->getTypeFromNodePath(new NodePath(['root', Structure::ARRAY_NAME, 'prop']))
+        );
     }
 
     /**

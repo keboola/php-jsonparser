@@ -32,7 +32,7 @@ class NodePath
      */
     public function toCleanString() : string
     {
-        $path = array_filter($this->path, function ($val) { return $val != '[]';});
+        $path = array_filter($this->path, function ($val) { return $val != Structure::ARRAY_NAME;});
         return implode('.', $path);
     }
 

@@ -329,7 +329,7 @@ class Structure
         $values = $this->getNodeChildrenProperties($nodePath, 'nodeType');
         $result = [];
         foreach ($values as $key => $value) {
-            if ($key === '[]') {
+            if ($key === self::ARRAY_NAME) {
                 $result[self::DATA_COLUMN] = $value;
             } else {
                 $result[$key] = $value;
@@ -347,7 +347,12 @@ class Structure
             foreach ($baseArray as $nodeName => &$nodeData) {
                 if (is_array($nodeData)) {
                     $nodeName = $this->decodeNodeName($nodeName);
-                    $this->generateHeaderName($nodeData, new NodePath([$baseType, $nodeName]), '[]', $baseType);
+                    $this->generateHeaderName(
+                        $nodeData,
+                        new NodePath([$baseType, $nodeName]),
+                        self::ARRAY_NAME, // # root is always array
+                        $baseType
+                    );
                 }
             }
         }
@@ -436,7 +441,8 @@ class Structure
     {
         if (empty($data['headerNames'])) {
             // write only once, because generateHeaderName may be called repeatedly
-            if ($parentName != '[]') {
+            if ($parentName != self::ARRAY_NAME) {
+                // do not generate headers for arrays
                 $headerName = $this->getSafeName($parentName);
                 $headerName = $this->getUniqueName($baseType, $headerName);
                 $data['headerNames'] = $headerName;
@@ -451,7 +457,7 @@ class Structure
         }
         foreach ($data as $key => &$value) {
             if (is_array($value)) {
-                if ($key != '[]') {$key = substr($key, 1);}
+                $key = $this->decodeNodeName($key);
                 if (!$parentName || (!empty($data[$key]['type']) && $data[$key]['type'] == 'parent')) {
                     // skip nesting if there is nowhere to nest (array or parent-type child)
                     $childName = $key;

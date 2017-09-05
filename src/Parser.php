@@ -408,7 +408,8 @@ class Parser
     {
         // parse what's in cache before returning results
         while ($batch = $this->cache->getNext()) {
-            $this->parse($batch["data"], new NodePath([$batch['type'], '[]']), $batch["parentId"]);
+            // root node is always array
+            $this->parse($batch["data"], new NodePath([$batch['type'], Structure::ARRAY_NAME]), $batch["parentId"]);
         }
         return $this->csvFiles;
     }
