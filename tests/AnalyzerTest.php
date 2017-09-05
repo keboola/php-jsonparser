@@ -880,5 +880,4 @@ class AnalyzerTest extends TestCase
             $analyzer->getStructure()->getData()
         );
     }
-
 }

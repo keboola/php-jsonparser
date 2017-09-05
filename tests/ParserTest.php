@@ -32,7 +32,8 @@ class ParserTest extends ParserTestCase
         ]');
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $parser->process($json, 'entities');
-        self:self::assertEquals("\"data\",\"JSON_parentId\"\n" .
+        self:self::assertEquals(
+            "\"data\",\"JSON_parentId\"\n" .
             "\"0\",\"entities.hashtags_7166de1f0241156ee048591b4492bc56\"\n" .
             "\"4\",\"entities.hashtags_7166de1f0241156ee048591b4492bc56\"\n" .
             "\"\",\"entities.hashtags_7166de1f0241156ee048591b4492bc56\"\n",

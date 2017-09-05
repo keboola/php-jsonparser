@@ -142,5 +142,4 @@ class HeaderConflictsTest extends TestCase
             "\"b\",\"root.first_06f40a9e874ef5271aaf5fb696c5d428\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_first_second']));
     }
-
 }

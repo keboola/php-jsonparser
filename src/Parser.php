@@ -219,7 +219,8 @@ class Parser
                 $csvRow->setValue($sf, $arrayParentId);
                 $this->parse(
                     $dataRow->{$column},
-                    $nodePath->addChild($column)->addChild(Structure::ARRAY_NAME), $arrayParentId
+                    $nodePath->addChild($column)->addChild(Structure::ARRAY_NAME),
+                    $arrayParentId
                 );
                 break;
             case "object":

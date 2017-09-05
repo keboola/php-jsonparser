@@ -38,8 +38,8 @@ class Analyzer
         LoggerInterface $logger,
         Structure $structure,
         bool $nestedArraysAsJson = false,
-        bool $strict = false)
-    {
+        bool $strict = false
+    ) {
         $this->nestedArrayAsJson = $nestedArraysAsJson;
         $this->strict = $strict;
         $this->log = $logger;
@@ -74,7 +74,6 @@ class Analyzer
         $path = new NodePath([$rootType]);
         $this->analyzeArray($data, $path);
         $this->structure->saveNodeValue($path, 'nodeType', 'array');
-
     }
 
     /**
@@ -128,7 +127,7 @@ class Analyzer
     {
         $oldType = null;
         $nodePath = $nodePath->addChild(Structure::ARRAY_NAME);
-         if (empty($array)) {
+        if (empty($array)) {
             $this->structure->saveNodeValue($nodePath, 'nodeType', 'null');
         }
         foreach ($array as $row) {
