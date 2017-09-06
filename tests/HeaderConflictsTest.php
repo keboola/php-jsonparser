@@ -96,25 +96,110 @@ class HeaderConflictsTest extends TestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = \Keboola\Utils\jsonDecode(
             '{
-                "components": [{
-                    "someKey": "origin",
-                    "first": {
-                        "second": ["a", "b"],
-                        "third": {
-                            "fourth": "last"
+                "components": [
+                    {
+                        "someKey": "origin",
+                        "first": {
+                            "second": ["a", "b"],
+                            "third": {
+                                "fourth": "first"
+                            }
                         }
-                    }
-                }]
+                    },
+                    {
+                        "someKey": "origin2",
+                        "first": {
+                            "second": ["c", "d"],
+                            "third": {
+                                "fourth": "last"
+                            }
+                        }
+                    },
+                    {
+                        "first": {
+                            "second": ["e", "f"],
+                            "third": {
+                                "fourth": "really-last"
+                            }
+                        }
+                    }                                        
+                ]
             }'
         );
         $parser->process($testFile->components, 'boo', ['someKey' => 'someValue']);
 
         $result = "\"someKey\",\"first_second\",\"first_third_fourth\",\"someKey_u0\"\n" .
-            "\"origin\",\"boo.first_e9223139b42fd7d2c1ea16aac27af9c2\",\"last\",\"someValue\"\n";
+            "\"origin\",\"boo.first_7e79d183dd748759aa22be0fb6fc28cd\",\"first\",\"someValue\"\n" .
+            "\"origin2\",\"boo.first_08498865105c0356b251f57e041fc7b5\",\"last\",\"someValue\"\n" .
+            "\"\",\"boo.first_6444c4e0bd5ff7e054936b992fae8dd4\",\"really-last\",\"someValue\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo']));
         $result = "\"data\",\"JSON_parentId\"\n" .
-            "\"a\",\"boo.first_e9223139b42fd7d2c1ea16aac27af9c2\"\n" .
-            "\"b\",\"boo.first_e9223139b42fd7d2c1ea16aac27af9c2\"\n";
+            "\"a\",\"boo.first_7e79d183dd748759aa22be0fb6fc28cd\"\n" .
+            "\"b\",\"boo.first_7e79d183dd748759aa22be0fb6fc28cd\"\n" .
+            "\"c\",\"boo.first_08498865105c0356b251f57e041fc7b5\"\n" .
+            "\"d\",\"boo.first_08498865105c0356b251f57e041fc7b5\"\n" .
+            "\"e\",\"boo.first_6444c4e0bd5ff7e054936b992fae8dd4\"\n" .
+            "\"f\",\"boo.first_6444c4e0bd5ff7e054936b992fae8dd4\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo_first_second']));
+    }
+
+    public function testObjectArrayCombinedConflictParentIdArrayMultiBatch()
+    {
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{
+                "components": [
+                    {
+                        "someKey": "origin",
+                        "first": {
+                            "second": ["a", "b"],
+                            "third": {
+                                "fourth": "first"
+                            }
+                        }
+                    }                                    
+                ]
+            }'
+        );
+        $parser->process($testFile->components, 'boo', ['someKey' => 'someValue']);
+
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{
+                "components": [
+                    {
+                        "someKey": "origin2",
+                        "first": {
+                            "second": ["c", "d"],
+                            "third": {
+                                "fourth": "last"
+                            }
+                        }
+                    },
+                    {
+                        "first": {
+                            "second": ["e", "f"],
+                            "third": {
+                                "fourth": "really-last"
+                            }
+                        }
+                    }                                        
+                ]
+            }'
+        );
+        $parser->process($testFile->components, 'boo', ['someKey' => 'someValue']);
+
+        $result = "\"someKey\",\"first_second\",\"first_third_fourth\",\"someKey_u0\"\n" .
+            "\"origin\",\"boo.first_7e79d183dd748759aa22be0fb6fc28cd\",\"first\",\"someValue\"\n" .
+            "\"origin2\",\"boo.first_08498865105c0356b251f57e041fc7b5\",\"last\",\"someValue\"\n" .
+            "\"\",\"boo.first_6444c4e0bd5ff7e054936b992fae8dd4\",\"really-last\",\"someValue\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo']));
+        $result = "\"data\",\"JSON_parentId\"\n" .
+            "\"a\",\"boo.first_7e79d183dd748759aa22be0fb6fc28cd\"\n" .
+            "\"b\",\"boo.first_7e79d183dd748759aa22be0fb6fc28cd\"\n" .
+            "\"c\",\"boo.first_08498865105c0356b251f57e041fc7b5\"\n" .
+            "\"d\",\"boo.first_08498865105c0356b251f57e041fc7b5\"\n" .
+            "\"e\",\"boo.first_6444c4e0bd5ff7e054936b992fae8dd4\"\n" .
+            "\"f\",\"boo.first_6444c4e0bd5ff7e054936b992fae8dd4\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo_first_second']));
     }
 
