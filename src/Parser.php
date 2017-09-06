@@ -292,6 +292,7 @@ class Parser
                         // rename the column in parent
                         $parent[$newColName] = $value;
                         unset($parent[$key]);
+                        $this->structure->setParentTargetName($key, $newColName);
                         $key = $newColName;
                     }
                     // either way we need to store the parent column in structure
@@ -381,7 +382,7 @@ class Parser
      * @return array
      * @throws JsonParserException
      */
-    private function validateParentId($parentId)
+    private function validateParentId($parentId) : array
     {
         if (!empty($parentId)) {
             if (is_array($parentId)) {
@@ -393,12 +394,15 @@ class Parser
                         ]
                     );
                 }
-                return $parentId;
             } else {
-                return ['JSON_parentId' => $parentId];
+                $parentId = ['JSON_parentId' => $parentId];
             }
         }
-        return [];
+        $result = [];
+        foreach ($parentId as $key => $value) {
+            $result[$this->structure->getParentTargetName($key)] = $value;
+        }
+        return $result;
     }
 
     /**

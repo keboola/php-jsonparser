@@ -12,15 +12,36 @@ class Structure
      */
     const DATA_COLUMN = 'data';
 
+    /**
+     * Structure property storing node data type
+     */
     const PROP_NODE_DATA_TYPE = 'nodeType';
 
+    /**
+     * Structure property storing whether a type of node ('normal' or 'parent')
+     */
     const PROP_NODE_TYPE = 'type';
 
+    /**
+     * Structure property storing name of node in CSV file
+     */
     const PROP_HEADER = 'headerNames';
+
+    /**
+     * Special name of node for array containers
+     */
     const ARRAY_NAME = '[]';
 
+    /**
+     * Allowed data types
+     * @var array
+     */
     private static $nodeDataTypes = ['null', 'array', 'object', 'scalar', 'string', 'integer', 'double', 'boolean'];
 
+    /**
+     * Allowed node types
+     * @var array
+     */
     private static $nodeTypes = ['parent'];
 
     /**
@@ -37,6 +58,12 @@ class Structure
      * @var bool
      */
     private $autoUpgradeToArray;
+
+    /**
+     * List of parent columns and their aliases
+     * @var array
+     */
+    private $parentAliases;
 
     /**
      * Structure constructor.
@@ -356,6 +383,29 @@ class Structure
                 }
             }
         }
+    }
+
+    /**
+     * Get new name of a parent column
+     * @param $name
+     * @return mixed
+     */
+    public function getParentTargetName(string $name)
+    {
+        if (empty($this->parentAliases[$name])) {
+            return $name;
+        }
+        return $this->parentAliases[$name];
+    }
+
+    /**
+     * Set new name (used in CSV file) of a parent column.
+     * @param string $name Original name.
+     * @param string $target New Name.
+     */
+    public function setParentTargetName(string $name, string $target)
+    {
+        $this->parentAliases[$name] = $target;
     }
 
     /**
