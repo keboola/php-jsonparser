@@ -85,7 +85,7 @@ class HeaderConflictsTest extends TestCase
         $result = "\"JSON_parentId\",\"first_second\",\"first_third_fourth\",\"JSON_parentId_u0\"\n" .
             "\"origin\",\"root.first_cebcde73e3d46faaa92d77a7499dc9cf\",\"last\",\"someValue\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
-        $result = "\"data\",\"JSON_parentId\"\n" .
+        $result = "\"data\",\"JSON_parentId_u0\"\n" .
             "\"a\",\"root.first_cebcde73e3d46faaa92d77a7499dc9cf\"\n" .
             "\"b\",\"root.first_cebcde73e3d46faaa92d77a7499dc9cf\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_first_second']));

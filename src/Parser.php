@@ -397,6 +397,8 @@ class Parser
             } else {
                 $parentId = ['JSON_parentId' => $parentId];
             }
+        } else {
+            $parentId = [];
         }
         $result = [];
         foreach ($parentId as $key => $value) {
