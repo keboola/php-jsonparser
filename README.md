@@ -2,7 +2,9 @@
 
 ## Description
 Parses JSON strings into CSV files. Creates multiple tables from a single JSON. 
-Uses Keboola\CsvFile for results. The root of the JSON must be an array.
+Uses Keboola\CsvFile for results. The root of the JSON must be an array. JSON parser
+is part of [Generic Extractor](https://github.com/keboola/generic-extractor/)
+(see also end-user [documentation](https://developers.keboola.com/extend/generic-extractor/)).
 
 ## Usage
 
