@@ -1,18 +1,19 @@
 <?php
-namespace Keboola\Json;
 
-use Keboola\Json\Test\ParserTestCase;
+namespace Keboola\Json\Tests;
+
+use Keboola\Json\Analyzer;
+use Keboola\Json\Parser;
+use Keboola\Json\Structure;
+use Psr\Log\NullLogger;
 
 class RealDataTest extends ParserTestCase
 {
     public function testProcess()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
-
         $data = $this->loadJson('Json_tweets_pinkbike');
-
         $parser->process($data);
 
         foreach ($parser->getCsvFiles() as $name => $table) {
@@ -38,16 +39,14 @@ class RealDataTest extends ParserTestCase
         array_walk($dir, function (&$val) {
             $val = str_replace(".csv", "", $val);
         });
-        self::assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
+        self::assertEquals([".",".."], array_diff($dir, array_keys($parser->getCsvFiles())));
         self::assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
     }
 
     public function testTypeCharacters()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data = $this->loadJson('Json_tweets_pinkbike');
-
         $parser->process($data, 'a/b.c&d@e$f');
 
         self::assertEquals(
@@ -63,11 +62,11 @@ class RealDataTest extends ParserTestCase
                 'a_b_c_d_e_f_statuses_entities_user_mentions',
                 'a_b_c_d_e_f_statuses_entities_user_mentions_indices',
                 'a_b_c_d_e_f_statuses_retweeted_status_user_entities_url_urls',
-                'abcdefsrueuui__status_user_entities_url_urls_indices',
+                'a_e_f_statuses_retweeted_status_user_entities_url_urls_indices',
                 'a_b_c_d_e_f_statuses_retweeted_status_entities_urls',
                 'a_b_c_d_e_f_statuses_retweeted_status_entities_urls_indices',
                 'a_b_c_d_e_f_statuses_retweeted_status_entities_user_mentions',
-                'abcdefsreui__status_entities_user_mentions_indices',
+                'a_e_f_statuses_retweeted_status_entities_user_mentions_indices',
                 'a_b_c_d_e_f_statuses_user_entities_description_urls',
                 'a_b_c_d_e_f_statuses_user_entities_description_urls_indices',
                 'a_b_c_d_e_f_statuses_entities_media',
@@ -81,10 +80,8 @@ class RealDataTest extends ParserTestCase
 
     public function testRowCount()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data = $this->loadJson('Json_tweets_pinkbike');
-
         $parser->process($data);
 
         // -1 offset to compensate for header
@@ -98,9 +95,8 @@ class RealDataTest extends ParserTestCase
 
     public function testValidateHeader()
     {
-        $parser = $this->getParser();
-
-        $header = array(
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        $header = [
             "KIND_Baseline SEM_Conversions : KIND_Baseline SEM_Conversions: Click-through Conversions",
             "KIND_Baseline SEM_Conversions : KIND_Baseline SEM_Conversions: View-through Conversions",
             "KIND_Baseline SEM_Conversions : KIND_Baseline SEM_Conversions: Total Conversions",
@@ -130,52 +126,51 @@ class RealDataTest extends ParserTestCase
             "KIND_Conversions_Submissions : KIND_Projects_Conversions_Submissions: Total Conversions",
             "KIND_Conversions_Submissions : KIND_Projects_Conversions_Submissions: Click-through Revenue",
             "KIND_Conversions_Submissions : KIND_Projects_Conversions_Submissions: View-through Revenue",
-            "KIND_Conversions_Submissions : KIND_Projects_Conversions_Submissions: Total Revenue");
+            "KIND_Conversions_Submissions : KIND_Projects_Conversions_Submissions: Total Revenue"];
+        $data = array_combine($header, array_fill(0, count($header), 'boo'));
+        $parser->process(['items' => \Keboola\Utils\arrayToObject($data)], 'root');
+        $file = $parser->getCsvFiles()['root'];
 
-        $validHeader = self::callMethod($parser, 'validateHeader', array($header));
+        $expectedHeader = [
+            't_KIND_Baseline_SEM_Conversions_Click-through_Conversions',
+            't_KIND_Baseline_SEM_Conversions_View-through_Conversions',
+            'KIND_Baseline_SEM_Conversions_Total_Conversions',
+            't_KIND_Baseline_SEM_Conversions_Click-through_Revenue',
+            't_KIND_Baseline_SEM_Conversions_View-through_Revenue',
+            'Conversions_KIND_Baseline_SEM_Conversions_Total_Revenue',
+            't_KIND_Strong_Conversions_Pledges_Click-through_Conversions',
+            't_KIND_Strong_Conversions_Pledges_View-through_Conversions',
+            'Pledges_KIND_Strong_Conversions_Pledges_Total_Conversions',
+            't_KIND_Strong_Conversions_Pledges_Click-through_Revenue',
+            't_KIND_Strong_Conversions_Pledges_View-through_Revenue',
+            'Pledges_KIND_Strong_Conversions_Pledges_Total_Revenue',
+            't_KINDProjects_Retargeting_Click-through_Conversions',
+            't_KINDProjects_Retargeting_View-through_Conversions',
+            'Retargeting_KINDProjects_Retargeting_Total_Conversions',
+            't_KINDProjects_Retargeting_Click-through_Revenue',
+            't_Retargeting_KINDProjects_Retargeting_View-through_Revenue',
+            'Retargeting_KIND_Projects_Retargeting_Total_Revenue',
+            't_KIND_Projects_Conversions_Votes_Click-through_Conversions',
+            't_KIND_Projects_Conversions_Votes_View-through_Conversions',
+            'KIND_Projects_Conversions_Votes_Total_Conversions',
+            't_KIND_Projects_Conversions_Votes_Click-through_Revenue',
+            't_KIND_Projects_Conversions_Votes_View-through_Revenue',
+            'Conversions_KIND_Projects_Conversions_Votes_Total_Revenue',
+            't_Projects_Conversions_Submissions_Click-through_Conversions',
+            't_Projects_Conversions_Submissions_View-through_Conversions',
+            'KIND_Projects_Conversions_Submissions_Total_Conversions',
+            't_KIND_Projects_Conversions_Submissions_Click-through_Revenue',
+            't_KIND_Projects_Conversions_Submissions_View-through_Revenue',
+            'KIND_Projects_Conversions_Submissions_Total_Revenue'
+        ];
 
-        $expectedHeader = array(
-            "KSKSCtC__SEM_Conversions__Click-through_Conversions",
-            "KSKSVtC__KIND_Baseline_SEM_Conversions__View-through_Conversions",
-            "KSKSTC____KIND_Baseline_SEM_Conversions__Total_Conversions",
-            "KSKSCtR____KIND_Baseline_SEM_Conversions__Click-through_Revenue",
-            "KSKSVtR____KIND_Baseline_SEM_Conversions__View-through_Revenue",
-            "KSKSTR____KIND_Baseline_SEM_Conversions__Total_Revenue",
-            "KKCtC__Click-through_Conversions",
-            "KKVtC__KIND_Strong_Conversions_Pledges__View-through_Conversions",
-            "KKTC____KIND_Strong_Conversions_Pledges__Total_Conversions",
-            "KKCtR____KIND_Strong_Conversions_Pledges__Click-through_Revenue",
-            "KKVtR____KIND_Strong_Conversions_Pledges__View-through_Revenue",
-            "KKTR____KIND_Strong_Conversions_Pledges__Total_Revenue",
-            "KRKCtC____KINDProjects_Retargeting__Click-through_Conversions",
-            "KRKVtC____KINDProjects_Retargeting__View-through_Conversions",
-            "KRKTC__Retargeting___KINDProjects_Retargeting__Total_Conversions",
-            "KRKCtR____KINDProjects_Retargeting__Click-through_Revenue",
-            "KRKVtR____KINDProjects_Retargeting__View-through_Revenue",
-            "KRKTR__Retargeting___KIND_Projects_Retargeting__Total_Revenue",
-            "2282172e8d22d91520151a6df2413dd6",
-            "KKVtC__KIND_Projects_Conversions_Votes__View-through_Conversions",
-            "KKTC____KIND_Projects_Conversions_Votes__Total_Conversions",
-            "KKCtR____KIND_Projects_Conversions_Votes__Click-through_Revenue",
-            "KKVtR____KIND_Projects_Conversions_Votes__View-through_Revenue",
-            "KKTR____KIND_Projects_Conversions_Votes__Total_Revenue",
-            "08dcf2d087429e430b5b060f138472c6",
-            "KKVtC__View-through_Conversions",
-            "KKTC____KIND_Projects_Conversions_Submissions__Total_Conversions",
-            "KKCtR__Click-through_Revenue",
-            "KKVtR__View-through_Revenue",
-            "KKTR____KIND_Projects_Conversions_Submissions__Total_Revenue"
-        );
-
-        self::assertEquals($expectedHeader, $validHeader);
+        self::assertEquals($expectedHeader, $file->getHeader());
     }
 
     public function testPrimaryKeys()
     {
-        $parser = $this->getParser();
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $data = $this->loadJson('Json_tweets_pinkbike');
-
         $pks = [
             'root_statuses' => 'id',
             'root_statuses_entities_urls' => 'url,JSON_parentId'
@@ -195,13 +190,9 @@ class RealDataTest extends ParserTestCase
      */
     public function testProcessWithAutoUpgradeToArray()
     {
-        $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFilesPath = $this->getDataDir() . 'Json_tweets_pinkbike';
-
         $data = $this->loadJson('Json_tweets_pinkbike');
-
         $parser->process($data);
 
         foreach ($parser->getCsvFiles() as $name => $table) {
@@ -227,24 +218,81 @@ class RealDataTest extends ParserTestCase
         array_walk($dir, function (&$val) {
             $val = str_replace(".csv", "", $val);
         });
-        self::assertEquals(array(".",".."), array_diff($dir, array_keys($parser->getCsvFiles())));
+        self::assertEquals([".",".."], array_diff($dir, array_keys($parser->getCsvFiles())));
         self::assertContainsOnlyInstancesOf('\Keboola\CsvTable\Table', $parser->getCsvFiles());
     }
 
     public function testAssignLongColName()
     {
-        $parser = $this->getParser();
-        $parser->getStruct()->setAutoUpgradeToArray(true);
-
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         $testFile = $this->loadJson('kbc_components');
-
         $parser->process($testFile->components);
-
-        $result = '"id","d__DistributionGroups_outputs_histogramEstimates_persistent",' .
-            '"d__m__DistributionGroups_outputs_groupCharacteristics_persistent"' . PHP_EOL .
-            '"ag-forecastio","",""' . PHP_EOL .
-            '"rcp-distribution-groups","1","1"' . PHP_EOL;
+        $result = '"id","DistributionGroups_outputs_histogramEstimates_persistent",' .
+            '"DistributionGroups_outputs_groupCharacteristics_persistent"' . "\n" .
+            '"ag-forecastio","",""' . "\n" .
+            '"rcp-distribution-groups","1","1"' . "\n";
 
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+    }
+
+    public function testFloatHash()
+    {
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{
+                "components": [
+                    {
+                        "id": "a1",
+                        "data": [
+                            0.03
+                        ]
+                    },
+                    {
+                        "id": "b1",
+                        "data": [
+                            0.01
+                        ]
+                    }
+                ]
+            }'
+        );
+        $parser->process($testFile->components);
+        self::assertEquals(['root', 'root_data'], array_keys($parser->getCsvFiles()));
+        $result = "\"id\",\"data\"\n" .
+            "\"a1\",\"root_b986422c776b4dc62f413f7454753d94\"\n" .
+            "\"b1\",\"root_692c6f543db16772f6a86c8baa0e62be\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+        $result = "\"data\",\"JSON_parentId\"\n" .
+            "\"0.03\",\"root_b986422c776b4dc62f413f7454753d94\"\n" .
+            "\"0.01\",\"root_692c6f543db16772f6a86c8baa0e62be\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_data']));
+    }
+
+    public function testEmptyArray()
+    {
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{
+                "components": [
+                    {
+                        "id": "a1",
+                        "data": []
+                    },
+                    {
+                        "id": "b1",
+                        "data": ["test"]
+                    }
+                ]
+            }'
+        );
+        $parser->process($testFile->components);
+        self::assertEquals(['root', 'root_data'], array_keys($parser->getCsvFiles()));
+        $result = "\"id\",\"data\"\n" .
+            "\"a1\",\"\"\n" .
+            "\"b1\",\"root_5befb93e296c823d90e855bc25136d9e\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+        $result = "\"data\",\"JSON_parentId\"\n" .
+            "\"test\",\"root_5befb93e296c823d90e855bc25136d9e\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_data']));
     }
 }

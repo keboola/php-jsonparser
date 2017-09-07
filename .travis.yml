@@ -1,7 +1,7 @@
 language: php
 
 php:
-  - 7.0
+  - 7.1
 
 before_install:
   - composer install
@@ -14,9 +14,7 @@ script:
   - ./vendor/bin/phpunit --coverage-clover build/logs/clover.xml --whitelist=src/
 
 after_success:
-  - "./vendor/bin/test-reporter --stdout > codeclimate.json"
-  - 'curl -X POST -d @codeclimate.json -H ''Content-Type: application/json'' -H ''User-Agent:
-    Code Climate (PHP Test Reporter v0.1.1)'' https://codeclimate.com/test_reports'
+  - "./vendor/bin/test-reporter"
 
 notifications:
   slack:
