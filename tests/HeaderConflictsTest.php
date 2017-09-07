@@ -291,4 +291,59 @@ class HeaderConflictsTest extends TestCase
             "\"6\",\"last\",\"boo_b1f5855828a92efc42e75adb30a5933a\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo_first']));
     }
+
+    public function testObjectArrayCombinedConflictParentIdMetadata()
+    {
+        $metadata = [
+            '_components' => [
+                '[]' => [
+                    'nodeType' => 'object',
+                    '_id' => [
+                        'nodeType' => 'scalar',
+                        'headerNames' => 'id',
+                    ],
+                    '_column' => [
+                        'nodeType' => 'scalar',
+                        'headerNames' => 'column'
+                    ],
+                    'headerNames' => 'data',
+                    '_column_u0' => [
+                        'nodeType' => 'scalar',
+                        'type' => 'parent',
+                        'headerNames' => 'column_u0'
+                    ]
+                ],
+                'nodeType' => 'array'
+            ]
+        ];
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()), $metadata);
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{
+                "components": [
+                    {
+                        "id": 3,
+                        "column": "test"
+                    }                                    
+                ]
+            }'
+        );
+        $parser->process($testFile->components, 'components', ['column' => 'someValue']);
+
+        $testFile = \Keboola\Utils\jsonDecode(
+            '{
+                "components": [
+                    {
+                        "id": 4,
+                        "column": "test2"
+                    }                                    
+                ]
+            }'
+        );
+        $parser->process($testFile->components, 'components', ['column' => 'someValue']);
+        self::assertEquals(['components'], array_keys($parser->getCsvFiles()));
+        $result = "\"id\",\"column\",\"column_u0\"\n" .
+            "\"3\",\"test\",\"someValue\"\n" .
+            "\"4\",\"test2\",\"someValue\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['components']));
+    }
 }
