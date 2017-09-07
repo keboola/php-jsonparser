@@ -63,7 +63,7 @@ class Structure
      * List of parent columns and their aliases
      * @var array
      */
-    private $parentAliases;
+    private $parentAliases = [];
 
     /**
      * Structure constructor.

@@ -38,6 +38,7 @@ class StructureTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $structure->getData()
         );
@@ -88,6 +89,7 @@ class StructureTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $structure->getData()
         );
@@ -133,6 +135,7 @@ class StructureTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $structure->getData()
         );
@@ -154,6 +157,7 @@ class StructureTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $structure->getData()
         );
@@ -187,6 +191,7 @@ class StructureTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $structure->getData()
         );
@@ -223,6 +228,7 @@ class StructureTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $structure->getData()
         );
@@ -267,6 +273,7 @@ class StructureTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $structure->getData()
         );
@@ -337,6 +344,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
+            'parent_aliases' => []
         ];
         $structure->load($data);
         self::assertEquals($data, $structure->getData());
@@ -354,6 +362,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
+            'parent_aliases' => []
         ];
         $structure->load($data);
         self::assertEquals(['nodeType' => 'string'], $structure->getNode(new NodePath(['root', 'obj'])));
@@ -371,6 +380,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
+            'parent_aliases' => []
         ];
         $structure->load($data);
         self::assertNull($structure->getNode(new NodePath(['root', 'non-existent'])));
@@ -388,6 +398,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
+            'parent_aliases' => []
         ];
         $structure->load($data);
         self::assertEquals('string', $structure->getNodeProperty(new NodePath(['root', 'obj']), 'nodeType'));
@@ -414,6 +425,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
+            'parent_aliases' => []
         ];
         $structure->load($data);
         self::assertEquals(
@@ -443,6 +455,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
+            'parent_aliases' => []
         ];
         $structure->load($data);
         self::assertEquals(
@@ -472,6 +485,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
+            'parent_aliases' => []
         ];
         $structure->load($data);
         self::assertEquals(
@@ -510,6 +524,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
+            'parent_aliases' => []
         ];
         $structure->load($data);
         $structure->generateHeaderNames();
@@ -549,6 +564,7 @@ class StructureTest extends TestCase
                         'nodeType' => 'array',
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $structure->getData()
         );
@@ -579,6 +595,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
+            'parent_aliases' => []
         ]);
     }
 
@@ -599,6 +616,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
+            'parent_aliases' => []
         ]);
     }
 
@@ -619,6 +637,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
+            'parent_aliases' => []
         ]);
     }
 
@@ -647,6 +666,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
+            'parent_aliases' => []
         ]);
     }
 
@@ -674,6 +694,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
+            'parent_aliases' => []
         ]);
     }
 
@@ -692,6 +713,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
+            'parent_aliases' => []
         ]);
     }
 }

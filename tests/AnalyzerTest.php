@@ -64,7 +64,8 @@ class AnalyzerTest extends TestCase
                         ],
                         'nodeType' => 'array'
                     ]
-                ]
+                ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
@@ -127,6 +128,7 @@ class AnalyzerTest extends TestCase
                         'nodeType' => 'array',
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
@@ -200,6 +202,7 @@ class AnalyzerTest extends TestCase
                         'nodeType' => 'array',
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
@@ -258,6 +261,7 @@ class AnalyzerTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
@@ -314,6 +318,7 @@ class AnalyzerTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
@@ -393,6 +398,7 @@ class AnalyzerTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
@@ -463,6 +469,7 @@ class AnalyzerTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
@@ -500,6 +507,7 @@ class AnalyzerTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
@@ -544,6 +552,7 @@ class AnalyzerTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
@@ -669,6 +678,7 @@ class AnalyzerTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
@@ -723,6 +733,7 @@ class AnalyzerTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
@@ -805,6 +816,7 @@ class AnalyzerTest extends TestCase
                         ],
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
@@ -830,6 +842,7 @@ class AnalyzerTest extends TestCase
                         ]
                     ]
                 ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
@@ -855,6 +868,7 @@ class AnalyzerTest extends TestCase
                         ]
                     ]
                 ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
@@ -905,6 +919,7 @@ class AnalyzerTest extends TestCase
                         'nodeType' => 'array',
                     ],
                 ],
+                'parent_aliases' => []
             ],
             $analyzer->getStructure()->getData()
         );
