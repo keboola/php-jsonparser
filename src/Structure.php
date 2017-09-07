@@ -270,7 +270,7 @@ class Structure
         foreach ($this->data as $value) {
             $this->validateDefinitions($value);
         }
-        return ['data' => $this->data];
+        return ['data' => $this->data, 'parent_aliases' => $this->parentAliases];
     }
 
     /**
@@ -526,6 +526,7 @@ class Structure
     public function load(array $definitions)
     {
         $this->data = $definitions['data'] ?? [];
+        $this->parentAliases = $definitions['parent_aliases'] ?? [];
         foreach ($this->data as $value) {
             $this->validateDefinitions($value);
         }
