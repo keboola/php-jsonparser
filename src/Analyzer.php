@@ -92,11 +92,7 @@ class Analyzer
             }
         } elseif (is_object($item)) {
             $nodeType = 'object';
-            if (\Keboola\Utils\isEmptyObject($item)) {
-                $nodeType = 'null';
-            } else {
-                $this->analyzeObject($item, $nodePath);
-            }
+            $this->analyzeObject($item, $nodePath);
         } elseif (is_null($item)) {
             $nodeType = 'null';
         } elseif (is_array($item)) {

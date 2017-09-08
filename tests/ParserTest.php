@@ -348,20 +348,17 @@ class ParserTest extends ParserTestCase
         self::assertEquals(['root'], array_keys($parser->getCsvFiles()));
         self::assertEquals(
             "\"id\",\"type\",\"author_id\",\"body\",\"html_body\",\"public\",\"attachments\",\"via_channel\","
-            . "\"via_source\",\"metadata\",\"created_at\"\n\"16565200977\",\"Comment\",\"457400607\",\"This is the "
+            . "\"via_source_rel\",\"created_at\"\n\"16565200977\",\"Comment\",\"457400607\",\"This is the "
             . "first comment. Feel free to delete this sample ticket.\",\"<p>This is the first comment. Feel free "
-            . "to delete this sample ticket.</p>\",\"1\",\"\",\"web\",\"{\"\"from\"\":{},\"\"to\"\":{},\"\"rel\""
-            . "\":null}\",\"{\"\"system\"\":{},\"\"custom\"\":{}}\",\"2013-09-01T20:22:29Z\"\n\"16565201277\","
+            . "to delete this sample ticket.</p>\",\"1\",\"\",\"web\",\"\",\"2013-09-01T20:22:29Z\"\n\"16565201277\","
             . "\"Comment\",\"457400607\",\"This is a private comment (visible to agents only) that you added. You "
             . "also changed the ticket priority to High. You can view a ticket's complete history by selecting the "
             . "Events link in the ticket.\",\"<p>This is a private comment (visible to agents only) that you added. "
             . "You also changed the ticket priority to High. You can view a ticket&#39;s complete history by "
-            . "selecting the Events link in the ticket.</p>\",\"\",\"\",\"web\",\"{\"\"from\"\":{},\"\"to\"\":{},"
-            . "\"\"rel\"\":null}\",\"{\"\"system\"\":{},\"\"custom\"\":{}}\",\"2013-09-01T20:22:29Z\"\n"
+            . "selecting the Events link in the ticket.</p>\",\"\",\"\",\"web\",\"\",\"2013-09-01T20:22:29Z\"\n"
             . "\"16565201397\",\"Comment\",\"457400607\",\"This is the latest comment for this ticket. You also "
             . "changed the ticket status to Pending.\",\"<p>This is the latest comment for this ticket. You also "
-            . "changed the ticket status to Pending.</p>\",\"1\",\"\",\"web\",\"{\"\"from\"\":{},\"\"to\"\":{},\""
-            . "\"rel\"\":null}\",\"{\"\"system\"\":{},\"\"custom\"\":{}}\",\"2013-09-01T20:22:29Z\"\n",
+            . "changed the ticket status to Pending.</p>\",\"1\",\"\",\"web\",\"\",\"2013-09-01T20:22:29Z\"\n",
             file_get_contents($parser->getCsvFiles()['root']->getPathname())
         );
     }

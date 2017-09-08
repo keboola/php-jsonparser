@@ -465,7 +465,7 @@ class AnalyzerTest extends TestCase
                     '_test' => [
                         'nodeType' => 'array',
                         '[]' => [
-                            'nodeType' => 'null',
+                            'nodeType' => 'object',
                         ],
                     ],
                 ],

@@ -295,4 +295,83 @@ class RealDataTest extends ParserTestCase
             "\"test\",\"root_5befb93e296c823d90e855bc25136d9e\"\n";
         self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_data']));
     }
+
+    public function testEmptyObject()
+    {
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        $testFile = \Keboola\Utils\jsonDecode(
+            '[
+                {
+                    "id": 1,
+                    "longDescription": null,
+                    "hasUI": false,
+                    "data": {},
+                    "flags": []
+                }
+            ]'
+        );
+        $parser->process($testFile);
+        self::assertEquals(['root'], array_keys($parser->getCsvFiles()));
+        $result = "\"id\",\"longDescription\",\"hasUI\",\"flags\"\n" .
+            "\"1\",\"\",\"\",\"\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+    }
+
+    public function testEmptyAndNonEmptyObject()
+    {
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        $testFile = \Keboola\Utils\jsonDecode(
+            '[
+                {
+                    "id": 1,
+                    "longDescription": null,
+                    "hasUI": false,
+                    "data": {},
+                    "flags": []
+                }
+            ]'
+        );
+        $parser->process($testFile);
+        $testFile = \Keboola\Utils\jsonDecode(
+            '[
+                {
+                    "id": 2,
+                    "longDescription": null,
+                    "hasUI": false,
+                    "data": {"a": "b"},
+                    "flags": []
+                }
+            ]'
+        );
+        $parser->process($testFile);
+        self::assertEquals(['root'], array_keys($parser->getCsvFiles()));
+        $result = "\"id\",\"longDescription\",\"hasUI\",\"data_a\",\"flags\"\n" .
+            "\"1\",\"\",\"\",\"\",\"\"\n" .
+            "\"2\",\"\",\"\",\"b\",\"\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+    }
+
+    public function testAlmostEmptyObject()
+    {
+        $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        $testFile = \Keboola\Utils\jsonDecode(
+            '[
+                {
+                    "id": 1,
+                    "longDescription": null,
+                    "hasUI": false,
+                    "data": {
+                        "a": {},
+                        "b": null
+                    },
+                    "flags": []
+                }
+            ]'
+        );
+        $parser->process($testFile);
+        self::assertEquals(['root'], array_keys($parser->getCsvFiles()));
+        $result = "\"id\",\"longDescription\",\"hasUI\",\"data_b\",\"flags\"\n" .
+            "\"1\",\"\",\"\",\"\",\"\"\n";
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+    }
 }
