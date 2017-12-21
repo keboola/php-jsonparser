@@ -11,8 +11,8 @@
     ],
     "require": {
         "keboola/php-csvtable": "^0.1",
-        "keboola/php-temp": "^0.1",
-        "keboola/php-utils": "^1.0",
+        "keboola/php-temp": "^1.0",
+        "keboola/php-utils": "^2.2",
         "monolog/monolog": "^1.23",
         "php": ">=7.1"
     },
