@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\Json;
 
 use Keboola\CsvTable\Table;
@@ -38,47 +40,35 @@ class Parser
     /**
      * @var Table[]
      */
-    private $csvFiles = [];
+    private array $csvFiles = [];
+
+    private Cache $cache;
+
+    private Temp $temp;
+
+    private array $primaryKeys = [];
+
+    private Analyzer $analyzer;
+
+    private Structure $structure;
 
     /**
-     * @var Cache
-     */
-    private $cache;
-
-    /**
-     * @var Temp
-     */
-    private $temp;
-
-    /**
-     * @var array
-     */
-    private $primaryKeys = [];
-
-    /**
-     * @var Analyzer
-     */
-    private $analyzer;
-
-    /**
-     * @var Structure
-     */
-    private $structure;
-
-    /**
-     * Parser constructor.
-     * @param Analyzer $analyzer
      * @param array $definitions should contain an array with previously
      *         cached results from analyze() calls (called automatically by process())
      */
     public function __construct(Analyzer $analyzer, array $definitions = [])
     {
-        ini_set('serialize_precision', 17);
+        ini_set('serialize_precision', '17');
         $this->analyzer = $analyzer;
         $analyzer->getStructure()->load($definitions);
         $this->structure = $analyzer->getStructure();
-        $this->temp = new Temp("json-parser");
+        $this->temp = new Temp('json-parser');
         $this->cache = new Cache();
+    }
+
+    public function __destruct()
+    {
+        $this->temp->remove();
     }
 
     /**
@@ -87,41 +77,37 @@ class Parser
      * then the data is stored using \Keboola\Json\Cache and parsed
      * upon retrieval using getCsvFiles().
      *
-     * @param array $data
      * @param string $type is used for naming the resulting table(s)
-     * @param string|array $parentId may be either a string,
+     * @param string|array|null $parentId may be either a string,
      *         which will be saved in a JSON_parentId column,
      *         or an array with "column_name" => "value",
      *         which will name the column(s) by array key provided
      * @throws NoDataException
      */
-    public function process(array $data, $type = "root", $parentId = null)
+    public function process(array $data, string $type = 'root', $parentId = null): void
     {
-        if (empty($data) || $data == [null]) {
+        if (empty($data) || $data === [null]) {
             throw new NoDataException("Empty data set received for '{$type}'", [
-                "data" => $data,
-                "type" => $type,
-                "parentId" => $parentId
+                'data' => $data,
+                'type' => $type,
+                'parentId' => $parentId,
             ]);
         }
 
         $this->analyzer->analyzeData($data, $type);
         $this->structure->generateHeaderNames();
-        $this->cache->store(["data" => $data, "type" => $type, "parentId" => $parentId]);
+        $this->cache->store(['data' => $data, 'type' => $type, 'parentId' => $parentId]);
     }
 
     /**
      * Parse data of known type
-     *
-     * @param array $data
-     * @param NodePath $nodePath
-     * @param string|array $parentId
+     * @param string|array|null $parentId
      */
-    private function parse(array $data, NodePath $nodePath, $parentId = null)
+    private function parse(array $data, NodePath $nodePath, $parentId = null): void
     {
         $parentId = $this->validateParentId($parentId);
         $csvFile = $this->createCsvFile($this->structure->getTypeFromNodePath($nodePath), $nodePath, $parentId);
-        $parentCols = array_fill_keys(array_keys($parentId), "string");
+        $parentCols = array_fill_keys(array_keys($parentId), 'string');
 
         foreach ($data as $row) {
             // in case of non-associative array of strings
@@ -150,20 +136,19 @@ class Parser
      * @param NodePath $nodePath
      * @param array $parentCols to inject parent columns, which aren't part of $this->struct
      * @param string $outerObjectHash Outer object hash to distinguish different parents in deep nested arrays
-     * @return CsvRow
      */
     private function parseRow(
         \stdClass $dataRow,
         NodePath $nodePath,
         array $parentCols = [],
-        $outerObjectHash = null
-    ) {
+        ?string $outerObjectHash = null
+    ): CsvRow {
         $csvRow = new CsvRow($this->getHeaders($nodePath, $parentCols));
         // Generate parent ID for arrays
         $arrayParentId = $this->getPrimaryKeyValue($dataRow, $nodePath, $outerObjectHash);
         $columns = $this->structure->getColumnTypes($nodePath);
         foreach (array_replace($columns, $parentCols) as $column => $dataType) {
-            $this->parseField($dataRow, $csvRow, $arrayParentId, $column, $dataType, $nodePath);
+            $this->parseField($dataRow, $csvRow, $arrayParentId, (string) $column, $dataType, $nodePath);
         }
 
         return $csvRow;
@@ -171,21 +156,15 @@ class Parser
 
     /**
      * Handle the actual write to CsvRow
-     * @param \stdClass $dataRow
-     * @param CsvRow $csvRow
-     * @param string $arrayParentId
-     * @param string $column
-     * @param string $dataType
-     * @param NodePath $nodePath
      */
     private function parseField(
         \stdClass $dataRow,
         CsvRow $csvRow,
-        $arrayParentId,
-        $column,
-        $dataType,
+        string $arrayParentId,
+        string $column,
+        string $dataType,
         NodePath $nodePath
-    ) {
+    ): void {
         // A hack allowing access to numeric keys in object
         if (!isset($dataRow->{$column})
             && isset(json_decode(json_encode($dataRow), true)[$column])
@@ -199,7 +178,7 @@ class Parser
             || (empty($dataRow->{$column}) && !is_scalar($dataRow->{$column}))
         ) {
             // do not save empty objects to prevent creation of ["obj_name" => null]
-            if ($dataType != 'object') {
+            if ($dataType !== 'object') {
                 $safeColumn = $this->structure->getNodeProperty($nodePath->addChild($column), 'headerNames');
                 if ($safeColumn === null) {
                     $safeColumn = $this->structure->getNodeProperty($nodePath, 'headerNames');
@@ -211,7 +190,7 @@ class Parser
         }
 
         switch ($dataType) {
-            case "array":
+            case 'array':
                 if (!is_array($dataRow->{$column})) {
                     $dataRow->{$column} = [$dataRow->{$column}];
                 }
@@ -223,7 +202,7 @@ class Parser
                     $arrayParentId
                 );
                 break;
-            case "object":
+            case 'object':
                 $childRow = $this->parseRow($dataRow->{$column}, $nodePath->addChild($column), [], $arrayParentId);
 
                 foreach ($childRow->getRow() as $key => $value) {
@@ -244,7 +223,7 @@ class Parser
                     $this->analyzer->getLogger()->error(
                         "Data parse error in '{$column}' - unexpected '"
                             . gettype($dataRow->{$column}) . "' where '{$dataType}' was expected!",
-                        [ "data" => $jsonColumn, "row" => json_encode($dataRow) ]
+                        [ 'data' => $jsonColumn, 'row' => json_encode($dataRow) ]
                     );
                     $sf = $this->structure->getNodeProperty($nodePath->addChild($column), 'headerNames');
                     $csvRow->setValue($sf, $jsonColumn);
@@ -255,17 +234,18 @@ class Parser
 
     /**
      * Get column names for a particular node path
-     * @param NodePath $nodePath
-     * @param bool $parent Parent column, may be renamed in case a conflict occurs
-     * @return array
+     * @param array|null $parent Parent column, may be renamed in case a conflict occurs
      */
-    private function getHeaders(NodePath $nodePath, &$parent = false)
+    private function getHeaders(NodePath $nodePath, ?array &$parent = null): array
     {
         $headers = [];
-        $nodeData = $this->structure->getNode($nodePath);
-        if ($nodeData['nodeType'] == 'scalar') {
+        $nodeData = $this->structure->getNode($nodePath) ?? [];
+        $nodeType = $nodeData['nodeType'] ?? [];
+
+        if ($nodeType === 'scalar') {
             $headers[] = $nodeData['headerNames'];
         }
+
         if (is_array($parent) && !empty($parent)) {
             foreach ($parent as $key => $value) {
                 // check all parent columns
@@ -300,13 +280,14 @@ class Parser
                         ['nodeType' => 'scalar', 'type' => 'parent'];
                     $this->structure->saveNode($previousPath, $previousNode);
                     $this->structure->generateHeaderNames();
-                    $nodeData = $this->structure->getNode($nodePath);
+                    $nodeData = $this->structure->getNode($nodePath) ?? [];
                 }
             }
         }
+
         foreach ($nodeData as $nodeName => $data) {
-            if (is_array($data) && ($data['nodeType'] == 'object')) {
-                $pparent = false;
+            if (is_array($data) && ($data['nodeType'] === 'object')) {
+                $pparent = null;
                 $nodeName = $this->structure->decodeNodeName($nodeName);
                 $ch = $this->getHeaders($nodePath->addChild($nodeName), $pparent);
                 $headers = array_merge($headers, $ch);
@@ -319,21 +300,17 @@ class Parser
 
     /**
      * to allow saving a single type to different files
-     *
-     * @param string $type
-     * @param NodePath $nodePath
-     * @param $parentId
-     * @return Table
      */
-    private function createCsvFile($type, NodePath $nodePath, &$parentId)
+    private function createCsvFile(string $type, NodePath $nodePath, array &$parentId): Table
     {
         if (empty($this->csvFiles[$type])) {
-            $this->csvFiles[$type] = Table::create(
+            $this->csvFiles[$type] = new Table(
                 $type,
                 $this->getHeaders($nodePath, $parentId),
+                true,
                 $this->temp
             );
-            $this->csvFiles[$type]->addAttributes(["fullDisplayName" => $type]);
+            $this->csvFiles[$type]->addAttributes(['fullDisplayName' => $type]);
             if (!empty($this->primaryKeys[$type])) {
                 $this->csvFiles[$type]->setPrimaryKey($this->primaryKeys[$type]);
             }
@@ -342,13 +319,7 @@ class Parser
         return $this->csvFiles[$type];
     }
 
-    /**
-     * @param \stdClass $dataRow
-     * @param NodePath $nodePath
-     * @param string $outerObjectHash
-     * @return string
-     */
-    private function getPrimaryKeyValue(\stdClass $dataRow, NodePath $nodePath, $outerObjectHash = null)
+    private function getPrimaryKeyValue(\stdClass $dataRow, NodePath $nodePath, ?string $outerObjectHash = null): string
     {
         $column = $this->structure->getTypeFromNodePath($nodePath);
         if (!empty($this->primaryKeys[$column])) {
@@ -368,7 +339,7 @@ class Parser
                 }
             }
             // this awkward format is because of backward compatibility
-            return $nodePath->toCleanString() . "_" . join(";", $values);
+            return $nodePath->toCleanString() . '_' . join(';', $values);
         } else {
             // this awkward format is because of backward compatibility
             return $nodePath->toCleanString() . '_' . md5(serialize($dataRow) . $outerObjectHash);
@@ -378,19 +349,18 @@ class Parser
     /**
      * Ensure the parentId array is not multidimensional
      *
-     * @param string|array $parentId
-     * @return array
+     * @param string|array|null $parentId
      * @throws JsonParserException
      */
-    private function validateParentId($parentId) : array
+    private function validateParentId($parentId): array
     {
         if (!empty($parentId)) {
             if (is_array($parentId)) {
-                if (count($parentId) != count($parentId, COUNT_RECURSIVE)) {
+                if (count($parentId) !== count($parentId, COUNT_RECURSIVE)) {
                     throw new JsonParserException(
                         'Error assigning parentId to a CSV file! $parentId array cannot be multidimensional.',
                         [
-                            'parentId' => $parentId
+                            'parentId' => $parentId,
                         ]
                     );
                 }
@@ -411,29 +381,22 @@ class Parser
      * Returns an array of CSV files containing results
      * @return Table[]
      */
-    public function getCsvFiles()
+    public function getCsvFiles(): array
     {
         // parse what's in cache before returning results
         while ($batch = $this->cache->getNext()) {
             // root node is always array
-            $this->parse($batch["data"], new NodePath([$batch['type'], Structure::ARRAY_NAME]), $batch["parentId"]);
+            $this->parse($batch['data'], new NodePath([$batch['type'], Structure::ARRAY_NAME]), $batch['parentId']);
         }
         return $this->csvFiles;
     }
 
-    /**
-     * @return Analyzer
-     */
-    public function getAnalyzer()
+    public function getAnalyzer(): Analyzer
     {
         return $this->analyzer;
     }
 
-    /**
-     * @param array $pks
-     * @throws JsonParserException
-     */
-    public function addPrimaryKeys(array $pks)
+    public function addPrimaryKeys(array $pks): void
     {
         if (!empty($this->csvFiles)) {
             throw new JsonParserException('"addPrimaryKeys" must be used before any data is parsed');
@@ -446,8 +409,8 @@ class Parser
      * Set maximum memory used before Cache starts using php://temp
      * @param string|int $limit
      */
-    public function setCacheMemoryLimit(int $limit)
+    public function setCacheMemoryLimit($limit): void
     {
-        $this->cache->setMemoryLimit($limit);
+        $this->cache->setMemoryLimit((int) $limit);
     }
 }

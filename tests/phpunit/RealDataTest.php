@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\Json\Tests;
 
-use Keboola\Csv\CsvFile;
 use Keboola\Csv\CsvReader;
 use Keboola\Json\Analyzer;
 use Keboola\Json\Parser;
@@ -29,7 +28,7 @@ class RealDataTest extends ParserTestCase
 
             // compare column counts
             $headerCount = null;
-            $parsedFile = new CsvFile($table->getPathname());
+            $parsedFile = new CsvReader($table->getPathname());
             foreach ($parsedFile as $row) {
                 if (empty($headerCount)) {
                     $headerCount = count($row);
@@ -209,7 +208,7 @@ class RealDataTest extends ParserTestCase
 
             // compare column counts
             $headerCount = null;
-            $parsedFile = new CsvFile($table->getPathname());
+            $parsedFile = new CsvReader($table->getPathname());
             foreach ($parsedFile as $row) {
                 if (empty($headerCount)) {
                     $headerCount = count($row);
