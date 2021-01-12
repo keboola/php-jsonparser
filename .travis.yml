@@ -1,22 +1,12 @@
-language: php
+sudo: required
 
-php:
-  - 7.1
+language: bash
 
-before_install:
-  - composer install
-
-install:
-  - composer install --dev --no-scripts
+services:
+  - docker
 
 script:
-  - ./vendor/bin/phpcs --standard=psr2 --ignore=vendor -n .
-  - ./vendor/bin/phpunit --coverage-clover build/logs/clover.xml --whitelist=src/
-
-after_success:
-  - "./vendor/bin/test-reporter"
-
-notifications:
-  slack:
-    secure: wIYBwUiQKD7AkOqAMNYfCr2ISfNtXkv45Slt8sYNnNMkKbsFSBdVQbVHZvtnQSIJo6a1ttmFF+Q5eFvv97xmllfg+WKJ9eewW0+n3MtvZs+za4RdNrnDIPS9pzj+42UYaNE9FZ6pWXb0Kf/ik6hyE1LAbOkVng5wpJ8DNleiPU0=
-  email: false
+  - export APP_IMAGE=php-jsonparser
+  - docker -v
+  - docker build -t $APP_IMAGE .
+  - docker run $APP_IMAGE composer ci
