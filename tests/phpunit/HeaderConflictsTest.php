@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\Json\Tests;
 
 use Keboola\Json\Analyzer;
@@ -10,9 +12,10 @@ use Psr\Log\NullLogger;
 
 class HeaderConflictsTest extends TestCase
 {
-    public function testObjectArrayCombinedConflictObject()
+    public function testObjectArrayCombinedConflictObject(): void
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        /** @var \stdClass $testFile */
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -30,16 +33,17 @@ class HeaderConflictsTest extends TestCase
 
         $result = "\"first_third_fourth\",\"first_second\",\"first_third_fourth_u0\"\n" .
             "\"origin\",\"root.first_44fdc1ad4311801c0a6f586c0c1d113d\",\"last\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']->getPathName()));
         $result = "\"data\",\"JSON_parentId\"\n" .
             "\"a\",\"root.first_44fdc1ad4311801c0a6f586c0c1d113d\"\n" .
             "\"b\",\"root.first_44fdc1ad4311801c0a6f586c0c1d113d\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_first_second']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_first_second']->getPathName()));
     }
 
-    public function testObjectArrayCombinedConflictArray()
+    public function testObjectArrayCombinedConflictArray(): void
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        /** @var \stdClass $testFile */
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -57,16 +61,17 @@ class HeaderConflictsTest extends TestCase
 
         $result = "\"first_second\",\"first_third_fourth\",\"first_second_u0\"\n" .
             "\"root.first_77ad9e5b9cf69f800a67c071287a675e\",\"last\",\"origin\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']->getPathName()));
         $result = "\"data\",\"JSON_parentId\"\n" .
             "\"a\",\"root.first_77ad9e5b9cf69f800a67c071287a675e\"\n" .
             "\"b\",\"root.first_77ad9e5b9cf69f800a67c071287a675e\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_first_second']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_first_second']->getPathName()));
     }
 
-    public function testObjectArrayCombinedConflictParentId()
+    public function testObjectArrayCombinedConflictParentId(): void
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        /** @var \stdClass $testFile */
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -84,16 +89,17 @@ class HeaderConflictsTest extends TestCase
 
         $result = "\"JSON_parentId\",\"first_second\",\"first_third_fourth\",\"JSON_parentId_u0\"\n" .
             "\"origin\",\"root.first_cebcde73e3d46faaa92d77a7499dc9cf\",\"last\",\"someValue\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']->getPathName()));
         $result = "\"data\",\"JSON_parentId_u0\"\n" .
             "\"a\",\"root.first_cebcde73e3d46faaa92d77a7499dc9cf\"\n" .
             "\"b\",\"root.first_cebcde73e3d46faaa92d77a7499dc9cf\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_first_second']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_first_second']->getPathName()));
     }
 
-    public function testObjectArrayCombinedConflictParentIdArray()
+    public function testObjectArrayCombinedConflictParentIdArray(): void
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        /** @var \stdClass $testFile */
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [
@@ -132,7 +138,7 @@ class HeaderConflictsTest extends TestCase
             "\"origin\",\"boo.first_7e79d183dd748759aa22be0fb6fc28cd\",\"first\",\"someValue\"\n" .
             "\"origin2\",\"boo.first_08498865105c0356b251f57e041fc7b5\",\"last\",\"someValue\"\n" .
             "\"\",\"boo.first_6444c4e0bd5ff7e054936b992fae8dd4\",\"really-last\",\"someValue\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo']->getPathName()));
         $result = "\"data\",\"JSON_parentId\"\n" .
             "\"a\",\"boo.first_7e79d183dd748759aa22be0fb6fc28cd\"\n" .
             "\"b\",\"boo.first_7e79d183dd748759aa22be0fb6fc28cd\"\n" .
@@ -140,12 +146,13 @@ class HeaderConflictsTest extends TestCase
             "\"d\",\"boo.first_08498865105c0356b251f57e041fc7b5\"\n" .
             "\"e\",\"boo.first_6444c4e0bd5ff7e054936b992fae8dd4\"\n" .
             "\"f\",\"boo.first_6444c4e0bd5ff7e054936b992fae8dd4\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo_first_second']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo_first_second']->getPathName()));
     }
 
-    public function testObjectArrayCombinedMultiConflict()
+    public function testObjectArrayCombinedMultiConflict(): void
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        /** @var \stdClass $testFile */
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [{
@@ -161,16 +168,17 @@ class HeaderConflictsTest extends TestCase
 
         $result = "\"first_second\",\"first_second_u0\",\"first_second_u1\"\n" .
             "\"origin\",\"root.first_06f40a9e874ef5271aaf5fb696c5d428\",\"origin2\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root']->getPathName()));
         $result = "\"data\",\"JSON_parentId\"\n" .
             "\"a\",\"root.first_06f40a9e874ef5271aaf5fb696c5d428\"\n" .
             "\"b\",\"root.first_06f40a9e874ef5271aaf5fb696c5d428\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_first_second']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['root_first_second']->getPathName()));
     }
 
-    public function testObjectArrayCombinedConflictParentIdArrayMultiBatch()
+    public function testObjectArrayCombinedConflictParentIdArrayMultiBatch(): void
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        /** @var \stdClass $testFile */
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [
@@ -188,6 +196,7 @@ class HeaderConflictsTest extends TestCase
         );
         $parser->process($testFile->components, 'boo', ['someKey' => 'someValue']);
 
+        /** @var \stdClass $testFile */
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [
@@ -217,7 +226,7 @@ class HeaderConflictsTest extends TestCase
             "\"origin\",\"boo.first_7e79d183dd748759aa22be0fb6fc28cd\",\"first\",\"someValue\"\n" .
             "\"origin2\",\"boo.first_08498865105c0356b251f57e041fc7b5\",\"last\",\"someValue\"\n" .
             "\"\",\"boo.first_6444c4e0bd5ff7e054936b992fae8dd4\",\"really-last\",\"someValue\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo']->getPathName()));
         $result = "\"data\",\"JSON_parentId\"\n" .
             "\"a\",\"boo.first_7e79d183dd748759aa22be0fb6fc28cd\"\n" .
             "\"b\",\"boo.first_7e79d183dd748759aa22be0fb6fc28cd\"\n" .
@@ -225,12 +234,13 @@ class HeaderConflictsTest extends TestCase
             "\"d\",\"boo.first_08498865105c0356b251f57e041fc7b5\"\n" .
             "\"e\",\"boo.first_6444c4e0bd5ff7e054936b992fae8dd4\"\n" .
             "\"f\",\"boo.first_6444c4e0bd5ff7e054936b992fae8dd4\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo_first_second']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo_first_second']->getPathName()));
     }
 
-    public function testObjectArrayNestedConflictParentIdArrayMultiBatch()
+    public function testObjectArrayNestedConflictParentIdArrayMultiBatch(): void
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
+        /** @var \stdClass $testFile */
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [
@@ -250,6 +260,7 @@ class HeaderConflictsTest extends TestCase
         );
         $parser->process($testFile->components, 'boo', ['someKey' => 'someValue']);
 
+        /** @var \stdClass $testFile */
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [
@@ -284,15 +295,15 @@ class HeaderConflictsTest extends TestCase
             "\"1\",\"boo_9cfc728a40e47a7d15e9cbca7150a589\",\"someValue\"\n" .
             "\"3\",\"boo_6bd48be59b1924bf9e08c6836d332cd5\",\"someValue\"\n" .
             "\"5\",\"boo_b1f5855828a92efc42e75adb30a5933a\",\"someValue\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo']->getPathName()));
         $result = "\"JSON_parentId\",\"third_fourth\",\"JSON_parentId_u0\"\n" .
             "\"2\",\"first\",\"boo_9cfc728a40e47a7d15e9cbca7150a589\"\n" .
             "\"4\",\"second\",\"boo_6bd48be59b1924bf9e08c6836d332cd5\"\n" .
             "\"6\",\"last\",\"boo_b1f5855828a92efc42e75adb30a5933a\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo_first']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['boo_first']->getPathName()));
     }
 
-    public function testObjectArrayCombinedConflictParentIdMetadata()
+    public function testObjectArrayCombinedConflictParentIdMetadata(): void
     {
         $metadata = [
             '_components' => [
@@ -304,19 +315,21 @@ class HeaderConflictsTest extends TestCase
                     ],
                     '_column' => [
                         'nodeType' => 'scalar',
-                        'headerNames' => 'column'
+                        'headerNames' => 'column',
                     ],
                     'headerNames' => 'data',
                     '_column_u0' => [
                         'nodeType' => 'scalar',
                         'type' => 'parent',
-                        'headerNames' => 'column_u0'
-                    ]
+                        'headerNames' => 'column_u0',
+                    ],
                 ],
-                'nodeType' => 'array'
-            ]
+                'nodeType' => 'array',
+            ],
         ];
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()), $metadata);
+
+        /** @var \stdClass $testFile */
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [
@@ -329,6 +342,7 @@ class HeaderConflictsTest extends TestCase
         );
         $parser->process($testFile->components, 'components', ['column' => 'someValue']);
 
+        /** @var \stdClass $testFile */
         $testFile = \Keboola\Utils\jsonDecode(
             '{
                 "components": [
@@ -344,6 +358,6 @@ class HeaderConflictsTest extends TestCase
         $result = "\"id\",\"column\",\"column_u0\"\n" .
             "\"3\",\"test\",\"someValue\"\n" .
             "\"4\",\"test2\",\"someValue\"\n";
-        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['components']));
+        self::assertEquals($result, file_get_contents($parser->getCsvFiles()['components']->getPathName()));
     }
 }

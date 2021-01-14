@@ -1,25 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\Json\Tests;
 
+use Keboola\Json\Exception\InconsistentValueException;
+use Keboola\Json\Exception\JsonParserException;
 use Keboola\Json\NodePath;
 use Keboola\Json\Structure;
 use PHPUnit\Framework\TestCase;
 
 class StructureTest extends TestCase
 {
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Node path [] does not exist.
-     */
-    public function testSaveNodeInvalid()
+    public function testSaveNodeInvalid(): void
     {
         $structure = new Structure();
+
+        $this->expectException(JsonParserException::class);
+        $this->expectExceptionMessage('Node path [] does not exist.');
         $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'array']);
-        self::assertEquals([], $structure->getData());
     }
 
-    public function testSaveNode()
+    public function testSaveNode(): void
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
@@ -38,29 +40,24 @@ class StructureTest extends TestCase
                         ],
                     ],
                 ],
-                'parent_aliases' => []
+                'parent_aliases' => [],
             ],
             $structure->getData()
         );
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Conflict property nodeType
-     */
-    public function testSaveNodeReserved1()
+    public function testSaveNodeReserved1(): void
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
         $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => ['object']]);
+
+        $this->expectException(JsonParserException::class);
+        $this->expectExceptionMessage('Conflict property nodeType');
         $structure->getData();
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Array [] is not an array.
-     */
-    public function testSaveNodeReserved2()
+    public function testSaveNodeReserved2(): void
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
@@ -69,10 +66,13 @@ class StructureTest extends TestCase
             new NodePath(['root', Structure::ARRAY_NAME, Structure::ARRAY_NAME]),
             ['nodeType' => 'scalar']
         );
+
+        $this->expectException(JsonParserException::class);
+        $this->expectExceptionMessage('Array [] is not an array.');
         $structure->getData();
     }
 
-    public function testSaveValue()
+    public function testSaveValue(): void
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
@@ -85,41 +85,39 @@ class StructureTest extends TestCase
                         'nodeType' => 'array',
                         '[]' => [
                             'nodeType' => 'object',
-                            'headerNames' => 'my-object'
+                            'headerNames' => 'my-object',
                         ],
                     ],
                 ],
-                'parent_aliases' => []
+                'parent_aliases' => [],
             ],
             $structure->getData()
         );
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\InconsistentValueException
-     * @expectedExceptionMessage Attempting to overwrite 'headerName' value 'object' with 'my-object'
-     */
-    public function testSaveValueConflictProp()
+    public function testSaveValueConflictProp(): void
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
         $structure->saveNode(new NodePath(['root', 'obj']), ['headerName' => 'object']);
+
+        $this->expectException(InconsistentValueException::class);
+        $this->expectExceptionMessage("Attempting to overwrite 'headerName' value 'object' with 'my-object'");
         $structure->saveNodeValue(new NodePath(['root', 'obj']), 'headerName', 'my-object');
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Unhandled nodeType change from "object" to "string" in "root.obj"
-     */
-    public function testSaveValueConflictTypeUpgradeFail()
+    public function testSaveValueConflictTypeUpgradeFail(): void
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
         $structure->saveNode(new NodePath(['root', 'obj']), ['nodeType' => 'object']);
+
+        $this->expectException(JsonParserException::class);
+        $this->expectExceptionMessage('Unhandled nodeType change from "object" to "string" in "root.obj"');
         $structure->saveNodeValue(new NodePath(['root', 'obj']), 'nodeType', 'string');
     }
 
-    public function testSaveValueConflictTypeUpgradeAllowed1()
+    public function testSaveValueConflictTypeUpgradeAllowed1(): void
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'object']);
@@ -135,13 +133,13 @@ class StructureTest extends TestCase
                         ],
                     ],
                 ],
-                'parent_aliases' => []
+                'parent_aliases' => [],
             ],
             $structure->getData()
         );
     }
 
-    public function testSaveValueConflictTypeUpgradeAllowed2()
+    public function testSaveValueConflictTypeUpgradeAllowed2(): void
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'object']);
@@ -157,13 +155,13 @@ class StructureTest extends TestCase
                         ],
                     ],
                 ],
-                'parent_aliases' => []
+                'parent_aliases' => [],
             ],
             $structure->getData()
         );
     }
 
-    public function testSaveValueConflictTypeUpgradeArrayAllowed1()
+    public function testSaveValueConflictTypeUpgradeArrayAllowed1(): void
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
@@ -191,13 +189,13 @@ class StructureTest extends TestCase
                         ],
                     ],
                 ],
-                'parent_aliases' => []
+                'parent_aliases' => [],
             ],
             $structure->getData()
         );
     }
 
-    public function testSaveValueConflictTypeUpgradeArrayAllowed2()
+    public function testSaveValueConflictTypeUpgradeArrayAllowed2(): void
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
@@ -228,13 +226,13 @@ class StructureTest extends TestCase
                         ],
                     ],
                 ],
-                'parent_aliases' => []
+                'parent_aliases' => [],
             ],
             $structure->getData()
         );
     }
 
-    public function testSaveValueConflictTypeUpgradeArrayAllowed3()
+    public function testSaveValueConflictTypeUpgradeArrayAllowed3(): void
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
@@ -273,66 +271,62 @@ class StructureTest extends TestCase
                         ],
                     ],
                 ],
-                'parent_aliases' => []
+                'parent_aliases' => [],
             ],
             $structure->getData()
         );
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Array contents are unknown
-     */
-    public function testSaveValueConflictTypeUpgradeArrayInvalid()
+    public function testSaveValueConflictTypeUpgradeArrayInvalid(): void
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
         $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'object']);
         $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), ['nodeType' => 'object']);
+
+        $this->expectException(JsonParserException::class);
+        $this->expectExceptionMessage('Array contents are unknown');
         $structure->saveNodeValue(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), 'nodeType', 'array');
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Unhandled nodeType change from "object" to "array" in "root.[].obj"
-     */
-    public function testSaveValueConflictTypeUpgradeArrayDisabled()
+    public function testSaveValueConflictTypeUpgradeArrayDisabled(): void
     {
         $structure = new Structure(false);
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
         $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'object']);
         $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), ['nodeType' => 'object']);
+
+        $this->expectException(JsonParserException::class);
+        $this->expectExceptionMessage('Unhandled nodeType change from "object" to "array" in "root.[].obj"');
         $structure->saveNodeValue(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), 'nodeType', 'array');
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Unhandled nodeType change from "object" to "string" in "root.[].obj"
-     */
-    public function testSaveValueConflictTypeUpgradeArrayNotAllowed1()
+    public function testSaveValueConflictTypeUpgradeArrayNotAllowed1(): void
     {
         $structure = new Structure(false);
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
         $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'object']);
         $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), ['nodeType' => 'object']);
+
+        $this->expectException(JsonParserException::class);
+        $this->expectExceptionMessage('Unhandled nodeType change from "object" to "string" in "root.[].obj"');
         $structure->saveNodeValue(new NodePath(['root', Structure::ARRAY_NAME, 'obj']), 'nodeType', 'string');
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Data array in 'root.[].str' contains incompatible types 'object' and 'scalar'
-     */
-    public function testSaveValueConflictTypeUpgradeArrayNotAllowed2()
+    public function testSaveValueConflictTypeUpgradeArrayNotAllowed2(): void
     {
         $structure = new Structure();
         $structure->saveNode(new NodePath(['root']), ['nodeType' => 'array']);
         $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME]), ['nodeType' => 'object']);
         $structure->saveNode(new NodePath(['root', Structure::ARRAY_NAME, 'str']), ['nodeType' => 'scalar']);
         $structure->saveNodeValue(new NodePath(['root', Structure::ARRAY_NAME, 'str', '[]']), 'nodeType', 'object');
+
+        $this->expectException(JsonParserException::class);
+        $this->expectExceptionMessage("Data array in 'root.[].str' contains incompatible types 'object' and 'scalar'");
         $structure->saveNodeValue(new NodePath(['root', Structure::ARRAY_NAME, 'str']), 'nodeType', 'array');
     }
 
-    public function testLoad()
+    public function testLoad(): void
     {
         $structure = new Structure();
         $data = [
@@ -344,13 +338,13 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
-            'parent_aliases' => []
+            'parent_aliases' => [],
         ];
         $structure->load($data);
         self::assertEquals($data, $structure->getData());
     }
 
-    public function testGetNode()
+    public function testGetNode(): void
     {
         $structure = new Structure();
         $data = [
@@ -362,13 +356,13 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
-            'parent_aliases' => []
+            'parent_aliases' => [],
         ];
         $structure->load($data);
         self::assertEquals(['nodeType' => 'string'], $structure->getNode(new NodePath(['root', 'obj'])));
     }
 
-    public function testGetNodeInvalid()
+    public function testGetNodeInvalid(): void
     {
         $structure = new Structure();
         $data = [
@@ -380,13 +374,13 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
-            'parent_aliases' => []
+            'parent_aliases' => [],
         ];
         $structure->load($data);
         self::assertNull($structure->getNode(new NodePath(['root', 'non-existent'])));
     }
 
-    public function testGetNodeProperty()
+    public function testGetNodeProperty(): void
     {
         $structure = new Structure();
         $data = [
@@ -398,13 +392,13 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
-            'parent_aliases' => []
+            'parent_aliases' => [],
         ];
         $structure->load($data);
         self::assertEquals('string', $structure->getNodeProperty(new NodePath(['root', 'obj']), 'nodeType'));
     }
 
-    public function testGetColumnTypes1()
+    public function testGetColumnTypes1(): void
     {
         $structure = new Structure();
         $data = [
@@ -417,15 +411,15 @@ class StructureTest extends TestCase
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'scalar',
-                            ]
+                            ],
                         ],
                         '_prop2' => [
-                            'nodeType' => 'scalar'
+                            'nodeType' => 'scalar',
                         ],
                     ],
                 ],
             ],
-            'parent_aliases' => []
+            'parent_aliases' => [],
         ];
         $structure->load($data);
         self::assertEquals(
@@ -434,7 +428,7 @@ class StructureTest extends TestCase
         );
     }
 
-    public function testGetColumnTypes2()
+    public function testGetColumnTypes2(): void
     {
         $structure = new Structure();
         $data = [
@@ -447,15 +441,15 @@ class StructureTest extends TestCase
                             'nodeType' => 'array',
                             '[]' => [
                                 'nodeType' => 'scalar',
-                            ]
+                            ],
                         ],
                         '_prop2' => [
-                            'nodeType' => 'scalar'
+                            'nodeType' => 'scalar',
                         ],
                     ],
                 ],
             ],
-            'parent_aliases' => []
+            'parent_aliases' => [],
         ];
         $structure->load($data);
         self::assertEquals(
@@ -464,7 +458,7 @@ class StructureTest extends TestCase
         );
     }
 
-    public function testGetColumnTypes3()
+    public function testGetColumnTypes3(): void
     {
         $structure = new Structure();
         $data = [
@@ -476,16 +470,16 @@ class StructureTest extends TestCase
                         '_prop1' => [
                             'nodeType' => 'array',
                             '[]' => [
-                                'nodeType' => 'scalar'
-                            ]
+                                'nodeType' => 'scalar',
+                            ],
                         ],
                         '_prop2' => [
-                            'nodeType' => 'scalar'
+                            'nodeType' => 'scalar',
                         ],
                     ],
                 ],
             ],
-            'parent_aliases' => []
+            'parent_aliases' => [],
         ];
         $structure->load($data);
         self::assertEquals(
@@ -494,7 +488,7 @@ class StructureTest extends TestCase
         );
     }
 
-    public function testHeaderNames()
+    public function testHeaderNames(): void
     {
         $structure = new Structure();
         $data = [
@@ -504,16 +498,16 @@ class StructureTest extends TestCase
                     '[]' => [
                         'nodeType' => 'object',
                         '_a very long name of a property of an object which exceeds the length of 60 characters' => [
-                            'nodeType' => 'object'
+                            'nodeType' => 'object',
                         ],
                         '_some special characters!@##%$*&(^%$#09do' => [
                             'nodeType' => 'scalar',
                         ],
                         '_prop2.something' => [
-                            'nodeType' => 'scalar'
+                            'nodeType' => 'scalar',
                         ],
                         '_prop2_something' => [
-                            'nodeType' => 'scalar'
+                            'nodeType' => 'scalar',
                         ],
                         '_array' => [
                             'nodeType' => 'array',
@@ -524,7 +518,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
-            'parent_aliases' => []
+            'parent_aliases' => [],
         ];
         $structure->load($data);
         $structure->generateHeaderNames();
@@ -540,7 +534,7 @@ class StructureTest extends TestCase
                                 ],
                             '_some special characters!@##%$*&(^%$#09do' => [
                                 'nodeType' => 'scalar',
-                                'headerNames' => 'some_special_characters_09do'
+                                'headerNames' => 'some_special_characters_09do',
                             ],
                             '_prop2.something' => [
                                 'nodeType' => 'scalar',
@@ -555,7 +549,7 @@ class StructureTest extends TestCase
                                 'headerNames' => 'array',
                                 '[]' => [
                                     'nodeType' => 'scalar',
-                                    'headerNames' => 'data'
+                                    'headerNames' => 'data',
                                 ],
                             ],
                             'nodeType' => 'object',
@@ -564,13 +558,13 @@ class StructureTest extends TestCase
                         'nodeType' => 'array',
                     ],
                 ],
-                'parent_aliases' => []
+                'parent_aliases' => [],
             ],
             $structure->getData()
         );
     }
 
-    public function testGetTypeFromPath()
+    public function testGetTypeFromPath(): void
     {
         $structure = new Structure();
         self::assertEquals(
@@ -579,13 +573,12 @@ class StructureTest extends TestCase
         );
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Undefined data type invalid-type
-     */
-    public function testLoadInvalid1()
+    public function testLoadInvalid1(): void
     {
         $structure = new Structure();
+
+        $this->expectException(JsonParserException::class);
+        $this->expectExceptionMessage('Undefined data type invalid-type');
         $structure->load([
             'data' => [
                 '_root' => [
@@ -595,17 +588,16 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
-            'parent_aliases' => []
+            'parent_aliases' => [],
         ]);
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Undefined property _invalidProperty
-     */
-    public function testLoadInvalid2()
+    public function testLoadInvalid2(): void
     {
         $structure = new Structure();
+
+        $this->expectException(JsonParserException::class);
+        $this->expectExceptionMessage('Undefined property _invalidProperty');
         $structure->load([
             'data' => [
                 '_root' => [
@@ -616,17 +608,16 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
-            'parent_aliases' => []
+            'parent_aliases' => [],
         ]);
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Array node does not have array.
-     */
-    public function testLoadInvalid3()
+    public function testLoadInvalid3(): void
     {
         $structure = new Structure();
+
+        $this->expectException(JsonParserException::class);
+        $this->expectExceptionMessage('Array node does not have array.');
         $structure->load([
             'data' => [
                 '_root' => [
@@ -637,17 +628,16 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
-            'parent_aliases' => []
+            'parent_aliases' => [],
         ]);
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Conflict property nodeType
-     */
-    public function testLoadInvalid4()
+    public function testLoadInvalid4(): void
     {
         $structure = new Structure();
+
+        $this->expectException(JsonParserException::class);
+        $this->expectExceptionMessage('Conflict property nodeType');
         $structure->load([
             'data' => [
                 '_root' => [
@@ -660,23 +650,22 @@ class StructureTest extends TestCase
                         ],
                         '_prop2' => [
                             'nodeType' => [
-                                'invalid-node-type'
-                            ]
-                        ]
+                                'invalid-node-type',
+                            ],
+                        ],
                     ],
                 ],
             ],
-            'parent_aliases' => []
+            'parent_aliases' => [],
         ]);
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Undefined property invalid-property
-     */
-    public function testLoadInvalid5()
+    public function testLoadInvalid5(): void
     {
         $structure = new Structure();
+
+        $this->expectException(JsonParserException::class);
+        $this->expectExceptionMessage('Undefined property invalid-property');
         $structure->load([
             'data' => [
                 '_root' => [
@@ -694,17 +683,16 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
-            'parent_aliases' => []
+            'parent_aliases' => [],
         ]);
     }
 
-    /**
-     * @expectedException \Keboola\Json\Exception\JsonParserException
-     * @expectedExceptionMessage Node data type is not set.
-     */
-    public function testLoadInvalid6()
+    public function testLoadInvalid6(): void
     {
         $structure = new Structure();
+
+        $this->expectException(JsonParserException::class);
+        $this->expectExceptionMessage('Node data type is not set.');
         $structure->load([
             'data' => [
                 '_root' => [
@@ -713,7 +701,7 @@ class StructureTest extends TestCase
                     ],
                 ],
             ],
-            'parent_aliases' => []
+            'parent_aliases' => [],
         ]);
     }
 }

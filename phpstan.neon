@@ -1,0 +1,8 @@
+parameters:
+    checkMissingIterableValueType: false
+    ignoreErrors:
+        - '#json_decode expects string, string\|false given#'
+        - '#Offset .* does not exist on array\|null#'
+        - '#Cannot access offset 1 on array<int, string>\|false#'
+        - '#Parameter .* of (function|method) .* expects array, array.*\|.* given#'
+        - '#Parameter .* of function fgetcsv expects resource, resource\|false given.#'
