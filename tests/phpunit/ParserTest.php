@@ -902,6 +902,7 @@ class ParserTest extends ParserTestCase
         $parser->process($testFile->data, 'someType', ['someColumn' => ['this' => 'is wrong']]);
 
         $this->expectException(JsonParserException::class);
+
         $this->expectExceptionMessage(
             'Error assigning parentId to a CSV file! $parentId array cannot be multidimensional'
         );

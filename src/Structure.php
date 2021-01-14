@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\Json;
 
 use Keboola\Json\Exception\InconsistentValueException;
@@ -10,60 +12,51 @@ class Structure
     /**
      * Column name for an array of scalars
      */
-    const DATA_COLUMN = 'data';
+    public const DATA_COLUMN = 'data';
 
     /**
      * Structure property storing node data type
      */
-    const PROP_NODE_DATA_TYPE = 'nodeType';
+    public const PROP_NODE_DATA_TYPE = 'nodeType';
 
     /**
      * Structure property storing whether a type of node ('normal' or 'parent')
      */
-    const PROP_NODE_TYPE = 'type';
+    public const PROP_NODE_TYPE = 'type';
 
     /**
      * Structure property storing name of node in CSV file
      */
-    const PROP_HEADER = 'headerNames';
+    public const PROP_HEADER = 'headerNames';
 
     /**
      * Special name of node for array containers
      */
-    const ARRAY_NAME = '[]';
+    public const ARRAY_NAME = '[]';
 
     /**
      * Allowed data types
-     * @var array
      */
-    private static $nodeDataTypes = ['null', 'array', 'object', 'scalar', 'string', 'integer', 'double', 'boolean'];
+    private static array $nodeDataTypes = [
+        'null', 'array', 'object', 'scalar', 'string', 'integer', 'double', 'boolean',
+    ];
 
     /**
      * Allowed node types
-     * @var array
      */
-    private static $nodeTypes = ['parent'];
+    private static array $nodeTypes = ['parent'];
 
-    /**
-     * @var array
-     */
-    private $data = [];
+    private array $data = [];
 
-    /**
-     * @var array
-     */
-    private $headerIndex = [];
+    private array $headerIndex = [];
 
-    /**
-     * @var bool
-     */
-    private $autoUpgradeToArray;
+    private bool $autoUpgradeToArray;
 
     /**
      * List of parent columns and their aliases
-     * @var array
+     * @var string[]
      */
-    private $parentAliases = [];
+    private array $parentAliases = [];
 
     /**
      * Structure constructor.
@@ -81,13 +74,13 @@ class Structure
      * @param mixed $value Scalar value.
      * @throws InconsistentValueException
      */
-    public function saveNodeValue(NodePath $nodePath, string $property, $value)
+    public function saveNodeValue(NodePath $nodePath, string $property, $value): void
     {
         try {
             $this->data = $this->storeValue($nodePath, $this->data, $property, $value);
         } catch (InconsistentValueException $e) {
-            if ($property == 'nodeType') {
-                $node = $this->getNode($nodePath);
+            if ($property === 'nodeType') {
+                $node = $this->getNode($nodePath) ?? [];
                 $this->handleUpgrade($node, $nodePath, $value);
             } else {
                 throw $e;
@@ -97,12 +90,10 @@ class Structure
 
     /**
      * Encode real JSON node name into the one stored in structure
-     * @param $nodeName
-     * @return string
      */
-    public function encodeNodeName($nodeName)
+    public function encodeNodeName(string $nodeName): string
     {
-        if ($nodeName == self::ARRAY_NAME) {
+        if ($nodeName === self::ARRAY_NAME) {
             return $nodeName;
         } else {
             return '_' . $nodeName;
@@ -111,12 +102,10 @@ class Structure
 
     /**
      * Decode node name into real node name found in JSON
-     * @param $nodeName
-     * @return string
      */
-    public function decodeNodeName($nodeName)
+    public function decodeNodeName(string $nodeName): string
     {
-        if ($nodeName == self::ARRAY_NAME) {
+        if ($nodeName === self::ARRAY_NAME) {
             return $nodeName;
         } else {
             return substr($nodeName, 1);
@@ -132,8 +121,9 @@ class Structure
      * @return array Structure data
      * @throws InconsistentValueException In case the values is already set and not same.
      */
-    private function storeValue(NodePath $nodePath, array $data, string $property, $value) : array
+    private function storeValue(NodePath $nodePath, array $data, string $property, $value): array
     {
+        $nodeName = '';
         $nodePath = $nodePath->popFirst($nodeName);
         $nodeName = $this->encodeNodeName($nodeName);
         if (!isset($data[$nodeName])) {
@@ -141,7 +131,7 @@ class Structure
         }
         if ($nodePath->isEmpty()) {
             // we arrived at the target, check if the value is not set already
-            if (!empty($data[$nodeName][$property]) && ($data[$nodeName][$property] != $value)) {
+            if (!empty($data[$nodeName][$property]) && ($data[$nodeName][$property] !== $value)) {
                 throw new InconsistentValueException("Attempting to overwrite '$property' value '"
                     . $data[$nodeName][$property] . "' with '$value'.");
             }
@@ -159,9 +149,9 @@ class Structure
      * @param string $newType
      * @throws JsonParserException
      */
-    private function handleUpgrade(array $node, NodePath $nodePath, string $newType)
+    private function handleUpgrade(array $node, NodePath $nodePath, string $newType): void
     {
-        if ((($node['nodeType'] == 'array') || ($newType == 'array')) && $this->autoUpgradeToArray) {
+        if ((($node['nodeType'] === 'array') || ($newType === 'array')) && $this->autoUpgradeToArray) {
             $this->checkArrayUpgrade($node, $nodePath, $newType);
             // copy all properties to the array
             if (!empty($node[self::ARRAY_NAME])) {
@@ -170,11 +160,11 @@ class Structure
                 }
             }
             foreach ($node as $key => $value) {
-                if (is_array($value) && ($key != self::ARRAY_NAME)) {
+                if (is_array($value) && ($key !== self::ARRAY_NAME)) {
                     $newNode[self::ARRAY_NAME][$key] = $value;
                 }
             }
-            if ($newType != 'array') {
+            if ($newType !== 'array') {
                 $newNode[self::ARRAY_NAME]['nodeType'] = $newType;
             } else {
                 $newNode[self::ARRAY_NAME]['nodeType'] = $node['nodeType'];
@@ -185,9 +175,9 @@ class Structure
                 $newNode['headerNames'] = $node['headerNames'];
             }
             $this->data = $this->storeNode($nodePath, $this->data, $newNode);
-        } elseif (($node['nodeType'] != 'null') && ($newType == 'null')) {
+        } elseif (($node['nodeType'] !== 'null') && ($newType === 'null')) {
             // do nothing, old type is fine
-        } elseif (($node['nodeType'] == 'null') && ($newType != 'null')) {
+        } elseif (($node['nodeType'] === 'null') && ($newType !== 'null')) {
             $newNode = $this->getNode($nodePath);
             $newNode['nodeType'] = $newType;
             $this->data = $this->storeNode($nodePath, $this->data, $newNode);
@@ -199,23 +189,23 @@ class Structure
         }
     }
 
-    private function checkArrayUpgrade(array $node, NodePath $nodePath, string $newType)
+    private function checkArrayUpgrade(array $node, NodePath $nodePath, string $newType): void
     {
-        if ((($node['nodeType'] == 'array') || ($newType == 'array')) && $this->autoUpgradeToArray) {
+        if ((($node['nodeType'] === 'array') || ($newType === 'array')) && $this->autoUpgradeToArray) {
             // if one of the two different types is array, we may consider upgrade
             // at this moment, the array items should already be set
             if (empty($node[self::ARRAY_NAME]['nodeType'])) {
-                throw new JsonParserException("Array contents are unknown");
+                throw new JsonParserException('Array contents are unknown');
             }
             // now get the non array type
-            if ($node['nodeType'] == 'array') {
+            if ($node['nodeType'] === 'array') {
                 $nonArray = $newType;
             } else {
                 $nonArray = $node['nodeType'];
             }
             // now verify if array contents match the non-array type
-            if (($node[self::ARRAY_NAME]['nodeType'] != $nonArray) && ($nonArray != 'null') &&
-                $node[self::ARRAY_NAME]['nodeType'] != 'null') {
+            if (($node[self::ARRAY_NAME]['nodeType'] !== $nonArray) && ($nonArray !== 'null') &&
+                $node[self::ARRAY_NAME]['nodeType'] !== 'null') {
                 throw new JsonParserException("Data array in '" . $nodePath->__toString() .
                     "' contains incompatible types '" . $node[self::ARRAY_NAME]['nodeType'] . "' and '" .
                     $nonArray . "'");
@@ -232,7 +222,7 @@ class Structure
      * @param NodePath $nodePath Node path.
      * @param array $node Node data.
      */
-    public function saveNode(NodePath $nodePath, array $node)
+    public function saveNode(NodePath $nodePath, array $node): void
     {
         $this->data = $this->storeNode($nodePath, $this->data, $node);
     }
@@ -245,8 +235,9 @@ class Structure
      * @return array Structure data.
      * @throws JsonParserException In case the node path is not valid.
      */
-    private function storeNode(NodePath $nodePath, array $data, array $node) : array
+    private function storeNode(NodePath $nodePath, array $data, array $node): array
     {
+        $nodeName = '';
         $nodePath = $nodePath->popFirst($nodeName);
         $nodeName = $this->encodeNodeName($nodeName);
         if ($nodePath->isEmpty()) {
@@ -255,7 +246,7 @@ class Structure
             if (isset($data[$nodeName])) {
                 $data[$nodeName] = $this->storeNode($nodePath, $data[$nodeName], $node);
             } else {
-                throw new JsonParserException("Node path " . $nodePath->__toString() . " does not exist.");
+                throw new JsonParserException('Node path ' . $nodePath->__toString() . ' does not exist.');
             }
         }
         return $data;
@@ -263,9 +254,8 @@ class Structure
 
     /**
      * Return complete structure.
-     * @return array
      */
-    public function getData()
+    public function getData(): array
     {
         foreach ($this->data as $value) {
             $this->validateDefinitions($value);
@@ -279,11 +269,12 @@ class Structure
      * @param array $data Optional structure data (for recursive call).
      * @return array|null Null in case the node path does not exist.
      */
-    public function getNode(NodePath $nodePath, array $data = null)
+    public function getNode(NodePath $nodePath, ?array $data = null): ?array
     {
         if (empty($data)) {
             $data = $this->data;
         }
+        $nodeName = '';
         $nodePath = $nodePath->popFirst($nodeName);
         $nodeName = $this->encodeNodeName($nodeName);
         if (!isset($data[$nodeName])) {
@@ -316,14 +307,13 @@ class Structure
      * Return a particular property of a the children of the node.
      * @param NodePath $nodePath Node path
      * @param string $property Property name (e.g. 'nodeType').
-     * @return array
      */
-    private function getNodeChildrenProperties(NodePath $nodePath, string $property) : array
+    private function getNodeChildrenProperties(NodePath $nodePath, string $property): array
     {
         $nodeData = $this->getNode($nodePath);
         $result = [];
         if (!empty($nodeData)) {
-            if ($nodeData['nodeType'] == 'object') {
+            if ($nodeData['nodeType'] === 'object') {
                 foreach ($nodeData as $itemName => $value) {
                     if (is_array($value)) {
                         $itemName = $this->decodeNodeName($itemName);
@@ -335,9 +325,9 @@ class Structure
                         }
                     }
                 }
-            } elseif ($nodeData['nodeType'] == 'scalar') {
+            } elseif ($nodeData['nodeType'] === 'scalar') {
                 foreach ($nodeData as $itemName => $value) {
-                    if ($itemName == $property) {
+                    if ($itemName === $property) {
                         $result[$nodePath->getLast()] = $value;
                     }
                 }
@@ -351,7 +341,7 @@ class Structure
      * @param NodePath $nodePath
      * @return array Index is column name, value is data type.
      */
-    public function getColumnTypes(NodePath $nodePath)
+    public function getColumnTypes(NodePath $nodePath): array
     {
         $values = $this->getNodeChildrenProperties($nodePath, 'nodeType');
         $result = [];
@@ -368,7 +358,7 @@ class Structure
     /**
      * Generate header names for the whole structure.
      */
-    public function generateHeaderNames()
+    public function generateHeaderNames(): void
     {
         foreach ($this->data as $baseType => &$baseArray) {
             foreach ($baseArray as $nodeName => &$nodeData) {
@@ -387,10 +377,8 @@ class Structure
 
     /**
      * Get new name of a parent column
-     * @param $name
-     * @return mixed
      */
-    public function getParentTargetName(string $name)
+    public function getParentTargetName(string $name): string
     {
         if (empty($this->parentAliases[$name])) {
             return $name;
@@ -403,38 +391,33 @@ class Structure
      * @param string $name Original name.
      * @param string $target New Name.
      */
-    public function setParentTargetName(string $name, string $target)
+    public function setParentTargetName(string $name, string $target): void
     {
         $this->parentAliases[$name] = $target;
     }
 
     /**
      * Get structure version for compatibility.
-     * @return int
      */
-    public function getVersion()
+    public function getVersion(): int
     {
         return 3;
     }
 
     /**
      * Return a legacy type for the given node.
-     * @param NodePath $nodePath
-     * @return string
      */
-    public function getTypeFromNodePath(NodePath $nodePath)
+    public function getTypeFromNodePath(NodePath $nodePath): string
     {
         return $this->getSafeName($nodePath->toCleanString());
     }
 
     /**
      * If necessary, change the name to a safe to store in database.
-     * @param string $name
-     * @return string
      */
-    private function getSafeName(string $name) : string
+    private function getSafeName(string $name): string
     {
-        $name = preg_replace('/[^A-Za-z0-9-]/', '_', $name);
+        $name = (string) preg_replace('/[^A-Za-z0-9-]/', '_', $name);
         if (strlen($name) > 64) {
             if (str_word_count($name) > 1 && preg_match_all('/\b(\w)/', $name, $m)) {
                 // Create an "acronym" from first letters
@@ -442,10 +425,10 @@ class Structure
             } else {
                 $short = md5($name);
             }
-            $short .= "_";
+            $short .= '_';
             $remaining = 64 - strlen($short);
-            $nextSpace = strpos($name, " ", (strlen($name)-$remaining))
-                ? : strpos($name, "_", (strlen($name)-$remaining));
+            $nextSpace = strpos($name, ' ', (strlen($name)-$remaining))
+                ? : strpos($name, '_', (strlen($name)-$remaining));
 
             $newName = $nextSpace === false
                 ? $short
@@ -454,18 +437,15 @@ class Structure
             $newName = $name;
         }
 
-        $newName = preg_replace('/[^A-Za-z0-9-]+/', '_', $newName);
-        $newName = trim($newName, "_");
+        $newName = (string) preg_replace('/[^A-Za-z0-9-]+/', '_', $newName);
+        $newName = trim($newName, '_');
         return $newName;
     }
 
     /**
      * If necessary change the name to a unique one.
-     * @param string $baseType
-     * @param string $headerName
-     * @return string
      */
-    private function getUniqueName(string $baseType, string $headerName) : string
+    private function getUniqueName(string $baseType, string $headerName): string
     {
         if (isset($this->headerIndex[$baseType][$headerName])) {
             $newName = $headerName;
@@ -487,11 +467,11 @@ class Structure
      * @param string $parentName
      * @param string $baseType
      */
-    private function generateHeaderName(array &$data, NodePath $nodePath, string $parentName, string $baseType)
+    private function generateHeaderName(array &$data, NodePath $nodePath, string $parentName, string $baseType): void
     {
         if (empty($data['headerNames'])) {
             // write only once, because generateHeaderName may be called repeatedly
-            if ($parentName != self::ARRAY_NAME) {
+            if ($parentName !== self::ARRAY_NAME) {
                 // do not generate headers for arrays
                 $headerName = $this->getSafeName($parentName);
                 $headerName = $this->getUniqueName($baseType, $headerName);
@@ -500,7 +480,7 @@ class Structure
                 $data['headerNames'] = self::DATA_COLUMN;
             }
         }
-        if ($data['nodeType'] == 'array') {
+        if ($data['nodeType'] === 'array') {
             // array node creates a new type and does not nest deeper
             $baseType = $baseType . '.' . $parentName;
             $parentName = '';
@@ -508,7 +488,7 @@ class Structure
         foreach ($data as $key => &$value) {
             if (is_array($value)) {
                 $key = $this->decodeNodeName($key);
-                if (!$parentName || (!empty($data[$key]['type']) && $data[$key]['type'] == 'parent')) {
+                if (!$parentName || (!empty($data[$key]['type']) && $data[$key]['type'] === 'parent')) {
                     // skip nesting if there is nowhere to nest (array or parent-type child)
                     $childName = $key;
                 } else {
@@ -523,7 +503,7 @@ class Structure
      * Load structure data.
      * @param array $definitions
      */
-    public function load(array $definitions)
+    public function load(array $definitions): void
     {
         $this->data = $definitions['data'] ?? [];
         $this->parentAliases = $definitions['parent_aliases'] ?? [];
@@ -532,14 +512,14 @@ class Structure
         }
     }
 
-    private function validateDefinitions(array $definitions)
+    private function validateDefinitions(array $definitions): void
     {
         $knownProps = [self::PROP_HEADER, self::PROP_NODE_DATA_TYPE, self::PROP_NODE_TYPE];
         if (!isset($definitions[self::PROP_NODE_DATA_TYPE])) {
-            throw new JsonParserException("Node data type is not set.", $definitions);
+            throw new JsonParserException('Node data type is not set.', $definitions);
         }
-        if (($definitions[self::PROP_NODE_DATA_TYPE] == 'array') && empty($definitions[self::ARRAY_NAME])) {
-            throw new JsonParserException("Array node does not have array.", $definitions);
+        if (($definitions[self::PROP_NODE_DATA_TYPE] === 'array') && empty($definitions[self::ARRAY_NAME])) {
+            throw new JsonParserException('Array node does not have array.', $definitions);
         }
         foreach ($definitions as $key => $value) {
             if (is_array($value)) {
@@ -548,8 +528,8 @@ class Structure
                     throw new JsonParserException("Conflict property $key", $definitions);
                 }
                 $this->validateDefinitions($value);
-                if ($key == self::ARRAY_NAME) {
-                    if ($definitions[self::PROP_NODE_DATA_TYPE] != 'array') {
+                if ($key === self::ARRAY_NAME) {
+                    if ($definitions[self::PROP_NODE_DATA_TYPE] !== 'array') {
                         throw new JsonParserException("Array $key is not an array.", $definitions);
                     }
                 }
@@ -558,11 +538,11 @@ class Structure
                 if (!in_array($key, $knownProps)) {
                     throw new JsonParserException("Undefined property $key", $definitions);
                 }
-                if ($key == self::PROP_NODE_DATA_TYPE) {
+                if ($key === self::PROP_NODE_DATA_TYPE) {
                     if (!in_array($value, self::$nodeDataTypes)) {
                         throw new JsonParserException("Undefined data type $value", $definitions);
                     }
-                } elseif ($key == self::PROP_NODE_TYPE) {
+                } elseif ($key === self::PROP_NODE_TYPE) {
                     if (!in_array($value, self::$nodeTypes)) {
                         throw new JsonParserException("Undefined node type $value", $definitions);
                     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\Json;
 
 use Keboola\Json\Exception\JsonParserException;
@@ -7,33 +9,14 @@ use Psr\Log\LoggerInterface;
 
 class Analyzer
 {
-    /**
-     * @var bool
-     */
-    protected $strict;
+    protected bool $strict;
 
-    /**
-     * @var bool
-     */
-    protected $nestedArrayAsJson;
+    protected bool $nestedArrayAsJson;
 
-    /**
-     * @var LoggerInterface
-     */
-    protected $log;
+    protected LoggerInterface $log;
 
-    /**
-     * @var Structure
-     */
-    private $structure;
+    private Structure $structure;
 
-    /**
-     * Analyzer constructor.
-     * @param LoggerInterface $logger
-     * @param Structure $structure
-     * @param bool $nestedArraysAsJson
-     * @param bool $strict
-     */
     public function __construct(
         LoggerInterface $logger,
         Structure $structure,
@@ -46,27 +29,17 @@ class Analyzer
         $this->structure = $structure;
     }
 
-    /**
-     * @return Structure
-     */
-    public function getStructure()
+    public function getStructure(): Structure
     {
         return $this->structure;
     }
 
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
+    public function getLogger(): LoggerInterface
     {
         return $this->log;
     }
 
-    /**
-     * @param array $data
-     * @param string $rootType
-     */
-    public function analyzeData(array $data, string $rootType)
+    public function analyzeData(array $data, string $rootType): void
     {
         if (empty($data)) {
             return;
@@ -77,12 +50,9 @@ class Analyzer
     }
 
     /**
-     * @param $item
-     * @param NodePath $nodePath
-     * @return string
-     * @throws JsonParserException
+     * @param mixed $item
      */
-    private function analyzeItem($item, NodePath $nodePath) : string
+    private function analyzeItem($item, NodePath $nodePath): string
     {
         if (is_scalar($item)) {
             if ($this->strict) {
@@ -115,11 +85,7 @@ class Analyzer
         return $nodeType;
     }
 
-    /**
-     * @param array $array
-     * @param NodePath $nodePath
-     */
-    private function analyzeArray(array $array, NodePath $nodePath)
+    private function analyzeArray(array $array, NodePath $nodePath): void
     {
         $oldType = null;
         $nodePath = $nodePath->addChild(Structure::ARRAY_NAME);
@@ -133,26 +99,18 @@ class Analyzer
         }
     }
 
-    /**
-     * @param $object
-     * @param NodePath $nodePath
-     */
-    private function analyzeObject($object, NodePath $nodePath)
+    private function analyzeObject(object $object, NodePath $nodePath): void
     {
-        foreach ($object as $key => $field) {
-            $this->analyzeItem($field, $nodePath->addChild($key));
+        foreach (get_object_vars($object) as $key => $field) {
+            $this->analyzeItem($field, $nodePath->addChild((string) $key));
         }
     }
 
     /**
      * Check that two types same or compatible.
-     * @param $oldType
-     * @param $newType
-     * @param NodePath $nodePath
-     * @return string
      * @throws JsonParserException
      */
-    private function checkType($oldType, $newType, NodePath $nodePath) : string
+    private function checkType(?string $oldType, string $newType, NodePath $nodePath): string
     {
         if (!is_null($oldType) && ($newType !== $oldType) && ($newType !== 'null') && ($oldType !== 'null')) {
             throw new JsonParserException(
@@ -162,10 +120,7 @@ class Analyzer
         return $newType;
     }
 
-    /**
-     * @return bool
-     */
-    public function getNestedArrayAsJson() : bool
+    public function getNestedArrayAsJson(): bool
     {
         return $this->nestedArrayAsJson;
     }
