@@ -62,3 +62,7 @@ names prepended by current objects' name, e.g.:
 }
 ```
 will result in a `parent_child` column with a string type of "value1".
+
+## License
+
+MIT licensed, see [LICENSE](./LICENSE) file.
