@@ -9,6 +9,7 @@ use Keboola\Json\Parser;
 use Keboola\Json\Structure;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use function Keboola\Utils\jsonDecode;
 
 class HeadersParentTest extends TestCase
 {
@@ -17,14 +18,14 @@ class HeadersParentTest extends TestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [{
                     "first": {
                         "second": ["a", "b"]
                     }
                 }]
-            }'
+            }',
         );
         $parser->process($testFile->components);
         $result = "\"first_second\"\n\"root.first_97360eb9d751f9ade2eac71d59bcb37d\"\n";
@@ -39,7 +40,7 @@ class HeadersParentTest extends TestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [{
                     "first": {
@@ -49,7 +50,7 @@ class HeadersParentTest extends TestCase
                         }
                     }
                 }]
-            }'
+            }',
         );
         $parser->process($testFile->components, 'root', 'someId');
 
@@ -67,7 +68,7 @@ class HeadersParentTest extends TestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [{
                     "first": {
@@ -77,7 +78,7 @@ class HeadersParentTest extends TestCase
                         }
                     }
                 }]
-            }'
+            }',
         );
         $parser->process($testFile->components, 'root', ['someId' => 'someValue']);
 
@@ -95,7 +96,7 @@ class HeadersParentTest extends TestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [{
                     "first": {
@@ -105,7 +106,7 @@ class HeadersParentTest extends TestCase
                         }
                     }
                 }]
-            }'
+            }',
         );
         $parser->process($testFile->components, 'root_first_second', ['someId' => 'someValue']);
 
@@ -117,7 +118,7 @@ class HeadersParentTest extends TestCase
             "\"b\",\"root_first_second.first_1c00277aca5b2395406ccaaabc24fbd7\"\n";
         self::assertEquals(
             $result,
-            file_get_contents($parser->getCsvFiles()['root_first_second_first_second']->getPathName())
+            file_get_contents($parser->getCsvFiles()['root_first_second_first_second']->getPathName()),
         );
     }
 
@@ -126,7 +127,7 @@ class HeadersParentTest extends TestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [{
                     "first": {
@@ -136,7 +137,7 @@ class HeadersParentTest extends TestCase
                         }
                     }
                 }]
-            }'
+            }',
         );
         $parser->process($testFile->components, 'first_second');
 
@@ -148,7 +149,7 @@ class HeadersParentTest extends TestCase
             "\"b\",\"first_second.first_f907b0c59507357e04c8d96eae1acf5c\"\n";
         self::assertEquals(
             $result,
-            file_get_contents($parser->getCsvFiles()['first_second_first_second']->getPathName())
+            file_get_contents($parser->getCsvFiles()['first_second_first_second']->getPathName()),
         );
     }
 }

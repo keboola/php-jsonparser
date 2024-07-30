@@ -6,10 +6,11 @@ namespace Keboola\Json;
 
 class NodePath
 {
+    /** @var array<string> */
     private array $path;
 
     /**
-     * NodePath constructor.
+     * @param array<string> $path
      */
     public function __construct(array $path)
     {

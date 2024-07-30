@@ -9,6 +9,7 @@ use Keboola\Json\Exception\JsonParserException;
 use Keboola\Json\Structure;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use stdClass;
 
 class AnalyzerTest extends TestCase
 {
@@ -70,7 +71,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 
@@ -133,7 +134,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 
@@ -207,7 +208,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 
@@ -266,7 +267,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 
@@ -323,7 +324,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 
@@ -402,7 +403,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 
@@ -432,7 +433,7 @@ class AnalyzerTest extends TestCase
 
         $this->expectException(JsonParserException::class);
         $this->expectExceptionMessage(
-            "Data array in 'root.[].arrOfScalars' contains incompatible types 'object' and 'scalar'"
+            "Data array in 'root.[].arrOfScalars' contains incompatible types 'object' and 'scalar'",
         );
         $analyzer->analyzeData($data, 'root');
     }
@@ -459,7 +460,7 @@ class AnalyzerTest extends TestCase
     public function testAnalyzeEmpty(): void
     {
         $analyzer = new Analyzer(new NullLogger(), new Structure());
-        $analyzer->analyzeData([new \stdClass], 'test');
+        $analyzer->analyzeData([new stdClass], 'test');
 
         self::assertEquals(
             [
@@ -473,7 +474,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 
@@ -481,7 +482,7 @@ class AnalyzerTest extends TestCase
     {
         $analyzer = new Analyzer(new NullLogger(), new Structure());
         $analyzer->analyzeData([
-            new \stdClass,
+            new stdClass,
             (object) [
                 'k' => 'v',
                 'field' => [
@@ -511,7 +512,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 
@@ -556,7 +557,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 
@@ -679,7 +680,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 
@@ -734,7 +735,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 
@@ -752,7 +753,7 @@ class AnalyzerTest extends TestCase
                     'obj' => [null],
                 ],
             ],
-            's2null'
+            's2null',
         );
 
         $analyzer->analyzeData(
@@ -766,7 +767,7 @@ class AnalyzerTest extends TestCase
                     'obj' => [null],
                 ],
             ],
-            'null2s'
+            'null2s',
         );
 
         self::assertEquals(
@@ -817,7 +818,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 
@@ -829,7 +830,7 @@ class AnalyzerTest extends TestCase
                 [1,2,3,[7,8]],
                 [4,5,6],
             ],
-            'test'
+            'test',
         );
         self::assertEquals(
             [
@@ -843,7 +844,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 
@@ -855,7 +856,7 @@ class AnalyzerTest extends TestCase
                 [1,2,3,[7,8]],
                 [4,5,6],
             ],
-            'test'
+            'test',
         );
         self::assertEquals(
             [
@@ -869,7 +870,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 
@@ -920,7 +921,7 @@ class AnalyzerTest extends TestCase
                 ],
                 'parent_aliases' => [],
             ],
-            $analyzer->getStructure()->getData()
+            $analyzer->getStructure()->getData(),
         );
     }
 }

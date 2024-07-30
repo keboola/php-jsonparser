@@ -5,17 +5,15 @@ declare(strict_types=1);
 namespace Keboola\Json\Tests;
 
 use PHPUnit\Framework\TestCase;
+use function Keboola\Utils\jsonDecode;
 
 class ParserTestCase extends TestCase
 {
-    /**
-     * @return mixed
-     */
-    protected function loadJson(string $fileName)
+    protected function loadJson(string $fileName): mixed
     {
         $testFilesPath = $this->getDataDir() . $fileName . '.json';
         $file = (string) file_get_contents($testFilesPath);
-        return \Keboola\Utils\jsonDecode($file);
+        return jsonDecode($file);
     }
 
     protected function getDataDir(): string

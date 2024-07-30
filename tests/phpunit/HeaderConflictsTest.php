@@ -9,6 +9,7 @@ use Keboola\Json\Parser;
 use Keboola\Json\Structure;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use function Keboola\Utils\jsonDecode;
 
 class HeaderConflictsTest extends TestCase
 {
@@ -16,7 +17,7 @@ class HeaderConflictsTest extends TestCase
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [{
                     "first_third_fourth": "origin",
@@ -27,7 +28,7 @@ class HeaderConflictsTest extends TestCase
                         }
                     }
                 }]
-            }'
+            }',
         );
         $parser->process($testFile->components);
 
@@ -44,7 +45,7 @@ class HeaderConflictsTest extends TestCase
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [{
                     "first": {
@@ -55,7 +56,7 @@ class HeaderConflictsTest extends TestCase
                     },
                     "first_second": "origin"
                 }]
-            }'
+            }',
         );
         $parser->process($testFile->components);
 
@@ -72,7 +73,7 @@ class HeaderConflictsTest extends TestCase
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [{
                     "JSON_parentId": "origin",
@@ -83,7 +84,7 @@ class HeaderConflictsTest extends TestCase
                         }
                     }
                 }]
-            }'
+            }',
         );
         $parser->process($testFile->components, 'root', 'someValue');
 
@@ -100,7 +101,7 @@ class HeaderConflictsTest extends TestCase
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [
                     {
@@ -130,7 +131,7 @@ class HeaderConflictsTest extends TestCase
                         }
                     }                                        
                 ]
-            }'
+            }',
         );
         $parser->process($testFile->components, 'boo', ['someKey' => 'someValue']);
 
@@ -153,7 +154,7 @@ class HeaderConflictsTest extends TestCase
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [{
                     "first_second": "origin",
@@ -162,7 +163,7 @@ class HeaderConflictsTest extends TestCase
                     },
                     "first.second": "origin2"
                 }]
-            }'
+            }',
         );
         $parser->process($testFile->components);
 
@@ -179,7 +180,7 @@ class HeaderConflictsTest extends TestCase
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [
                     {
@@ -192,12 +193,12 @@ class HeaderConflictsTest extends TestCase
                         }
                     }                                    
                 ]
-            }'
+            }',
         );
         $parser->process($testFile->components, 'boo', ['someKey' => 'someValue']);
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [
                     {
@@ -218,7 +219,7 @@ class HeaderConflictsTest extends TestCase
                         }
                     }                                        
                 ]
-            }'
+            }',
         );
         $parser->process($testFile->components, 'boo', ['someKey' => 'someValue']);
 
@@ -241,7 +242,7 @@ class HeaderConflictsTest extends TestCase
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [
                     {
@@ -256,12 +257,12 @@ class HeaderConflictsTest extends TestCase
                         ]
                     }                                    
                 ]
-            }'
+            }',
         );
         $parser->process($testFile->components, 'boo', ['someKey' => 'someValue']);
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [
                     {
@@ -287,7 +288,7 @@ class HeaderConflictsTest extends TestCase
                         ]
                     }                                        
                 ]
-            }'
+            }',
         );
         $parser->process($testFile->components, 'boo', ['someKey' => 'someValue']);
         self::assertEquals(['boo', 'boo_first'], array_keys($parser->getCsvFiles()));
@@ -330,7 +331,7 @@ class HeaderConflictsTest extends TestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()), $metadata);
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [
                     {
@@ -338,12 +339,12 @@ class HeaderConflictsTest extends TestCase
                         "column": "test"
                     }                                    
                 ]
-            }'
+            }',
         );
         $parser->process($testFile->components, 'components', ['column' => 'someValue']);
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [
                     {
@@ -351,7 +352,7 @@ class HeaderConflictsTest extends TestCase
                         "column": "test2"
                     }                                    
                 ]
-            }'
+            }',
         );
         $parser->process($testFile->components, 'components', ['column' => 'someValue']);
         self::assertEquals(['components'], array_keys($parser->getCsvFiles()));

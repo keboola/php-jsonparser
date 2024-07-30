@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Keboola\Json;
 
+use function Keboola\Utils\returnBytes;
+
 class Cache
 {
+    /** @var mixed[] */
     protected array $data = [];
 
     /**
@@ -18,12 +21,15 @@ class Cache
 
     protected ?int $memoryLimit = null;
 
+    /**
+     * @param mixed[] $data
+     */
     public function store(array $data): void
     {
         // TODO ensure at least X MB is left free (X should be possible to change -> Parser::getCache()->setMemLimit(X))
         // either to stop using memory once X mem is used or once X is left from PHP limit
         if (ini_get('memory_limit') !== '-1'
-            && memory_get_usage() > (\Keboola\Utils\returnBytes(ini_get('memory_limit')) * 0.25)
+            && memory_get_usage() > (returnBytes(ini_get('memory_limit')) * 0.25)
             || ($this->memoryLimit !== null && memory_get_usage() > $this->memoryLimit)
         ) {
             // cache
@@ -41,6 +47,9 @@ class Cache
         }
     }
 
+    /**
+     * @return mixed[]|null
+     */
     public function getNext(): ?array
     {
         if (!empty($this->temp) && !feof($this->temp)) {

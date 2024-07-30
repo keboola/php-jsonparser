@@ -10,6 +10,7 @@ use Keboola\Json\Parser;
 use Keboola\Json\Structure;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use function Keboola\Utils\jsonDecode;
 
 class HeadersTest extends TestCase
 {
@@ -17,8 +18,8 @@ class HeadersTest extends TestCase
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
-            '{"components": []}'
+        $testFile = jsonDecode(
+            '{"components": []}',
         );
 
         $this->expectException(NoDataException::class);
@@ -31,8 +32,8 @@ class HeadersTest extends TestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
-            '{"components": [{}]}'
+        $testFile = jsonDecode(
+            '{"components": [{}]}',
         );
         $parser->process($testFile->components);
         self::assertEquals(['root'], array_keys($parser->getCsvFiles()));
@@ -44,8 +45,8 @@ class HeadersTest extends TestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
-            '{"components": [{"a": null}]}'
+        $testFile = jsonDecode(
+            '{"components": [{"a": null}]}',
         );
         $parser->process($testFile->components);
 
@@ -58,8 +59,8 @@ class HeadersTest extends TestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
-            '{"components": [{"AReallyTrulyIncrediblyHellishlyLongFromOuterSpaceAndAgePropertyName": null}]}'
+        $testFile = jsonDecode(
+            '{"components": [{"AReallyTrulyIncrediblyHellishlyLongFromOuterSpaceAndAgePropertyName": null}]}',
         );
         $parser->process($testFile->components);
 
@@ -72,8 +73,8 @@ class HeadersTest extends TestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
-            '{"components": [{"a": "b"}]}'
+        $testFile = jsonDecode(
+            '{"components": [{"a": "b"}]}',
         );
         $parser->process($testFile->components);
 
@@ -86,8 +87,8 @@ class HeadersTest extends TestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
-            '{"components": ["a", "b"]}'
+        $testFile = jsonDecode(
+            '{"components": ["a", "b"]}',
         );
         $parser->process($testFile->components);
 
@@ -100,7 +101,7 @@ class HeadersTest extends TestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [{
                     "first": {
@@ -109,7 +110,7 @@ class HeadersTest extends TestCase
                         }                        
                     }
                 }]
-            }'
+            }',
         );
         $parser->process($testFile->components);
 
