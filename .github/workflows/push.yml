@@ -1,0 +1,23 @@
+name: 'GitHub Actions'
+'on':
+    - push
+
+env:
+    APP_IMAGE: php-jsonparser
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            -
+                name: 'Check out the repo'
+                uses: actions/checkout@v2
+            -
+                name: 'Print Docker version'
+                run: 'docker -v'
+            -
+                name: 'Build image'
+                run: 'docker build -t $APP_IMAGE .'
+            -
+                name: 'Run tests'
+                run: 'docker run $APP_IMAGE composer ci'
