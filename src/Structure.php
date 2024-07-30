@@ -36,6 +36,7 @@ class Structure
 
     /**
      * Allowed data types
+     * @var string[]
      */
     private static array $nodeDataTypes = [
         'null', 'array', 'object', 'scalar', 'string', 'integer', 'double', 'boolean',
@@ -43,11 +44,18 @@ class Structure
 
     /**
      * Allowed node types
+     * @var string[]
      */
     private static array $nodeTypes = ['parent'];
 
+    /**
+     * @var mixed[]
+     */
     private array $data = [];
 
+    /**
+     * @var string[]
+     */
     private array $headerIndex = [];
 
     private bool $autoUpgradeToArray;
@@ -74,7 +82,7 @@ class Structure
      * @param mixed $value Scalar value.
      * @throws InconsistentValueException
      */
-    public function saveNodeValue(NodePath $nodePath, string $property, $value): void
+    public function saveNodeValue(NodePath $nodePath, string $property, mixed $value): void
     {
         try {
             $this->data = $this->storeValue($nodePath, $this->data, $property, $value);
@@ -115,13 +123,13 @@ class Structure
     /**
      * Store a particular value of a particular property for a given node.
      * @param NodePath $nodePath Node Path
-     * @param array $data Structure data.
+     * @param mixed[] $data Structure data.
      * @param string $property Name of the property (e.g. 'nodeType')
      * @param mixed $value Scalar value of the property.
-     * @return array Structure data
+     * @return mixed[] Structure data
      * @throws InconsistentValueException In case the values is already set and not same.
      */
-    private function storeValue(NodePath $nodePath, array $data, string $property, $value): array
+    private function storeValue(NodePath $nodePath, array $data, string $property, mixed $value): array
     {
         $nodeName = '';
         $nodePath = $nodePath->popFirst($nodeName);
@@ -144,9 +152,7 @@ class Structure
 
     /**
      * Upgrade a node to array
-     * @param array $node
-     * @param NodePath $nodePath
-     * @param string $newType
+     * @var string[] $node
      * @throws JsonParserException
      */
     private function handleUpgrade(array $node, NodePath $nodePath, string $newType): void
@@ -184,7 +190,7 @@ class Structure
         } else {
             throw new JsonParserException(
                 'Unhandled nodeType change from "' . $node['nodeType'] .
-                '" to "' . $newType . '" in "' . $nodePath->__toString() . '"'
+                '" to "' . $newType . '" in "' . $nodePath->__toString() . '"',
             );
         }
     }
@@ -293,7 +299,7 @@ class Structure
      * @param string $property Property name (e.g. 'nodeType')
      * @return mixed Property value or null if the node or property does not exist.
      */
-    public function getNodeProperty(NodePath $nodePath, string $property)
+    public function getNodeProperty(NodePath $nodePath, string $property): mixed
     {
         $data = $this->getNode($nodePath);
         if (isset($data[$property])) {
@@ -338,7 +344,6 @@ class Structure
 
     /**
      * Get columns from a node and return their data types.
-     * @param NodePath $nodePath
      * @return array Index is column name, value is data type.
      */
     public function getColumnTypes(NodePath $nodePath): array
@@ -368,7 +373,7 @@ class Structure
                         $nodeData,
                         new NodePath([$baseType, $nodeName]),
                         self::ARRAY_NAME, // # root is always array
-                        $baseType
+                        $baseType,
                     );
                 }
             }
@@ -463,9 +468,6 @@ class Structure
     /**
      * Generate header name for a node and sub-nodes.
      * @param array $data Node data
-     * @param NodePath $nodePath
-     * @param string $parentName
-     * @param string $baseType
      */
     private function generateHeaderName(array &$data, NodePath $nodePath, string $parentName, string $baseType): void
     {
@@ -501,7 +503,6 @@ class Structure
 
     /**
      * Load structure data.
-     * @param array $definitions
      */
     public function load(array $definitions): void
     {

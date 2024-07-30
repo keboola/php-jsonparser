@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Keboola\Json;
 
 use Keboola\CsvTable\Table;
-use Keboola\Temp\Temp;
 use Keboola\Json\Exception\JsonParserException;
 use Keboola\Json\Exception\NoDataException;
+use Keboola\Temp\Temp;
+use stdClass;
 
 /**
  * JSON to CSV data analyzer and parser/converter
@@ -46,6 +47,7 @@ class Parser
 
     private Temp $temp;
 
+    /** @var string[]  */
     private array $primaryKeys = [];
 
     private Analyzer $analyzer;
@@ -84,7 +86,7 @@ class Parser
      *         which will name the column(s) by array key provided
      * @throws NoDataException
      */
-    public function process(array $data, string $type = 'root', $parentId = null): void
+    public function process(array $data, string $type = 'root', string|array|null $parentId = null): void
     {
         if (empty($data) || $data === [null]) {
             throw new NoDataException("Empty data set received for '{$type}'", [
@@ -101,9 +103,8 @@ class Parser
 
     /**
      * Parse data of known type
-     * @param string|array|null $parentId
      */
-    private function parse(array $data, NodePath $nodePath, $parentId = null): void
+    private function parse(array $data, NodePath $nodePath, string|array|null $parentId = null): void
     {
         $parentId = $this->validateParentId($parentId);
         $csvFile = $this->createCsvFile($this->structure->getTypeFromNodePath($nodePath), $nodePath, $parentId);
@@ -133,15 +134,14 @@ class Parser
      * If the row contains an array, it's recursively parsed
      *
      * @param \stdClass $dataRow Input data
-     * @param NodePath $nodePath
      * @param array $parentCols to inject parent columns, which aren't part of $this->struct
      * @param string $outerObjectHash Outer object hash to distinguish different parents in deep nested arrays
      */
     private function parseRow(
-        \stdClass $dataRow,
+        stdClass $dataRow,
         NodePath $nodePath,
         array $parentCols = [],
-        ?string $outerObjectHash = null
+        ?string $outerObjectHash = null,
     ): CsvRow {
         $csvRow = new CsvRow($this->getHeaders($nodePath, $parentCols));
         // Generate parent ID for arrays
@@ -158,12 +158,12 @@ class Parser
      * Handle the actual write to CsvRow
      */
     private function parseField(
-        \stdClass $dataRow,
+        stdClass $dataRow,
         CsvRow $csvRow,
         string $arrayParentId,
         string $column,
         string $dataType,
-        NodePath $nodePath
+        NodePath $nodePath,
     ): void {
         // A hack allowing access to numeric keys in object
         if (!isset($dataRow->{$column})
@@ -199,7 +199,7 @@ class Parser
                 $this->parse(
                     $dataRow->{$column},
                     $nodePath->addChild($column)->addChild(Structure::ARRAY_NAME),
-                    $arrayParentId
+                    $arrayParentId,
                 );
                 break;
             case 'object':
@@ -223,7 +223,7 @@ class Parser
                     $this->analyzer->getLogger()->error(
                         "Data parse error in '{$column}' - unexpected '"
                             . gettype($dataRow->{$column}) . "' where '{$dataType}' was expected!",
-                        [ 'data' => $jsonColumn, 'row' => json_encode($dataRow) ]
+                        [ 'data' => $jsonColumn, 'row' => json_encode($dataRow) ],
                     );
                     $sf = $this->structure->getNodeProperty($nodePath->addChild($column), 'headerNames');
                     $csvRow->setValue($sf, $jsonColumn);
@@ -291,7 +291,7 @@ class Parser
                 $nodeName = $this->structure->decodeNodeName($nodeName);
                 $ch = $this->getHeaders($nodePath->addChild($nodeName), $pparent);
                 $headers = array_merge($headers, $ch);
-            } else if (is_array($data)) {
+            } elseif (is_array($data)) {
                 $headers[] = $data['headerNames'];
             }
         }
@@ -308,7 +308,7 @@ class Parser
                 $type,
                 $this->getHeaders($nodePath, $parentId),
                 true,
-                $this->temp
+                $this->temp,
             );
             $this->csvFiles[$type]->addAttributes(['fullDisplayName' => $type]);
             if (!empty($this->primaryKeys[$type])) {
@@ -319,7 +319,7 @@ class Parser
         return $this->csvFiles[$type];
     }
 
-    private function getPrimaryKeyValue(\stdClass $dataRow, NodePath $nodePath, ?string $outerObjectHash = null): string
+    private function getPrimaryKeyValue(stdClass $dataRow, NodePath $nodePath, ?string $outerObjectHash = null): string
     {
         $column = $this->structure->getTypeFromNodePath($nodePath);
         if (!empty($this->primaryKeys[$column])) {
@@ -332,7 +332,7 @@ class Parser
                     $this->analyzer->getLogger()->warning(
                         "Primary key for type '{$column}' was set to '". $this->primaryKeys[$column] .
                         "', but its column '{$pKeyCol}' does not exist! Using hash to link child objects instead.",
-                        ['row' => $dataRow]
+                        ['row' => $dataRow],
                     );
                 } else {
                     $values[] = $dataRow->{$pKeyCol};
@@ -349,10 +349,9 @@ class Parser
     /**
      * Ensure the parentId array is not multidimensional
      *
-     * @param string|array|null $parentId
      * @throws JsonParserException
      */
-    private function validateParentId($parentId): array
+    private function validateParentId(string|array|null $parentId): array
     {
         if (!empty($parentId)) {
             if (is_array($parentId)) {
@@ -361,7 +360,7 @@ class Parser
                         'Error assigning parentId to a CSV file! $parentId array cannot be multidimensional.',
                         [
                             'parentId' => $parentId,
-                        ]
+                        ],
                     );
                 }
             } else {
@@ -407,9 +406,8 @@ class Parser
 
     /**
      * Set maximum memory used before Cache starts using php://temp
-     * @param string|int $limit
      */
-    public function setCacheMemoryLimit($limit): void
+    public function setCacheMemoryLimit(string|int $limit): void
     {
         $this->cache->setMemoryLimit((int) $limit);
     }

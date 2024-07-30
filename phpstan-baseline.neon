@@ -1,0 +1,151 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Binary operation \"\\*\" between int\\|string and 0\\.25 results in an error\\.$#"
+			count: 1
+			path: src/Cache.php
+
+		-
+			message: "#^Method Keboola\\\\Json\\\\Cache\\:\\:getNext\\(\\) should return array\\|null but returns mixed\\.$#"
+			count: 2
+			path: src/Cache.php
+
+		-
+			message: "#^Property Keboola\\\\Json\\\\Cache\\:\\:\\$temp \\(resource\\) in empty\\(\\) is not falsy\\.$#"
+			count: 3
+			path: src/Cache.php
+
+		-
+			message: "#^PHPDoc tag @var above a method has no effect\\.$#"
+			count: 1
+			path: src/CsvRow.php
+
+		-
+			message: "#^Part \\$value \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
+			count: 1
+			path: src/CsvRow.php
+
+		-
+			message: "#^Method Keboola\\\\Json\\\\NodePath\\:\\:getLast\\(\\) should return string but returns string\\|false\\.$#"
+			count: 1
+			path: src/NodePath.php
+
+		-
+			message: "#^Cannot access offset string on mixed\\.$#"
+			count: 1
+			path: src/Parser.php
+
+		-
+			message: "#^Parameter \\#1 \\$column of method Keboola\\\\Json\\\\CsvRow\\:\\:setValue\\(\\) expects string, mixed given\\.$#"
+			count: 4
+			path: src/Parser.php
+
+		-
+			message: "#^Parameter \\#1 \\$data of method Keboola\\\\Json\\\\Parser\\:\\:parse\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: src/Parser.php
+
+		-
+			message: "#^Parameter \\#1 \\$path of class Keboola\\\\Json\\\\NodePath constructor expects array\\<string\\>, array\\<int, mixed\\> given\\.$#"
+			count: 1
+			path: src/Parser.php
+
+		-
+			message: "#^Parameter \\#3 \\$parentId of method Keboola\\\\Json\\\\Parser\\:\\:parse\\(\\) expects array\\|string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Parser.php
+
+		-
+			message: "#^Right side of \\|\\| is always false\\.$#"
+			count: 1
+			path: src/Parser.php
+
+		-
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/Structure.php
+
+		-
+			message: "#^Cannot access offset string on mixed\\.$#"
+			count: 2
+			path: src/Structure.php
+
+		-
+			message: "#^Cannot assign offset string to string\\.$#"
+			count: 1
+			path: src/Structure.php
+
+		-
+			message: "#^Offset string on string in isset\\(\\) does not exist\\.$#"
+			count: 2
+			path: src/Structure.php
+
+		-
+			message: "#^PHPDoc tag @var above a method has no effect\\.$#"
+			count: 1
+			path: src/Structure.php
+
+		-
+			message: "#^Parameter \\#1 \\$definitions of method Keboola\\\\Json\\\\Structure\\:\\:validateDefinitions\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: src/Structure.php
+
+		-
+			message: "#^Parameter \\#1 \\$nodeName of method Keboola\\\\Json\\\\Structure\\:\\:decodeNodeName\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Structure.php
+
+		-
+			message: "#^Parameter \\#2 \\$data of method Keboola\\\\Json\\\\Structure\\:\\:storeValue\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: src/Structure.php
+
+		-
+			message: "#^Parameter \\#3 \\$newType of method Keboola\\\\Json\\\\Structure\\:\\:handleUpgrade\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Structure.php
+
+		-
+			message: "#^Part \\$value \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
+			count: 1
+			path: src/Structure.php
+
+		-
+			message: "#^Cannot access property \\$data on mixed\\.$#"
+			count: 1
+			path: tests/phpunit/ParserTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$data of method Keboola\\\\Json\\\\Parser\\:\\:process\\(\\) expects array, mixed given\\.$#"
+			count: 2
+			path: tests/phpunit/ParserTest.php
+
+		-
+			message: "#^Cannot access offset 0 on mixed\\.$#"
+			count: 1
+			path: tests/phpunit/RealDataTest.php
+
+		-
+			message: "#^Cannot access property \\$components on mixed\\.$#"
+			count: 1
+			path: tests/phpunit/RealDataTest.php
+
+		-
+			message: "#^Cannot access property \\$statuses on mixed\\.$#"
+			count: 1
+			path: tests/phpunit/RealDataTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$array of function array_walk expects array\\|object, array\\<int, string\\>\\|false given\\.$#"
+			count: 2
+			path: tests/phpunit/RealDataTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$data of method Keboola\\\\Json\\\\Parser\\:\\:process\\(\\) expects array, mixed given\\.$#"
+			count: 5
+			path: tests/phpunit/RealDataTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$value of function count expects array\\|Countable, mixed given\\.$#"
+			count: 4
+			path: tests/phpunit/RealDataTest.php

@@ -11,6 +11,7 @@ use Keboola\Json\Structure;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use Psr\Log\NullLogger;
+use function Keboola\Utils\jsonDecode;
 
 class ParserTest extends ParserTestCase
 {
@@ -40,7 +41,7 @@ class ParserTest extends ParserTestCase
             "\"0\",\"entities.hashtags_7166de1f0241156ee048591b4492bc56\"\n" .
             "\"4\",\"entities.hashtags_7166de1f0241156ee048591b4492bc56\"\n" .
             "\"\",\"entities.hashtags_7166de1f0241156ee048591b4492bc56\"\n",
-            file_get_contents($parser->getCsvFiles()['entities_hashtags_indices']->getPathname())
+            file_get_contents($parser->getCsvFiles()['entities_hashtags_indices']->getPathname()),
         );
     }
 
@@ -59,7 +60,7 @@ class ParserTest extends ParserTestCase
         self::assertEquals('id,date', $parser->getCsvFiles()['root']->getPrimaryKey());
         self::assertEquals(
             '"stuff","root_1;2015-10-21"' . "\n",
-            file($parser->getCsvFiles()['root_data']->getPathName())[1]
+            file($parser->getCsvFiles()['root_data']->getPathName())[1],
         );
     }
 
@@ -82,7 +83,7 @@ class ParserTest extends ParserTestCase
         foreach ($parser->getCsvFiles() as $type => $file) {
             self::assertEquals(
                 file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv"),
-                file_get_contents($file->getPathname())
+                file_get_contents($file->getPathname()),
             );
         }
     }
@@ -99,7 +100,7 @@ class ParserTest extends ParserTestCase
         foreach ($parser->getCsvFiles() as $type => $file) {
             self::assertEquals(
                 file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv"),
-                file_get_contents($file->getPathname())
+                file_get_contents($file->getPathname()),
             );
         }
     }
@@ -121,7 +122,7 @@ class ParserTest extends ParserTestCase
         foreach ($parser->getCsvFiles() as $type => $file) {
             self::assertEquals(
                 file_get_contents($this->getDataDir() . "PrimaryKeyTest/{$type}.csv"),
-                file_get_contents($file->getPathname())
+                file_get_contents($file->getPathname()),
             );
         }
     }
@@ -182,7 +183,7 @@ class ParserTest extends ParserTestCase
         foreach ($parser->getCsvFiles() as $type => $file) {
             self::assertEquals(
                 file_get_contents($this->getDataDir() . "{$type}.csv"),
-                file_get_contents($file->getPathname())
+                file_get_contents($file->getPathname()),
             );
         }
     }
@@ -245,7 +246,7 @@ class ParserTest extends ParserTestCase
         foreach ($parser->getCsvFiles() as $type => $file) {
             self::assertEquals(
                 file_get_contents($this->getDataDir() . "{$type}.csv"),
-                file_get_contents($file->getPathname())
+                file_get_contents($file->getPathname()),
             );
         }
     }
@@ -290,7 +291,7 @@ class ParserTest extends ParserTestCase
             $new = file($files[$later]->getPathname());
             self::assertNotEquals(
                 $old,
-                $new
+                $new,
             );
 
             // ditch headers
@@ -310,7 +311,7 @@ class ParserTest extends ParserTestCase
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         /** @var array $data */
-        $data = \Keboola\Utils\jsonDecode('[
+        $data = jsonDecode('[
             {"field": 128},
             {"field": "string"},
             {"field": true}
@@ -324,7 +325,7 @@ class ParserTest extends ParserTestCase
                 '"string"' . "\n",
                 '"1"' . "\n", // true gets converted to "1"! should be documented!
             ],
-            file($parser->getCsvFiles()['threepack']->getPathname())
+            file($parser->getCsvFiles()['threepack']->getPathname()),
         );
     }
 
@@ -361,7 +362,7 @@ class ParserTest extends ParserTestCase
             . '"16565201397","Comment","457400607","This is the latest comment for this ticket. You also '
             . 'changed the ticket status to Pending.","<p>This is the latest comment for this ticket. You also '
             . "changed the ticket status to Pending.</p>\",\"1\",\"\",\"web\",\"\",\"2013-09-01T20:22:29Z\"\n",
-            file_get_contents($parser->getCsvFiles()['root']->getPathname())
+            file_get_contents($parser->getCsvFiles()['root']->getPathname()),
         );
     }
 
@@ -380,11 +381,11 @@ class ParserTest extends ParserTestCase
             [
                 'first_parent' => 1,
                 'second_parent' => 'two',
-            ]
+            ],
         );
         self::assertEquals(
             file_get_contents($this->getDataDir() . 'ParentIdsTest.csv'),
-            file_get_contents($parser->getCsvFiles()['test']->getPathName())
+            file_get_contents($parser->getCsvFiles()['test']->getPathName()),
         );
     }
 
@@ -398,7 +399,7 @@ class ParserTest extends ParserTestCase
                 '"a"' . "\n",
                 '"b"' . "\n",
             ],
-            file($parser->getCsvFiles()['root']->getPathname())
+            file($parser->getCsvFiles()['root']->getPathname()),
         );
     }
 
@@ -447,11 +448,11 @@ class ParserTest extends ParserTestCase
         self::assertEquals(
             true,
             $logHandler->hasWarning("Converting nested array 'root.[]' to JSON string."),
-            'Warning should have been logged'
+            'Warning should have been logged',
         );
         self::assertEquals(
             file_get_contents($this->getDataDir() . 'NestedArraysJson.csv'),
-            file_get_contents($parser->getCsvFiles()['root']->getPathName())
+            file_get_contents($parser->getCsvFiles()['root']->getPathName()),
         );
     }
 
@@ -479,7 +480,7 @@ class ParserTest extends ParserTestCase
             '"id","KeywordRanking_attributes_date","KeywordRanking_stuff_I_ARE_POTAT"' .
             ',"KeywordRanking_stuff_kek_ser_ou_ly"' . "\n" .
             '"123456","2015-03-20","aaa$@!","now"' . "\n",
-            file_get_contents($parser->getCsvFiles()['root']->getPathName())
+            file_get_contents($parser->getCsvFiles()['root']->getPathName()),
         );
     }
 
@@ -558,7 +559,7 @@ class ParserTest extends ParserTestCase
             '"root_eae48f50d1159c41f633f876d6c66411"' . "\n" .
             '"root_83cb9491934903381f6808ac79842022"' . "\n" .
             '"root_6d231f9592a4e259452229e2be31f42e"' . "\n",
-            file_get_contents($parser->getCsvFiles()['root']->getPathName())
+            file_get_contents($parser->getCsvFiles()['root']->getPathName()),
         );
 
         self::assertEquals(
@@ -567,7 +568,7 @@ class ParserTest extends ParserTestCase
             '"val2.1.1","val2.1.2","root_83cb9491934903381f6808ac79842022"' . "\n" .
             '"val2.2.1","","root_83cb9491934903381f6808ac79842022"' . "\n" .
             '"val3.1","val3.2","root_6d231f9592a4e259452229e2be31f42e"' . "\n",
-            file_get_contents($parser->getCsvFiles()['root_key']->getPathName())
+            file_get_contents($parser->getCsvFiles()['root_key']->getPathName()),
         );
 
         // Test with array first
@@ -598,7 +599,7 @@ class ParserTest extends ParserTestCase
             '"key"' . "\n" .
             '"arr_d03523e758a12366bd7062ee727c4939"' . "\n" .
             '"arr_6d231f9592a4e259452229e2be31f42e"' . "\n",
-            file_get_contents($parser->getCsvFiles()['arr']->getPathName())
+            file_get_contents($parser->getCsvFiles()['arr']->getPathName()),
         );
 
         self::assertEquals(
@@ -606,7 +607,7 @@ class ParserTest extends ParserTestCase
             '"val2.1.1","val2.1.2","arr_d03523e758a12366bd7062ee727c4939"' . "\n" .
             '"val2.2.1","val2.2.2","arr_d03523e758a12366bd7062ee727c4939"' . "\n" .
             '"val3.1","val3.2","arr_6d231f9592a4e259452229e2be31f42e"' . "\n",
-            file_get_contents($parser->getCsvFiles()['arr_key']->getPathName())
+            file_get_contents($parser->getCsvFiles()['arr_key']->getPathName()),
         );
     }
 
@@ -698,7 +699,7 @@ class ParserTest extends ParserTestCase
             '"root_0c616a2609bd2e8d88574f3f856170c5"' . "\n" .
             '"root_3cc17a87c69e64707ac357e84e5a9eb8"' . "\n" .
             '"root_af523454cc66582ad5dcec3f171b35ed"' . "\n",
-            file_get_contents($parser->getCsvFiles()['root']->getPathName())
+            file_get_contents($parser->getCsvFiles()['root']->getPathName()),
         );
 
         self::assertEquals(
@@ -707,7 +708,7 @@ class ParserTest extends ParserTestCase
             '"str2.1","root_3cc17a87c69e64707ac357e84e5a9eb8"' . "\n" .
             '"str2.2","root_3cc17a87c69e64707ac357e84e5a9eb8"' . "\n" .
             '"str3","root_af523454cc66582ad5dcec3f171b35ed"' . "\n",
-            file_get_contents($parser->getCsvFiles()['root_key']->getPathName())
+            file_get_contents($parser->getCsvFiles()['root_key']->getPathName()),
         );
     }
 
@@ -734,7 +735,7 @@ class ParserTest extends ParserTestCase
 
         self::assertEquals(
             '"id","value"' . "\n" . '"1",""' . "\n",
-            file_get_contents($parser->getCsvFiles()['root']->getPathName())
+            file_get_contents($parser->getCsvFiles()['root']->getPathName()),
         );
     }
 
@@ -770,7 +771,7 @@ class ParserTest extends ParserTestCase
                     'obj' => [null],
                 ],
             ],
-            's2null'
+            's2null',
         );
 
         $parser->process(
@@ -784,7 +785,7 @@ class ParserTest extends ParserTestCase
                     'obj' => [null],
                 ],
             ],
-            'null2s'
+            'null2s',
         );
 
         self::assertEquals(
@@ -792,7 +793,7 @@ class ParserTest extends ParserTestCase
             '"s2null_eb89917794221aeda822735efbab9069","s2null_eb89917794221aeda822735efbab9069"' . "\n" .
             '"s2null_77cca534224f13ec1fa45c6c0c98557d","s2null_77cca534224f13ec1fa45c6c0c98557d"' . "\n" .
             '',
-            file_get_contents($parser->getCsvFiles()['s2null']->getPathName())
+            file_get_contents($parser->getCsvFiles()['s2null']->getPathName()),
         );
 
         self::assertEquals(
@@ -800,7 +801,7 @@ class ParserTest extends ParserTestCase
             '"stringArr","s2null_eb89917794221aeda822735efbab9069"' . "\n" .
             '"","s2null_77cca534224f13ec1fa45c6c0c98557d"' . "\n" .
             '',
-            file_get_contents($parser->getCsvFiles()['s2null_val']->getPathName())
+            file_get_contents($parser->getCsvFiles()['s2null_val']->getPathName()),
         );
 
         self::assertEquals(
@@ -808,7 +809,7 @@ class ParserTest extends ParserTestCase
             '"objValue","s2null_eb89917794221aeda822735efbab9069"' . "\n" .
             '"","s2null_77cca534224f13ec1fa45c6c0c98557d"' . "\n" .
             '',
-            file_get_contents($parser->getCsvFiles()['s2null_obj']->getPathName())
+            file_get_contents($parser->getCsvFiles()['s2null_obj']->getPathName()),
         );
 
         self::assertEquals(
@@ -816,7 +817,7 @@ class ParserTest extends ParserTestCase
             '"null2s_eb89917794221aeda822735efbab9069","null2s_eb89917794221aeda822735efbab9069"' . "\n" .
             '"null2s_77cca534224f13ec1fa45c6c0c98557d","null2s_77cca534224f13ec1fa45c6c0c98557d"' . "\n".
             '',
-            file_get_contents($parser->getCsvFiles()['null2s']->getPathName())
+            file_get_contents($parser->getCsvFiles()['null2s']->getPathName()),
         );
 
         self::assertEquals(
@@ -824,7 +825,7 @@ class ParserTest extends ParserTestCase
             '"stringArr","null2s_eb89917794221aeda822735efbab9069"' . "\n" .
             '"","null2s_77cca534224f13ec1fa45c6c0c98557d"' . "\n" .
             '',
-            file_get_contents($parser->getCsvFiles()['null2s_val']->getPathName())
+            file_get_contents($parser->getCsvFiles()['null2s_val']->getPathName()),
         );
 
         self::assertEquals(
@@ -832,7 +833,7 @@ class ParserTest extends ParserTestCase
             '"objValue","null2s_eb89917794221aeda822735efbab9069"' . "\n" .
             '"","null2s_77cca534224f13ec1fa45c6c0c98557d"' . "\n" .
             '',
-            file_get_contents($parser->getCsvFiles()['null2s_obj']->getPathName())
+            file_get_contents($parser->getCsvFiles()['null2s_obj']->getPathName()),
         );
     }
 
@@ -841,14 +842,14 @@ class ParserTest extends ParserTestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure(), true));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
-            '{"data": [{"1": "one", "2": "two"}]}'
+        $testFile = jsonDecode(
+            '{"data": [{"1": "one", "2": "two"}]}',
         );
         $parser->process($testFile->data, 'someType');
         self::assertEquals(['someType'], array_keys($parser->getCsvFiles()));
         self::assertEquals(
             "\"1\",\"2\"\n\"one\",\"two\"\n",
-            file_get_contents($parser->getCsvFiles()['someType']->getPathName())
+            file_get_contents($parser->getCsvFiles()['someType']->getPathName()),
         );
     }
 
@@ -857,20 +858,20 @@ class ParserTest extends ParserTestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure(), true));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
-            '{"a": [["c", "d"], ["e", "f"]]}'
+        $testFile = jsonDecode(
+            '{"a": [["c", "d"], ["e", "f"]]}',
         );
         $parser->process([$testFile], 'someType');
         self::assertEquals(['someType', 'someType_a'], array_keys($parser->getCsvFiles()));
         self::assertEquals(
             "\"a\"\n\"someType_0a3f2bc488aa446db98866f181f43dbb\"\n",
-            file_get_contents($parser->getCsvFiles()['someType']->getPathName())
+            file_get_contents($parser->getCsvFiles()['someType']->getPathName()),
         );
         self::assertEquals(
             "\"data\",\"JSON_parentId\"\n" .
             "\"[\"\"c\"\",\"\"d\"\"]\",\"someType_0a3f2bc488aa446db98866f181f43dbb\"\n" .
             "\"[\"\"e\"\",\"\"f\"\"]\",\"someType_0a3f2bc488aa446db98866f181f43dbb\"\n",
-            file_get_contents($parser->getCsvFiles()['someType_a']->getPathName())
+            file_get_contents($parser->getCsvFiles()['someType_a']->getPathName()),
         );
     }
 
@@ -879,14 +880,14 @@ class ParserTest extends ParserTestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure(), true));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
-            '{"data": [null, "a"]}'
+        $testFile = jsonDecode(
+            '{"data": [null, "a"]}',
         );
         $parser->process($testFile->data, 'someType');
         self::assertEquals(['someType'], array_keys($parser->getCsvFiles()));
         self::assertEquals(
             "\"data\"\n\"\"\n\"a\"\n",
-            file_get_contents($parser->getCsvFiles()['someType']->getPathName())
+            file_get_contents($parser->getCsvFiles()['someType']->getPathName()),
         );
     }
 
@@ -895,8 +896,8 @@ class ParserTest extends ParserTestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
-            '{"data": ["a", "b"]}'
+        $testFile = jsonDecode(
+            '{"data": ["a", "b"]}',
         );
 
         $parser->process($testFile->data, 'someType', ['someColumn' => ['this' => 'is wrong']]);
@@ -904,7 +905,7 @@ class ParserTest extends ParserTestCase
         $this->expectException(JsonParserException::class);
 
         $this->expectExceptionMessage(
-            'Error assigning parentId to a CSV file! $parentId array cannot be multidimensional'
+            'Error assigning parentId to a CSV file! $parentId array cannot be multidimensional',
         );
         $parser->getCsvFiles();
     }
@@ -914,8 +915,8 @@ class ParserTest extends ParserTestCase
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure(), true));
 
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
-            '{"data": [{"id": "a", "val": ["a"]}, {"id": "b", "val": ["b"]}]}'
+        $testFile = jsonDecode(
+            '{"data": [{"id": "a", "val": ["a"]}, {"id": "b", "val": ["b"]}]}',
         );
         $parser->addPrimaryKeys(['someType_val' => 'id']);
         $parser->process($testFile->data, 'someType');
@@ -923,12 +924,12 @@ class ParserTest extends ParserTestCase
         self::assertEquals(
             "\"id\",\"val\"\n\"a\",\"someType_ee9689ff88c83c395a3ffd9a0e747920\"\n".
             "\"b\",\"someType_37fb9eda31010642e996aa72bc998558\"\n",
-            file_get_contents($parser->getCsvFiles()['someType']->getPathName())
+            file_get_contents($parser->getCsvFiles()['someType']->getPathName()),
         );
         self::assertEquals(
             "\"data\",\"JSON_parentId\"\n\"a\",\"someType_ee9689ff88c83c395a3ffd9a0e747920\"\n" .
             "\"b\",\"someType_37fb9eda31010642e996aa72bc998558\"\n",
-            file_get_contents($parser->getCsvFiles()['someType_val']->getPathName())
+            file_get_contents($parser->getCsvFiles()['someType_val']->getPathName()),
         );
     }
 }

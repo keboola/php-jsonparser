@@ -9,6 +9,8 @@ use Keboola\Json\Analyzer;
 use Keboola\Json\Parser;
 use Keboola\Json\Structure;
 use Psr\Log\NullLogger;
+use function Keboola\Utils\arrayToObject;
+use function Keboola\Utils\jsonDecode;
 
 class RealDataTest extends ParserTestCase
 {
@@ -23,7 +25,7 @@ class RealDataTest extends ParserTestCase
             // compare result files
             self::assertEquals(
                 file_get_contents("{$testFilesPath}/{$name}.csv"),
-                file_get_contents($table->getPathname())
+                file_get_contents($table->getPathname()),
             );
 
             // compare column counts
@@ -78,7 +80,7 @@ class RealDataTest extends ParserTestCase
                 'a_b_c_d_e_f_statuses_retweeted_status_entities_media',
                 'a_b_c_d_e_f_statuses_retweeted_status_entities_media_indices',
             ],
-            array_keys($parser->getCsvFiles())
+            array_keys($parser->getCsvFiles()),
         );
     }
 
@@ -132,7 +134,7 @@ class RealDataTest extends ParserTestCase
             'KIND_Conversions_Submissions : KIND_Projects_Conversions_Submissions: View-through Revenue',
             'KIND_Conversions_Submissions : KIND_Projects_Conversions_Submissions: Total Revenue'];
         $data = array_combine($header, array_fill(0, count($header), 'boo'));
-        $parser->process(['items' => \Keboola\Utils\arrayToObject($data)], 'root');
+        $parser->process(['items' => arrayToObject($data)], 'root');
         $file = $parser->getCsvFiles()['root'];
 
         $expectedHeader = [
@@ -203,7 +205,7 @@ class RealDataTest extends ParserTestCase
             // compare result files
             self::assertEquals(
                 file_get_contents("{$testFilesPath}/{$name}.csv"),
-                file_get_contents($table->getPathname())
+                file_get_contents($table->getPathname()),
             );
 
             // compare column counts
@@ -244,7 +246,7 @@ class RealDataTest extends ParserTestCase
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [
                     {
@@ -260,7 +262,7 @@ class RealDataTest extends ParserTestCase
                         ]
                     }
                 ]
-            }'
+            }',
         );
         $parser->process($testFile->components);
         self::assertEquals(['root', 'root_data'], array_keys($parser->getCsvFiles()));
@@ -278,7 +280,7 @@ class RealDataTest extends ParserTestCase
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
         /** @var \stdClass $testFile */
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '{
                 "components": [
                     {
@@ -290,7 +292,7 @@ class RealDataTest extends ParserTestCase
                         "data": ["test"]
                     }
                 ]
-            }'
+            }',
         );
         $parser->process($testFile->components);
         self::assertEquals(['root', 'root_data'], array_keys($parser->getCsvFiles()));
@@ -306,7 +308,7 @@ class RealDataTest extends ParserTestCase
     public function testEmptyObject(): void
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '[
                 {
                     "id": 1,
@@ -315,7 +317,7 @@ class RealDataTest extends ParserTestCase
                     "data": {},
                     "flags": []
                 }
-            ]'
+            ]',
         );
         $parser->process($testFile);
         self::assertEquals(['root'], array_keys($parser->getCsvFiles()));
@@ -327,7 +329,7 @@ class RealDataTest extends ParserTestCase
     public function testEmptyAndNonEmptyObject(): void
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '[
                 {
                     "id": 1,
@@ -336,10 +338,10 @@ class RealDataTest extends ParserTestCase
                     "data": {},
                     "flags": []
                 }
-            ]'
+            ]',
         );
         $parser->process($testFile);
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '[
                 {
                     "id": 2,
@@ -348,7 +350,7 @@ class RealDataTest extends ParserTestCase
                     "data": {"a": "b"},
                     "flags": []
                 }
-            ]'
+            ]',
         );
         $parser->process($testFile);
         self::assertEquals(['root'], array_keys($parser->getCsvFiles()));
@@ -361,7 +363,7 @@ class RealDataTest extends ParserTestCase
     public function testAlmostEmptyObject(): void
     {
         $parser = new Parser(new Analyzer(new NullLogger(), new Structure()));
-        $testFile = \Keboola\Utils\jsonDecode(
+        $testFile = jsonDecode(
             '[
                 {
                     "id": 1,
@@ -373,7 +375,7 @@ class RealDataTest extends ParserTestCase
                     },
                     "flags": []
                 }
-            ]'
+            ]',
         );
         $parser->process($testFile);
         self::assertEquals(['root'], array_keys($parser->getCsvFiles()));

@@ -21,7 +21,7 @@ class Analyzer
         LoggerInterface $logger,
         Structure $structure,
         bool $nestedArraysAsJson = false,
-        bool $strict = false
+        bool $strict = false,
     ) {
         $this->nestedArrayAsJson = $nestedArraysAsJson;
         $this->strict = $strict;
@@ -39,6 +39,9 @@ class Analyzer
         return $this->log;
     }
 
+    /**
+     * @param mixed[] $data
+     */
     public function analyzeData(array $data, string $rootType): void
     {
         if (empty($data)) {
@@ -49,10 +52,7 @@ class Analyzer
         $this->structure->saveNodeValue($path, 'nodeType', 'array');
     }
 
-    /**
-     * @param mixed $item
-     */
-    private function analyzeItem($item, NodePath $nodePath): string
+    private function analyzeItem(mixed $item, NodePath $nodePath): string
     {
         if (is_scalar($item)) {
             if ($this->strict) {
@@ -85,6 +85,9 @@ class Analyzer
         return $nodeType;
     }
 
+    /**
+     * @param mixed[] $array
+     */
     private function analyzeArray(array $array, NodePath $nodePath): void
     {
         $oldType = null;
@@ -114,7 +117,7 @@ class Analyzer
     {
         if (!is_null($oldType) && ($newType !== $oldType) && ($newType !== 'null') && ($oldType !== 'null')) {
             throw new JsonParserException(
-                "Data in '$nodePath' contains incompatible data types '$oldType' and '$newType'."
+                "Data in '$nodePath' contains incompatible data types '$oldType' and '$newType'.",
             );
         }
         return $newType;
